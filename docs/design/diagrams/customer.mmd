@@ -1,0 +1,52 @@
+erDiagram
+    customer_source {
+        bigint id PK
+        varchar name
+        boolean active
+    }
+    customer {
+        bigint id PK
+        varchar full_name
+        varchar phone UK "E.164, duy nhất"
+        date birth_date
+        varchar gender
+        varchar zalo
+        varchar facebook
+        bigint source_id FK
+        varchar occupation
+        bigint interested_group_id FK
+        text health_notes "nhạy cảm"
+        varchar care_status "NEW/CARING/..."
+        timestamptz anonymized_at "ẩn danh"
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    customer_package {
+        bigint id PK
+        bigint customer_id FK
+        varchar name
+        bigint service_group_id FK
+        int sessions_purchased
+        int sessions_bonus
+        date purchased_on
+        date expires_on
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    customer_contact {
+        bigint id PK
+        bigint customer_id FK
+        date contacted_on
+        varchar channel
+        varchar outcome
+        date next_follow_up_on
+        text note
+        bigint created_by FK
+        timestamptz created_at
+    }
+    service_group o|--o{ customer : "interested_group_id"
+    customer_source o|--o{ customer : "source_id"
+    app_user ||--o{ customer_contact : "created_by"
+    customer ||--o{ customer_contact : "customer_id"
+    customer ||--o{ customer_package : "customer_id"
+    service_group o|--o{ customer_package : "service_group_id"

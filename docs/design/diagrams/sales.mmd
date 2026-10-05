@@ -1,0 +1,96 @@
+erDiagram
+    visit {
+        bigint id PK
+        date business_date "ngày làm việc"
+        bigint customer_id FK
+        varchar payment_method "CASH/TRANSFER"
+        bigint source_id FK
+        text note
+        varchar status "ACTIVE/VOID"
+        timestamptz voided_at
+        text void_reason
+        bigint created_by FK
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    visit_item {
+        bigint id PK
+        bigint visit_id FK
+        varchar item_type "SERVICE/COMBO/PACKAGE_SALE/PACKAGE_USE"
+        bigint service_id FK
+        bigint combo_id FK
+        bigint package_id FK
+        bigint staff_id FK
+        varchar name_snapshot "chụp lại"
+        bigint list_price_snapshot "chụp lại, đồng"
+        numeric discount_percent "0 đến 100"
+        bigint tour_fee_snapshot "chụp lại, đồng"
+        timestamptz created_at
+    }
+    expense_category {
+        bigint id PK
+        varchar name
+        varchar kind "PURCHASE/CTV/OTHER"
+        boolean active
+    }
+    expense {
+        bigint id PK
+        date business_date
+        bigint category_id FK
+        bigint amount "đồng, lớn hơn 0"
+        text description
+        varchar status
+        timestamptz voided_at
+        text void_reason
+        bigint created_by FK
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    daily_closing {
+        date business_date PK "có hàng = đã chốt"
+        bigint gross_revenue
+        bigint revenue_adjustment
+        bigint discount_total
+        bigint purchase_expense
+        bigint ctv_expense
+        bigint other_expense
+        bigint expense_adjustment
+        bigint cash_collected
+        bigint transfer_collected
+        int visit_count
+        int item_count
+        int expense_count
+        int adjustment_count
+        bigint total_revenue "sinh tự động"
+        bigint total_expense "sinh tự động"
+        bigint net_received "sinh tự động"
+        bigint closed_by FK
+        timestamptz closed_at
+    }
+    adjustment {
+        bigint id PK
+        date recorded_on "ngày ghi nhận"
+        date original_date "ngày gốc"
+        varchar kind "REVENUE/EXPENSE"
+        bigint amount "có dấu, khác 0"
+        text reason
+        bigint visit_id FK
+        bigint expense_id FK
+        boolean voids_visit "loại lượt đến (OQ-16)"
+        bigint created_by FK
+        timestamptz created_at
+    }
+    app_user ||--o{ adjustment : "created_by"
+    expense o|--o{ adjustment : "expense_id"
+    visit o|--o{ adjustment : "visit_id"
+    app_user ||--o{ daily_closing : "closed_by"
+    expense_category ||--o{ expense : "category_id"
+    app_user ||--o{ expense : "created_by"
+    app_user ||--o{ visit : "created_by"
+    customer o|--o{ visit : "customer_id"
+    customer_source o|--o{ visit : "source_id"
+    combo o|--o{ visit_item : "combo_id"
+    customer_package o|--o{ visit_item : "package_id"
+    service o|--o{ visit_item : "service_id"
+    staff o|--o{ visit_item : "staff_id"
+    visit ||--o{ visit_item : "visit_id"

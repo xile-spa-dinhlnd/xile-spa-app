@@ -1,0 +1,48 @@
+# Bí mật và cấu hình máy (xem AGENTS.md quy tắc 6)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*service-account*.json
+credentials*.json
+
+# Dữ liệu thật của tiệm: không đưa lên repo
+*.xlsx
+*.xls
+*.csv
+!**/src/test/resources/**/*.csv
+*.dump
+*.backup
+
+# Java / Gradle
+backend/build/
+backend/.gradle/
+backend/out/
+*.class
+hs_err_pid*
+
+# Node / Vite
+frontend/node_modules/
+frontend/dist/
+frontend/coverage/
+frontend/test-results/
+frontend/playwright-report/
+*.local
+npm-debug.log*
+
+# IDE và hệ điều hành
+.idea/
+*.iml
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.DS_Store
+Thumbs.db
+
+# Python (công cụ trong docs/design/tools)
+__pycache__/
+.venv/
+
+# Công cụ AI: cấu hình cá nhân
+.claude/settings.local.json

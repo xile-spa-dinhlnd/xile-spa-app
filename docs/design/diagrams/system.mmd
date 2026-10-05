@@ -1,0 +1,33 @@
+erDiagram
+    audit_log {
+        bigint id PK
+        timestamptz occurred_at
+        bigint actor_id FK
+        varchar action
+        varchar entity_type
+        varchar entity_id
+        jsonb before_data "chỉ thêm"
+        jsonb after_data
+    }
+    sync_job {
+        date business_date PK,FK "ngày đã chốt"
+        varchar status "PENDING/RUNNING/SUCCEEDED/FAILED"
+        int attempts
+        timestamptz next_attempt_at
+        text last_error
+        uuid batch_id "chạy lại không trùng"
+        timestamptz started_at
+        timestamptz succeeded_at
+        jsonb reconcile_result
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    app_setting {
+        varchar key PK
+        jsonb value
+        timestamptz updated_at
+        bigint updated_by FK
+    }
+    app_user o|--o{ app_setting : "updated_by"
+    app_user o|--o{ audit_log : "actor_id"
+    daily_closing ||--o| sync_job : "business_date"

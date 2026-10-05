@@ -1,0 +1,32 @@
+erDiagram
+    app_user {
+        bigint id PK
+        varchar email
+        varchar password_hash "băm"
+        varchar display_name
+        varchar role "OWNER/STAFF"
+        boolean enabled
+        int failed_login_count
+        timestamptz locked_until
+        timestamptz last_login_at
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    refresh_token {
+        bigint id PK
+        bigint user_id FK
+        varchar token_hash UK "băm"
+        timestamptz expires_at
+        timestamptz revoked_at
+        timestamptz created_at
+    }
+    password_reset_token {
+        bigint id PK
+        bigint user_id FK
+        varchar token_hash UK "băm"
+        timestamptz expires_at
+        timestamptz used_at
+        timestamptz created_at
+    }
+    app_user ||--o{ password_reset_token : "user_id"
+    app_user ||--o{ refresh_token : "user_id"

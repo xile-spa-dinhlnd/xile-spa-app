@@ -1,0 +1,25 @@
+erDiagram
+    staff_payment {
+        bigint id PK
+        bigint staff_id FK
+        date paid_on
+        bigint amount
+        varchar kind "SAME_DAY/ADVANCE/MONTHLY"
+        text note
+        bigint created_by FK
+        timestamptz created_at
+    }
+    marketing_spend {
+        bigint id PK
+        date spend_date
+        varchar channel
+        bigint cost
+        int leads
+        int bookings
+        int visits
+        bigint revenue
+        text note
+        timestamptz created_at
+    }
+    app_user ||--o{ staff_payment : "created_by"
+    staff ||--o{ staff_payment : "staff_id"

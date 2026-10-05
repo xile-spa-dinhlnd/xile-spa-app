@@ -1,0 +1,56 @@
+erDiagram
+    service_group {
+        bigint id PK
+        varchar name
+        int sort_order
+        boolean active
+    }
+    service {
+        bigint id PK
+        bigint group_id FK
+        varchar name "duy nhất, chuẩn hóa"
+        int duration_minutes
+        bigint list_price "đồng"
+        bigint tour_fee "đồng, mặc định"
+        boolean active
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    service_price_history {
+        bigint id PK
+        bigint service_id FK
+        bigint old_price
+        bigint new_price
+        timestamptz changed_at
+        bigint changed_by FK
+    }
+    combo {
+        bigint id PK
+        varchar name
+        bigint price "đồng"
+        bigint tour_fee "đồng, tạm theo combo"
+        boolean active
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    combo_item {
+        bigint id PK
+        bigint combo_id FK
+        bigint service_id FK
+        int quantity
+    }
+    staff {
+        bigint id PK
+        varchar full_name
+        varchar role "OWNER/THERAPIST"
+        bigint user_id FK,UK
+        boolean active
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    combo ||--o{ combo_item : "combo_id"
+    service ||--o{ combo_item : "service_id"
+    service_group ||--o{ service : "group_id"
+    app_user ||--o{ service_price_history : "changed_by"
+    service ||--o{ service_price_history : "service_id"
+    app_user o|--o| staff : "user_id"
