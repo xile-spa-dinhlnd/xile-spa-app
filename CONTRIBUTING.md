@@ -9,9 +9,9 @@ commit, Pull Request và nhịp làm việc**.
 1. Kéo card từ `Sprint Backlog` sang `Đang làm`, gán tên mình. Mỗi người **tối đa 2 card** ở `Đang làm`.
 2. Cập nhật `develop` rồi tạo nhánh cho card từ `develop` (mục 2).
 3. Làm từng bước nhỏ, commit theo mục 3, đẩy nhánh lên GitHub ít nhất cuối mỗi buổi làm.
-4. Mở Pull Request **vào `develop`** (mục 4). Chưa xong thì mở dạng **Draft** để người kia xem sớm.
-5. Kéo card sang `Review (PR)`, nhắn người kia.
-6. Sửa theo review, build và test chạy qua (CI xanh khi đã có CI), có approve → **Squash and merge** vào `develop`, xóa nhánh.
+4. Mở Pull Request **vào `develop`** (mục 4). Chưa xong thì mở dạng **Draft** để Đình xem sớm.
+5. Kéo card sang `Review (PR)`. PR của Huy: gán Đình review và nhắn. PR của Đình: tự review theo danh sách soát ở mục 4.
+6. Sửa theo review, build và test chạy qua (CI xanh khi đã có CI), đủ điều kiện merge (mục 4) → **Squash and merge** vào `develop`, xóa nhánh.
 7. Kéo card sang `Xong` khi đủ Definition of Done (`docs/backlog/sprint-0-1.md` mục 1), cập nhật cột
    "Cột Trello" trong file backlog.
 
@@ -167,8 +167,15 @@ cd frontend && npm run lint && npm run typecheck && npm test
 - **Nhỏ:** cố gắng dưới khoảng 400 dòng thay đổi (không tính file sinh tự động, lock file). Lớn hơn thì
   chia nhỏ.
 - **Tự review trước:** đọc lại toàn bộ diff trên GitHub trước khi gán người review.
-- **Điều kiện merge** (ruleset của `develop` và `main`, mục 7): 1 approve của người kia, không còn
-  bình luận chưa giải quyết, người viết đã chạy build + test ở máy. Từ khi có CI (card D-01): thêm CI xanh.
+- **Người duyệt: Đình là người duyệt duy nhất** (code owner, file `.github/CODEOWNERS`).
+  - PR của Huy: Đình review và approve, rồi Huy bấm merge. Huy có thể bình luận vào PR của Đình nhưng
+    approve của Huy không thay cho approve của Đình.
+  - PR của Đình: GitHub không cho tự approve PR của chính mình, nên Đình merge bằng quyền bypass của
+    ruleset (ô "Merge without waiting for requirements to be met"). **Trước khi bypass phải tự review**: đọc
+    lại toàn bộ diff, đi hết danh sách soát bên dưới, ghi "Đã tự review" trong PR. Với phần nhạy cảm
+    (đăng nhập, tiền, chốt sổ, migration), nên nhờ Huy đọc và bình luận dù không cần Huy approve.
+- **Điều kiện merge** (ruleset của `develop` và `main`, mục 7): approve của Đình (hoặc Đình bypass với PR
+  của chính mình), không còn bình luận chưa giải quyết, người viết đã chạy build + test ở máy. Từ khi có CI (card D-01): thêm CI xanh.
 - **Cách merge:** PR card vào `develop` dùng **Squash and merge**. PR vào `main` (release, hotfix) và PR
   merge ngược `main` → `develop` dùng **Create a merge commit**, không squash (squash ở đây làm hai nhánh
   lệch lịch sử, lần phát hành sau sẽ xung đột). Người viết PR bấm merge; nhánh card, `release/*`, `hotfix/*`
@@ -177,8 +184,8 @@ cd frontend && npm run lint && npm run typecheck && npm test
 
 ### Review
 
-- Người được gán review **trong vòng 1 ngày làm việc**. Không kịp thì nhắn báo.
-- Ưu tiên review PR của người kia trước khi bắt đầu card mới: PR chờ lâu làm cả nhóm chậm.
+- Đình review PR của Huy **trong vòng 1 ngày làm việc**. Không kịp thì nhắn báo.
+- Đình ưu tiên review PR đang chờ trước khi bắt đầu card mới: PR chờ lâu làm cả nhóm chậm.
 - Ghi tiền tố cho bình luận để rõ mức độ:
   - `bắt buộc:` phải sửa mới merge.
   - `gợi ý:` nên sửa, người viết quyết định.
@@ -226,7 +233,8 @@ sau Sprint 1...); hotfix tăng PATCH (`v0.1.1`). Lên `v1.0.0` khi chủ tiệm 
 
 ### Phát hành cuối sprint (release)
 
-Làm sau buổi sprint review, khi mọi card của sprint đã vào `develop`. Một người làm, người kia review.
+Làm sau buổi sprint review, khi mọi card của sprint đã vào `develop`. Đình làm và duyệt (bypass như PR của
+mình, mục 4); Huy có thể cùng xem để học.
 
 1. Tạo nhánh release từ `develop`:
 
@@ -240,7 +248,7 @@ Làm sau buổi sprint review, khi mọi card của sprint đã vào `develop`. 
 2. Chạy thử toàn bộ trên máy. Lỗi nhỏ thì sửa **ngay trên `release/v0.1.0`** (commit `fix: ...`).
    **Không** thêm tính năng mới vào nhánh release; tính năng mới vẫn vào `develop` như thường.
 3. Mở PR `release/v0.1.0` → `main`, tiêu đề `release: v0.1.0`, nội dung liệt kê các card của sprint.
-   Người kia approve → **Create a merge commit**.
+   Đình tự review → **Create a merge commit** (bypass, mục 4).
 4. Gắn tag trên `main`:
 
    ```bash
@@ -252,7 +260,7 @@ Làm sau buổi sprint review, khi mọi card của sprint đã vào `develop`. 
 
    Rồi tạo GitHub Release từ tag (Releases → Draft a new release → chọn tag → Generate release notes).
 5. **Merge ngược** về `develop`: mở PR `main` → `develop`, tiêu đề `chore: merge ngược v0.1.0 về develop`,
-   approve → **Create a merge commit**. Bước này đưa các lỗi đã sửa ở bước 2 về `develop`; không làm thì lỗi
+   Đình duyệt → **Create a merge commit**. Bước này đưa các lỗi đã sửa ở bước 2 về `develop`; không làm thì lỗi
    quay lại ở lần phát hành sau.
 6. Cập nhật máy: `git switch develop && git pull`.
 
@@ -270,7 +278,7 @@ từ `develop` như card bình thường.
    ```
 
 2. Sửa, viết test chứng minh lỗi đã hết, commit `fix(...): ...`.
-3. Mở PR `hotfix/...` → `main`. Vẫn cần người kia approve (có thể review nhanh qua tin nhắn) →
+3. Mở PR `hotfix/...` → `main`. Hotfix của Huy cần Đình approve; của Đình thì tự review rồi bypass →
    **Create a merge commit**.
 4. Gắn tag `v0.1.1` trên `main` như bước 4 ở trên, tạo GitHub Release.
 5. **Merge ngược** `main` → `develop` như bước 5 ở trên. Bắt buộc, nếu không `develop` vẫn còn lỗi.
@@ -285,12 +293,14 @@ Chỉ Owner (Đình) sửa được các cấu hình này. Đổi gì thì cập
 - **Default branch:** `develop`.
 - **Pull Requests:** bật Allow merge commits và Allow squash merging (message mặc định: "Pull request title
   and description"); tắt Allow rebase merging; bật Automatically delete head branches.
-- **Ruleset `protect-develop`** (target `develop`, không ai được bypass): Restrict deletions, Block force
-  pushes, Require a pull request (1 approval, dismiss stale approvals, require approval of the most recent
-  reviewable push, require conversation resolution). Allowed merge methods: **Squash, Merge** (squash cho PR
+- **Ruleset `protect-develop`** (target `develop`): Restrict deletions, Block force
+  pushes, Require a pull request (1 approval, dismiss stale approvals, **require review from Code Owners**,
+  require conversation resolution). Bypass list: chỉ Đình, chế độ **For pull requests only** (vẫn phải qua
+  PR, không đẩy thẳng được, nhưng merge được PR của mình khi chưa có approve). Allowed merge methods: **Squash, Merge** (squash cho PR
   card, merge cho PR merge ngược).
-- **Ruleset `protect-main`** (target `main`, không ai được bypass): như trên, Allowed merge methods: chỉ
+- **Ruleset `protect-main`** (target `main`): như trên, cùng bypass list, Allowed merge methods: chỉ
   **Merge**.
+- **Code owner:** `.github/CODEOWNERS` gán toàn bộ repo cho Đình.
 - **Quyền:** team `core` (Đình, Huy) quyền Write. Base permissions của org: Read hoặc No permission. Bắt buộc
   2FA.
 - **Code security:** Dependabot alerts, Dependabot security updates, Secret scanning, Push protection.
