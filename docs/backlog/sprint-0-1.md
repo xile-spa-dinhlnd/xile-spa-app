@@ -16,7 +16,7 @@ Nguồn: `docs/srs/03-functional-requirements.md` (mã FR), `docs/srs/07-open-qu
 
 **Definition of Done (dán vào mô tả board):**
 
-1. Đã qua Pull Request, người kia review và approve.
+1. Đã qua Pull Request. PR của Huy: Đình approve. PR của Đình: tự review theo danh sách soát trong `CONTRIBUTING.md` rồi merge.
 2. Build và test chạy qua ở máy người viết, ghi rõ trong PR. (Khi có CI ở giai đoạn DevOps: CI xanh.)
 3. Có test cho logic nghiệp vụ; đổi DB bằng migration Flyway mới.
 4. Làm đủ yêu cầu của card.
@@ -35,7 +35,7 @@ Mục tiêu: khung backend và frontend chạy được trên máy dev, DB tạo
 | Mã    | Card                             | Điểm | Nhãn | Người làm | Cột Trello     | Nội dung dán vào card                                                                                                                                                      |
 | ----- | -------------------------------- | ---- | ---- | --------- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | S0-01 | Dựng board Trello và quy ước     | 1    | Docs | Đình      | Sprint Backlog | Tạo cột, nhãn theo mục 1, mời Huy, dán DoD, tạo card từ file này, chốt lịch planning/review/retro                                                                          |
-| S0-02 | Quy tắc repo, nhánh, Pull Request | 1    | Docs | Đình      | Sprint Backlog | Repo GitHub, bảo vệ `main` (bắt buộc PR, 1 approve; chưa bật điều kiện CI), quy ước trong `CONTRIBUTING.md`, PR template, `.gitignore`, `.editorconfig`                   |
+| S0-02 | Quy tắc repo, nhánh, Pull Request | 1    | Docs | Đình      | Sprint Backlog | Repo GitHub theo Git Flow: nhánh `develop` (mặc định) và `main`, ruleset cho cả hai (bắt buộc PR, Đình là code owner duyệt, Đình bypass được với PR của mình; chưa bật điều kiện CI), quy ước trong `CONTRIBUTING.md`, PR template, `.gitignore`, `.editorconfig`                   |
 | S0-03 | Tài liệu dev và quy tắc cho AI   | 1    | Docs | Đình      | Sprint Backlog | README chạy từ máy trống; `AGENTS.md`, `backend/AGENTS.md`, `frontend/AGENTS.md`, `CONTRIBUTING.md` hai người duyệt; Huy cấu hình Antigravity đọc `AGENTS.md`             |
 | S0-04 | Khung backend Spring Boot        | 3    | BE   | Đình      | Sprint Backlog | Gradle Kotlin DSL, Java 21, Spring Boot 3; cấu trúc module theo `backend/AGENTS.md`; profile dev/prod, bí mật từ biến môi trường; định dạng lỗi chung; endpoint health; chốt tên package gốc |
 | S0-05 | PostgreSQL trên máy dev và chạy migration | 2 | BE | Huy   | Sprint Backlog | Cài Docker Desktop **chỉ như một phần mềm** để chạy Postgres (một file `docker-compose.yml` chỉ có service `postgres`, chép theo mẫu, chưa cần học sâu); Flyway tự chạy V1, V2 khi khởi động; ghi cách chạy vào README |
