@@ -329,3 +329,38 @@ Mọi yêu cầu có trạng thái ban đầu là `Draft`. Quy tắc nghiệp v�
   - Ghi lại mọi thao tác tạo, sửa, hủy trên: dịch vụ, combo, giao dịch, chi phí, chốt sổ, bút toán điều chỉnh, tài khoản.
   - Mỗi bản ghi có: người thực hiện, thời điểm, loại đối tượng, mã đối tượng, giá trị trước và sau (dạng JSON).
   - Nhật ký không có chức năng sửa hay xóa trên giao diện.
+
+---
+
+## 3.15 Hỗ trợ nội dung bằng AI (AI)
+
+Ý tưởng cho giai đoạn sau, ghi lại để không mất. Nguyên tắc chung: **AI chỉ soạn nháp, người dùng luôn đọc,
+sửa và duyệt trước khi gửi hay đăng**. Hệ thống không bao giờ tự gửi tin cho khách.
+
+Bối cảnh của tiệm (06/10/2026): tiệm có Fanpage Facebook; liên lạc với khách qua Zalo bằng số điện thoại cá
+nhân của chủ tiệm; tiệm không có Zalo Official Account và dự kiến không trả phí cho kênh gửi tin (ZNS, SMS).
+
+| ID | Yêu cầu | Ưu tiên | Đợt |
+|---|---|---|---|
+| FR-AI-01 | Soạn nháp tin nhắn chăm sóc cho một khách theo tình huống: lâu chưa quay lại, sinh nhật, gói liệu trình sắp hết buổi, cảm ơn sau buổi làm. Người dùng sửa và duyệt | C | R3 |
+| FR-AI-02 | Gửi tin đã duyệt theo cách thủ công: sao chép nội dung và mở Zalo tới SĐT của khách (hoặc mở link Facebook của khách), rồi ghi nhận lần liên hệ (FR-CUS-06) | C | R3 |
+| FR-AI-03 | Soạn nháp bài đăng từ dịch vụ, combo, khuyến mãi có trong hệ thống. Người dùng sửa, lưu nháp, duyệt | C | R3 |
+| FR-AI-04 | Đăng bài đã duyệt lên Fanpage Facebook bằng một nút; lưu trạng thái và liên kết bài đã đăng | C | R3 |
+| FR-AI-05 | Nhà cung cấp mô hình AI cấu hình qua biến môi trường (mô hình tự host hoặc API bên ngoài), đổi được mà không sửa code nghiệp vụ | C | R3 |
+
+**FR-AI-01 Soạn tin chăm sóc khách**
+- *Story:* Là chủ tiệm, tôi muốn có sẵn bản nháp tin nhắn hợp với từng khách để chăm sóc nhanh hơn mà vẫn đúng giọng của tiệm.
+- *AC:*
+  - Chỉ gửi cho mô hình AI những thông tin cần thiết: tên gọi, dịch vụ gần nhất, số ngày chưa quay lại, số buổi còn lại của gói. **Không gửi** SĐT, ghi chú sức khỏe, ngày sinh đầy đủ (NFR-PRV-05).
+  - Giá và ưu đãi trong tin chỉ được lấy từ dữ liệu của hệ thống; AI không được tự đặt ra.
+  - Người dùng sửa được nội dung trước khi dùng. Có thể yêu cầu soạn lại.
+  - AI lỗi hoặc chậm thì báo rõ và cho phép tự viết tay; không ảnh hưởng chức năng khác.
+
+**FR-AI-04 Đăng bài lên Fanpage**
+- *AC:*
+  - Chỉ bài ở trạng thái đã duyệt mới đăng được. Có bước xác nhận trước khi đăng.
+  - Token của Page lưu trong biến môi trường hoặc secret, không lưu trong cơ sở dữ liệu, không ghi log.
+  - Đăng lỗi (token hết hạn, thiếu quyền) thì giữ nguyên bài nháp và báo lý do.
+
+**Ngoài phạm vi (đã cân nhắc):** tự động gửi tin vào Zalo hoặc Facebook cá nhân của khách (nền tảng không cho
+phép); Zalo ZNS và SMS brandname (có phí, xem OQ-18); đăng TikTok (API kiểm duyệt khắt khe).

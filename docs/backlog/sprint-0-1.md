@@ -88,6 +88,8 @@ Theo thứ tự ưu tiên để sớm "dùng thật được":
 
 Gói liệu trình, đồng bộ Google Sheets, CRM nâng cao và lương thuộc R2, R3.
 
+**Epic để dành (R3 trở đi, chưa chia card):** Hỗ trợ nội dung bằng AI (FR-AI-01 đến 05): AI soạn nháp tin chăm sóc khách và bài đăng, người duyệt, gửi Zalo thủ công, đăng Fanpage một nút. Cần CRM (FR-CUS-04, 06, 07) và giai đoạn DevOps xong trước; chốt OQ-18, OQ-19, OQ-20.
+
 ## 5. Giai đoạn DevOps (để sau)
 
 Gom toàn bộ việc DevOps vào đây để Sprint 0 đến các sprint đầu chỉ tập trung xây sản phẩm. Bắt đầu khi
