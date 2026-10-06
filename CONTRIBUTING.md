@@ -122,7 +122,7 @@ fix(auth): không tiết lộ email tồn tại khi đăng nhập sai
 feat(db): thêm migration V3 cho bảng service_group
 test(visit): kiểm tra không tạo giao dịch vào ngày đã chốt
 docs(srs): cập nhật BR-04 theo câu trả lời OQ-06
-build(be): khóa phiên bản Spring Boot 3.3 trong version catalog
+build(be): nâng Spring Boot lên 4.1.2 trong version catalog
 ```
 
 **Ví dụ không dùng:** `update`, `fix bug`, `wip`, `sửa linh tinh`, `final`, `final 2`.
@@ -155,7 +155,7 @@ cd backend && ./gradlew spotlessApply test
 cd frontend && npm run lint && npm run typecheck && npm test
 ```
 
-(Lệnh chính xác sẽ cập nhật sau khi có khung S0-04, S0-08.)
+(Lệnh frontend sẽ cập nhật sau khi có khung S0-08. Test backend cần Docker Desktop đang chạy.)
 
 ## 4. Pull Request
 

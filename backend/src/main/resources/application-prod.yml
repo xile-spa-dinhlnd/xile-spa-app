@@ -1,0 +1,10 @@
+# Môi trường thật: mọi giá trị bắt buộc lấy từ biến môi trường, không có giá trị mặc định.
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
+logging:
+  level:
+    root: INFO

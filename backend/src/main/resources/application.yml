@@ -1,0 +1,32 @@
+# Cấu hình chung cho mọi môi trường. KHÔNG ghi bí mật vào đây (AGENTS.md quy tắc 6).
+spring:
+  application:
+    name: xile-spa-backend
+  profiles:
+    default: dev
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate # Schema chỉ đổi bằng Flyway, không bao giờ update/create.
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  flyway:
+    locations: classpath:db/migration
+  jackson:
+    time-zone: Asia/Ho_Chi_Minh
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
+server:
+  error:
+    include-message: never
+    include-stacktrace: never
