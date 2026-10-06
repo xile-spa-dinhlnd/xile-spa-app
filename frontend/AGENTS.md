@@ -1,7 +1,8 @@
 # frontend/AGENTS.md — quy tắc riêng cho frontend
 
 Đọc `../AGENTS.md` trước. File này chỉ bổ sung phần riêng của frontend.
-Stack: React + TypeScript (Vite), Ant Design, TanStack Query, React Hook Form + Zod, Recharts, Vitest, Playwright.
+Stack: React 19 + TypeScript (Vite), Ant Design 6, TanStack Query, React Router, React Hook Form + Zod, Recharts,
+Vitest, Playwright. Lint bằng oxlint (mặc định của Vite), format bằng Prettier.
 
 ## Cấu trúc
 
@@ -10,10 +11,11 @@ người nhận một tính năng làm cả hai đầu mà ít đụng file củ
 
 ```
 frontend/
-├─ index.html, package.json, vite.config.ts, tsconfig.json
+├─ index.html, package.json, vite.config.ts (alias @/, proxy /api tới backend), tsconfig*.json
+├─ .oxlintrc.json, .prettierrc.json
 ├─ .env.example                  # chỉ VITE_API_BASE_URL..., không có bí mật
-├─ playwright.config.ts
-├─ Dockerfile
+├─ playwright.config.ts          # thêm khi viết test luồng đầu tiên (S1-03)
+├─ Dockerfile                    # thêm ở giai đoạn DevOps (D-02)
 ├─ public/
 ├─ e2e/                          # Playwright: login.spec.ts, services.spec.ts
 └─ src/
@@ -21,6 +23,7 @@ frontend/
    ├─ app/
    │  ├─ App.tsx
    │  ├─ providers.tsx           # QueryClient, ConfigProvider (locale vi_VN, theme)
+   │  ├─ queryClient.ts          # mặc định: không thử lại lỗi 4xx
    │  ├─ router.tsx              # khai báo route, bảo vệ trang khi chưa đăng nhập
    │  └─ layout/                 # AppLayout, menu, header; co giãn điện thoại / iPad / máy tính
    ├─ features/
@@ -91,7 +94,14 @@ Quy tắc:
 - Dùng tốt trên điện thoại, iPad và máy tính (chủ tiệm dùng cả ba). Kiểm tra cả ba cỡ màn hình.
 - Ưu tiên component có sẵn của Ant Design; bật tree-shaking; không thêm thư viện UI khác (ADR-0001).
 
-## Test
+## Test và lệnh
 
 - Logic và hook: Vitest. Luồng chính (đăng nhập, tạo dịch vụ): Playwright.
-- Chạy lint, typecheck và test trước khi commit.
+- Chạy trước khi commit (trong `frontend/`):
+
+  ```bash
+  npm run format && npm run lint && npm run typecheck && npm test
+  ```
+
+- Chạy dev: `npm run dev` (http://localhost:5173). `/api` và `/actuator` được proxy tới backend
+  `http://localhost:8080` (đổi bằng biến `BACKEND_URL`).
