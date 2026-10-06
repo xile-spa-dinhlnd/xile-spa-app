@@ -520,4 +520,5 @@ cd docs/design/tools
 PSQL_CMD='psql -d xile_test' python3 gen_erd_mermaid.py ../diagrams
 ```
 
-Khi dựng backend, bộ kiểm thử này sẽ được chuyển sang Testcontainers (PostgreSQL 16) trong CI.
+Bộ kiểm thử này chạy tự động trong `./gradlew test` (`SchemaSmokeIT`, Testcontainers PostgreSQL 16, S0-06):
+Flyway áp dụng migration rồi psql trong container chạy file trên. Sau này đưa vào CI ở card D-01.
