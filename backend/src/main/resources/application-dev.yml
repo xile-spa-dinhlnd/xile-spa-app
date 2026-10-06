@@ -1,0 +1,10 @@
+# Máy dev: Postgres chạy bằng docker-compose.yml ở thư mục gốc, cổng 5433 (card S0-05). Giá trị mặc định chỉ dùng cho DB dev, ghi đè bằng biến môi trường.
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5433/xile_spa}
+    username: ${DB_USERNAME:xile}
+    password: ${DB_PASSWORD:xile_dev}
+
+logging:
+  level:
+    com.xilespa: DEBUG

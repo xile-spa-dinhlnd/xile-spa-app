@@ -16,7 +16,7 @@ Nguồn: `docs/srs/03-functional-requirements.md` (mã FR), `docs/srs/07-open-qu
 
 **Definition of Done (dán vào mô tả board):**
 
-1. Đã qua Pull Request, người kia review và approve.
+1. Đã qua Pull Request. PR của Huy: Đình approve. PR của Đình: tự review theo danh sách soát trong `CONTRIBUTING.md` rồi merge.
 2. Build và test chạy qua ở máy người viết, ghi rõ trong PR. (Khi có CI ở giai đoạn DevOps: CI xanh.)
 3. Có test cho logic nghiệp vụ; đổi DB bằng migration Flyway mới.
 4. Làm đủ yêu cầu của card.
@@ -34,17 +34,17 @@ Mục tiêu: khung backend và frontend chạy được trên máy dev, DB tạo
 
 | Mã    | Card                             | Điểm | Nhãn | Người làm | Cột Trello     | Nội dung dán vào card                                                                                                                                                      |
 | ----- | -------------------------------- | ---- | ---- | --------- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| S0-01 | Dựng board Trello và quy ước     | 1    | Docs | Đình      | Sprint Backlog | Tạo cột, nhãn theo mục 1, mời Huy, dán DoD, tạo card từ file này, chốt lịch planning/review/retro                                                                          |
-| S0-02 | Quy tắc repo, nhánh, Pull Request | 1    | Docs | Đình      | Sprint Backlog | Repo GitHub, bảo vệ `main` (bắt buộc PR, 1 approve; chưa bật điều kiện CI), quy ước trong `CONTRIBUTING.md`, PR template, `.gitignore`, `.editorconfig`                   |
-| S0-03 | Tài liệu dev và quy tắc cho AI   | 1    | Docs | Đình      | Sprint Backlog | README chạy từ máy trống; `AGENTS.md`, `backend/AGENTS.md`, `frontend/AGENTS.md`, `CONTRIBUTING.md` hai người duyệt; Huy cấu hình Antigravity đọc `AGENTS.md`             |
-| S0-04 | Khung backend Spring Boot        | 3    | BE   | Đình      | Sprint Backlog | Gradle Kotlin DSL, Java 21, Spring Boot 3; cấu trúc module theo `backend/AGENTS.md`; profile dev/prod, bí mật từ biến môi trường; định dạng lỗi chung; endpoint health; chốt tên package gốc |
-| S0-05 | PostgreSQL trên máy dev và chạy migration | 2 | BE | Huy   | Sprint Backlog | Cài Docker Desktop **chỉ như một phần mềm** để chạy Postgres (một file `docker-compose.yml` chỉ có service `postgres`, chép theo mẫu, chưa cần học sâu); Flyway tự chạy V1, V2 khi khởi động; ghi cách chạy vào README |
-| S0-06 | Kiểm thử schema bằng Testcontainers | 2 | BE  | Đình      | Sprint Backlog | Chạy `schema_smoke_test.sql` trong `./gradlew test` trên Postgres thật (Testcontainers), chạy ở máy dev; lớp nền test tích hợp dùng chung cho các card sau. Đưa vào CI để ở D-01 |
-| S0-07 | Ánh xạ lỗi DB sang lỗi nghiệp vụ | 2    | BE   | Đình      | Sprint Backlog | Bắt `XL001`, `XL002`, `XL004`, trả lỗi tiếng Việt theo định dạng chung; có test                                                                                            |
-| S0-08 | Khung frontend React             | 3    | FE   | Huy       | Sprint Backlog | Vite + TypeScript + Ant Design + TanStack Query; cấu trúc theo `frontend/AGENTS.md`; layout dùng được trên điện thoại; lớp gọi API chung xử lý lỗi theo định dạng S0-04; ESLint, Prettier, Vitest chạy được |
+| S0-01 | Dựng board Trello và quy ước     | 1    | Docs | Đình      | Xong           | Tạo cột, nhãn theo mục 1, mời Huy, dán DoD, tạo card từ file này, chốt lịch planning/review/retro                                                                          |
+| S0-02 | Quy tắc repo, nhánh, Pull Request | 1    | Docs | Đình      | Xong           | Repo GitHub theo Git Flow: nhánh `develop` (mặc định) và `main`, ruleset cho cả hai (bắt buộc PR, Đình là code owner duyệt, Đình bypass được với PR của mình; chưa bật điều kiện CI), quy ước trong `CONTRIBUTING.md`, PR template, `.gitignore`, `.editorconfig` |
+| S0-03 | Tài liệu dev và quy tắc cho AI   | 1    | Docs | Đình      | Xong           | README chạy từ máy trống; `AGENTS.md`, `backend/AGENTS.md`, `frontend/AGENTS.md`, `CONTRIBUTING.md`. Huy cấu hình Antigravity đọc `AGENTS.md` khi bắt đầu Sprint 1 |
+| S0-04 | Khung backend Spring Boot        | 3    | BE   | Đình      | Xong           | Gradle Kotlin DSL, Java 21, Spring Boot 4 (ADR-0001), MapStruct; cấu trúc module theo `backend/AGENTS.md`; profile dev/prod, bí mật từ biến môi trường; định dạng lỗi chung; endpoint health; package gốc `com.xilespa` |
+| S0-05 | PostgreSQL trên máy dev và chạy migration | 2 | BE | Đình  | Xong           | Docker Desktop chỉ dùng như một phần mềm để chạy Postgres (`docker-compose.yml` chỉ có service `postgres`, cổng 5433 để không đụng Postgres cài sẵn); Flyway tự chạy V1, V2 khi khởi động; cách chạy trong README |
+| S0-06 | Kiểm thử schema bằng Testcontainers | 2 | BE  | Đình      | Xong           | `schema_smoke_test.sql` chạy trong `./gradlew test` trên Postgres thật (`SchemaSmokeIT`, Testcontainers); lớp nền test tích hợp dùng chung (`@IntegrationTest`). Đưa vào CI để ở D-01 |
+| S0-07 | Ánh xạ lỗi DB sang lỗi nghiệp vụ | 2    | BE   | Đình      | Xong           | `XL001` → `DAY_CLOSED`, `XL002` → `RECORD_IMMUTABLE`, `XL004` → `FUTURE_DAY_CLOSING`, lỗi tiếng Việt theo định dạng chung; test với trigger thật |
+| S0-08 | Khung frontend React             | 3    | FE   | Đình      | Xong           | Vite + TypeScript + Ant Design + TanStack Query; cấu trúc theo `frontend/AGENTS.md`; layout dùng được trên điện thoại; lớp gọi API chung xử lý lỗi theo định dạng S0-04; oxlint, Prettier, Vitest |
 
-**Tổng điểm:** Đình 10, Huy 5. Sprint 0 nhẹ hơn trước vì bỏ phần DevOps; Huy còn dư sức thì kéo sớm S1-01
-(backend đăng nhập) sau khi S0-04 có khung.
+**Tổng điểm:** Đình 15. Ngày 06/10/2026 Đình quyết định tự làm toàn bộ Sprint 0 cho gọn; Huy bắt đầu nhận card
+từ Sprint 1. Trạng thái "Xong" ở trên tính khi các PR của Sprint 0 đã merge vào `develop`.
 
 **Việc ngoài card (đừng bỏ sót):**
 
@@ -59,12 +59,12 @@ Mục tiêu: đăng nhập được, quản lý bảng giá dịch vụ, mọi t
 
 | Mã    | Card                              | Điểm | Nhãn | Người làm | Cột Trello      | Nội dung dán vào card                                                                                                                                                                                              |
 | ----- | --------------------------------- | ---- | ---- | --------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| S1-01 | Backend đăng nhập và phiên        | 5    | BE   | Huy       | Product Backlog | FR-AUTH-01, 02. Login email + mật khẩu (Argon2/BCrypt), access token cookie `httpOnly`, refresh token chỉ lưu băm và xoay vòng, logout thu hồi; API khác trả 401 khi chưa đăng nhập; lỗi không lộ email có tồn tại |
-| S1-02 | Khởi tạo tài khoản chủ tiệm       | 2    | BE   | Huy       | Product Backlog | FR-AUTH-07. Tạo từ biến môi trường ở lần chạy đầu, không có trang đăng ký, không log mật khẩu, chạy lại không tạo trùng                                                                                            |
-| S1-03 | Giao diện đăng nhập, bảo vệ trang | 5    | FE   | Huy       | Product Backlog | FR-AUTH-01, 02. Trang đăng nhập dùng tốt trên điện thoại, chuyển hướng khi chưa đăng nhập, tự làm mới phiên, nút đăng xuất, lỗi tiếng Việt                                                                         |
-| S1-04 | Nhật ký thay đổi (audit log)      | 3    | BE   | Đình      | Product Backlog | FR-SYS-01, BR-18. Cơ chế dùng chung ghi `audit_log` trong cùng transaction; không ghi mật khẩu/token; API xem có phân trang                                                                                        |
-| S1-05 | Backend quản lý dịch vụ           | 5    | BE   | Đình      | Product Backlog | FR-SVC-01 đến 04. Danh sách/tìm/lọc, tạo, sửa (đổi giá ghi `service_price_history`), ngừng bán/bán lại, không xóa cứng (BR-19), tiền là số nguyên không âm (BR-01), ghi audit; test tích hợp DB thật               |
-| S1-06 | Giao diện quản lý dịch vụ         | 5    | FE   | Đình      | Product Backlog | FR-SVC-01 đến 04. Bảng có tìm/lọc, form tạo/sửa báo lỗi từng ô, ô tiền định dạng `1.234.000 đ`, ngừng bán có xác nhận, ghi rõ đổi giá niêm yết không ảnh hưởng giao dịch cũ                                        |
+| S1-01 | Backend đăng nhập và phiên        | 5    | BE   | Huy       | Đang làm        | FR-AUTH-01, 02. Login email + mật khẩu (Argon2/BCrypt), access token cookie `httpOnly`, refresh token chỉ lưu băm và xoay vòng, logout thu hồi; API khác trả 401 khi chưa đăng nhập; lỗi không lộ email có tồn tại |
+| S1-02 | Khởi tạo tài khoản chủ tiệm       | 2    | BE   | Huy       | Đang làm        | FR-AUTH-07. Tạo từ biến môi trường ở lần chạy đầu, không có trang đăng ký, không log mật khẩu, chạy lại không tạo trùng                                                                                            |
+| S1-03 | Giao diện đăng nhập, bảo vệ trang | 5    | FE   | Huy       | Đang làm        | FR-AUTH-01, 02. Trang đăng nhập dùng tốt trên điện thoại, chuyển hướng khi chưa đăng nhập, tự làm mới phiên, nút đăng xuất, lỗi tiếng Việt                                                                         |
+| S1-04 | Nhật ký thay đổi (audit log)      | 3    | BE   | Đình      | Đang làm        | FR-SYS-01, BR-18. Cơ chế dùng chung ghi `audit_log` trong cùng transaction; không ghi mật khẩu/token; API xem có phân trang                                                                                        |
+| S1-05 | Backend quản lý dịch vụ           | 5    | BE   | Đình      | Đang làm        | FR-SVC-01 đến 04. Danh sách/tìm/lọc, tạo, sửa (đổi giá ghi `service_price_history`), ngừng bán/bán lại, không xóa cứng (BR-19), tiền là số nguyên không âm (BR-01), ghi audit; test tích hợp DB thật               |
+| S1-06 | Giao diện quản lý dịch vụ         | 5    | FE   | Đình      | Đang làm        | FR-SVC-01 đến 04. Bảng có tìm/lọc, form tạo/sửa báo lỗi từng ô, ô tiền định dạng `1.234.000 đ`, ngừng bán có xác nhận, ghi rõ đổi giá niêm yết không ảnh hưởng giao dịch cũ                                        |
 
 **Tổng điểm:** Huy 12, Đình 13.
 
@@ -87,6 +87,8 @@ Theo thứ tự ưu tiên để sớm "dùng thật được":
 7. Chi phí (FR-EXP), chốt sổ và bút toán (FR-CLS), dashboard (FR-DSH-01, 03, 06, 07, 09).
 
 Gói liệu trình, đồng bộ Google Sheets, CRM nâng cao và lương thuộc R2, R3.
+
+**Epic để dành (R3 trở đi, chưa chia card):** Hỗ trợ nội dung bằng AI (FR-AI-01 đến 05): AI soạn nháp tin chăm sóc khách và bài đăng, người duyệt, gửi Zalo thủ công, đăng Fanpage một nút. Cần CRM (FR-CUS-04, 06, 07) và giai đoạn DevOps xong trước; chốt OQ-18, OQ-19, OQ-20.
 
 ## 5. Giai đoạn DevOps (để sau)
 
