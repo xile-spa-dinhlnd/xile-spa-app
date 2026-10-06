@@ -4,6 +4,21 @@
 Quy tắc code nằm ở `AGENTS.md`, `backend/AGENTS.md`, `frontend/AGENTS.md`; file này chỉ nói về **nhánh,
 commit, Pull Request và nhịp làm việc**.
 
+## Tóm tắt một trang
+
+Mọi card đi qua **một vòng lặp**:
+
+```
+Trello "Đang làm" → nhánh từ develop → code + commit → test ở máy → push → PR vào develop
+→ review → Squash and merge → git switch develop && git pull → Trello "Xong"
+```
+
+- `develop` là code chung, **chỉ đổi qua PR**. Push lên nhánh của mình chưa ảnh hưởng ai; chỉ khi merge mới tính là xong.
+- **Ai làm gì:** người làm card lo từ tạo nhánh tới mở PR và merge; Đình là người duyệt (approve PR của Huy, tự
+  review rồi bypass với PR của mình). Làm việc với AI: mục 8.
+- **Cuối sprint:** phát hành `vX.Y.0` từ `develop` lên `main`, gắn tag, merge ngược (mục 6).
+- **Không chắc nhánh đang thế nào:** `git status`, rồi hỏi trước khi chạy lệnh sửa lịch sử (`reset`, `rebase`).
+
 ## 1. Luồng một card, từ đầu đến cuối
 
 1. Kéo card từ `Sprint Backlog` sang `Đang làm`, gán tên mình. Mỗi người **tối đa 2 card** ở `Đang làm`.
@@ -305,3 +320,25 @@ Chỉ Owner (Đình) sửa được các cấu hình này. Đổi gì thì cập
   2FA.
 - **Code security:** Dependabot alerts, Dependabot security updates, Secret scanning, Push protection.
 - **Chưa bật:** Require status checks (bật ở card D-01 khi có CI).
+
+## 8. Làm việc với AI (Claude Code, Antigravity)
+
+Mục tiêu: người trong nhóm **tự cầm lái phần git** để luyện Git Flow; AI lo phần code, test và review.
+
+**Cách mặc định cho một card:**
+
+1. Người làm card tạo nhánh: `git switch develop && git pull && git switch -c feature/<mã-card>-<mô-tả>`,
+   rồi báo AI tên nhánh.
+2. AI gửi kế hoạch (file nào, bảng hay API nào, test gì). Người làm card duyệt (AGENTS.md mục 5).
+3. AI **chỉ sửa file và chạy test** trên nhánh đó. AI **không** chạy lệnh git làm đổi nhánh, commit, push hay
+   sửa lịch sử. Xong thì báo: file đã sửa, kết quả test, gợi ý câu commit.
+4. **Trong lúc AI đang sửa file, không đổi nhánh.** Chờ AI báo xong rồi mới commit hoặc làm việc khác.
+5. Người làm card đọc thay đổi (VS Code, tab Source Control), rồi `git add`, `git commit`, `git push`, mở PR.
+6. AI review PR như một đồng đội. Sửa xong thì commit, push tiếp; merge theo mục 4.
+
+**Khi giao trọn cho AI** (việc nhỏ, tài liệu, lúc bận): AI làm trong **thư mục riêng** (`git worktree`), tự tạo
+nhánh, commit, push và gửi link mở PR; người duyệt chỉ review rồi merge. AI không bao giờ push thẳng `develop`
+hay `main`, không tự merge PR, không sửa ruleset.
+
+**Không dùng chung một thư mục cho hai bên cùng chạy lệnh git** (ví dụ AI commit trong lúc IDE đổi nhánh): commit
+sẽ rơi nhầm nhánh. Đã xảy ra ở Sprint 0.
