@@ -35,16 +35,17 @@ Mục tiêu: khung backend và frontend chạy được trên máy dev, DB tạo
 | Mã    | Card                             | Điểm | Nhãn | Người làm | Cột Trello     | Nội dung dán vào card                                                                                                                                                      |
 | ----- | -------------------------------- | ---- | ---- | --------- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | S0-01 | Dựng board Trello và quy ước     | 1    | Docs | Đình      | Sprint Backlog | Tạo cột, nhãn theo mục 1, mời Huy, dán DoD, tạo card từ file này, chốt lịch planning/review/retro                                                                          |
-| S0-02 | Quy tắc repo, nhánh, Pull Request | 1    | Docs | Đình      | Sprint Backlog | Repo GitHub theo Git Flow: nhánh `develop` (mặc định) và `main`, ruleset cho cả hai (bắt buộc PR, Đình là code owner duyệt, Đình bypass được với PR của mình; chưa bật điều kiện CI), quy ước trong `CONTRIBUTING.md`, PR template, `.gitignore`, `.editorconfig`                   |
-| S0-03 | Tài liệu dev và quy tắc cho AI   | 1    | Docs | Đình      | Sprint Backlog | README chạy từ máy trống; `AGENTS.md`, `backend/AGENTS.md`, `frontend/AGENTS.md`, `CONTRIBUTING.md` hai người duyệt; Huy cấu hình Antigravity đọc `AGENTS.md`             |
-| S0-04 | Khung backend Spring Boot        | 3    | BE   | Đình      | Sprint Backlog | Gradle Kotlin DSL, Java 21, Spring Boot 3; cấu trúc module theo `backend/AGENTS.md`; profile dev/prod, bí mật từ biến môi trường; định dạng lỗi chung; endpoint health; chốt tên package gốc |
-| S0-05 | PostgreSQL trên máy dev và chạy migration | 2 | BE | Huy   | Sprint Backlog | Cài Docker Desktop **chỉ như một phần mềm** để chạy Postgres (một file `docker-compose.yml` chỉ có service `postgres`, chép theo mẫu, chưa cần học sâu); Flyway tự chạy V1, V2 khi khởi động; ghi cách chạy vào README |
-| S0-06 | Kiểm thử schema bằng Testcontainers | 2 | BE  | Đình      | Sprint Backlog | Chạy `schema_smoke_test.sql` trong `./gradlew test` trên Postgres thật (Testcontainers), chạy ở máy dev; lớp nền test tích hợp dùng chung cho các card sau. Đưa vào CI để ở D-01 |
-| S0-07 | Ánh xạ lỗi DB sang lỗi nghiệp vụ | 2    | BE   | Đình      | Sprint Backlog | Bắt `XL001`, `XL002`, `XL004`, trả lỗi tiếng Việt theo định dạng chung; có test                                                                                            |
-| S0-08 | Khung frontend React             | 3    | FE   | Huy       | Sprint Backlog | Vite + TypeScript + Ant Design + TanStack Query; cấu trúc theo `frontend/AGENTS.md`; layout dùng được trên điện thoại; lớp gọi API chung xử lý lỗi theo định dạng S0-04; ESLint, Prettier, Vitest chạy được |
+| S0-02 | Quy tắc repo, nhánh, Pull Request | 1    | Docs | Đình      | Xong           | Repo GitHub theo Git Flow: nhánh `develop` (mặc định) và `main`, ruleset cho cả hai (bắt buộc PR, Đình là code owner duyệt, Đình bypass được với PR của mình; chưa bật điều kiện CI), quy ước trong `CONTRIBUTING.md`, PR template, `.gitignore`, `.editorconfig` |
+| S0-03 | Tài liệu dev và quy tắc cho AI   | 1    | Docs | Đình      | Xong           | README chạy từ máy trống; `AGENTS.md`, `backend/AGENTS.md`, `frontend/AGENTS.md`, `CONTRIBUTING.md`. Huy cấu hình Antigravity đọc `AGENTS.md` khi bắt đầu Sprint 1 |
+| S0-04 | Khung backend Spring Boot        | 3    | BE   | Đình      | Xong           | Gradle Kotlin DSL, Java 21, Spring Boot 4 (ADR-0001), MapStruct; cấu trúc module theo `backend/AGENTS.md`; profile dev/prod, bí mật từ biến môi trường; định dạng lỗi chung; endpoint health; package gốc `com.xilespa` |
+| S0-05 | PostgreSQL trên máy dev và chạy migration | 2 | BE | Đình  | Xong           | Docker Desktop chỉ dùng như một phần mềm để chạy Postgres (`docker-compose.yml` chỉ có service `postgres`, cổng 5433 để không đụng Postgres cài sẵn); Flyway tự chạy V1, V2 khi khởi động; cách chạy trong README |
+| S0-06 | Kiểm thử schema bằng Testcontainers | 2 | BE  | Đình      | Xong           | `schema_smoke_test.sql` chạy trong `./gradlew test` trên Postgres thật (`SchemaSmokeIT`, Testcontainers); lớp nền test tích hợp dùng chung (`@IntegrationTest`). Đưa vào CI để ở D-01 |
+| S0-07 | Ánh xạ lỗi DB sang lỗi nghiệp vụ | 2    | BE   | Đình      | Xong           | `XL001` → `DAY_CLOSED`, `XL002` → `RECORD_IMMUTABLE`, `XL004` → `FUTURE_DAY_CLOSING`, lỗi tiếng Việt theo định dạng chung; test với trigger thật |
+| S0-08 | Khung frontend React             | 3    | FE   | Đình      | Xong           | Vite + TypeScript + Ant Design + TanStack Query; cấu trúc theo `frontend/AGENTS.md`; layout dùng được trên điện thoại; lớp gọi API chung xử lý lỗi theo định dạng S0-04; oxlint, Prettier, Vitest |
 
-**Tổng điểm:** Đình 10, Huy 5. Sprint 0 nhẹ hơn trước vì bỏ phần DevOps; Huy còn dư sức thì kéo sớm S1-01
-(backend đăng nhập) sau khi S0-04 có khung.
+**Tổng điểm:** Đình 15. Ngày 06/10/2026 Đình quyết định tự làm toàn bộ Sprint 0 cho gọn; Huy bắt đầu nhận card
+từ Sprint 1. Trạng thái "Xong" ở trên tính khi các PR của Sprint 0 đã merge vào `develop`. S0-01 (Trello) chờ Đình
+xác nhận.
 
 **Việc ngoài card (đừng bỏ sót):**
 
