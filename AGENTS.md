@@ -29,6 +29,7 @@ Nhóm hai người: **Đình** và **Huy**, chia việc theo tính năng, Scrum 
 | Thuật ngữ, tên trường                                   | `docs/srs/06-data-dictionary.md`                                                                                              |
 | Chưa rõ nghiệp vụ, thấy mâu thuẫn                       | `docs/srs/07-open-questions.md` (mã OQ) — **hỏi lại, đừng tự quyết**                                                          |
 | Card đang làm, phạm vi sprint                           | `docs/backlog/sprint-0-1.md`                                                                                                  |
+| Phiên bản nào chứa gì, mốc tới v1.0.0                   | `docs/roadmap.md`                                                                                                             |
 | Nhánh, commit, Pull Request, nhịp sprint                | `CONTRIBUTING.md`                                                                                                             |
 
 Quy tắc riêng của từng phần: `backend/AGENTS.md`, `frontend/AGENTS.md`.

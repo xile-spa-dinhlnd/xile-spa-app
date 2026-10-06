@@ -229,7 +229,7 @@ theo lô ở buổi review, ghi lại câu trả lời.
 ## 6. Phát hành
 
 **Phiên bản:** `v0.MINOR.PATCH`. Mỗi lần phát hành cuối sprint tăng MINOR (`v0.1.0` sau Sprint 0, `v0.2.0`
-sau Sprint 1...); hotfix tăng PATCH (`v0.1.1`). Lên `v1.0.0` khi chủ tiệm bắt đầu dùng thật.
+sau Sprint 1...); hotfix tăng PATCH (`v0.1.1`). Lên `v1.0.0` khi chủ tiệm bắt đầu dùng thật. Mốc của từng phiên bản: [docs/roadmap.md](docs/roadmap.md).
 
 ### Phát hành cuối sprint (release)
 

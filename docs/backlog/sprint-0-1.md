@@ -76,6 +76,8 @@ Mục tiêu: đăng nhập được, quản lý bảng giá dịch vụ, mọi t
 
 ## 4. Ứng viên cho Sprint 2 (chưa chia nhỏ)
 
+Phân bổ theo phiên bản: [docs/roadmap.md](../roadmap.md).
+
 Theo thứ tự ưu tiên để sớm "dùng thật được":
 
 1. Đổi/quên mật khẩu, chống dò mật khẩu (FR-AUTH-03, 04, 05). Cần chốt OQ-10 trước.
