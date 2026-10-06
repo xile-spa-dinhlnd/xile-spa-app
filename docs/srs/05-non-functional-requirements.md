@@ -23,6 +23,7 @@ Các con số dưới đây là **mục tiêu khởi đầu**, được chọn c
 | NFR-PRV-02 | Ghi chú sức khỏe là dữ liệu nhạy cảm: chỉ hiển thị trong hồ sơ khách, không đưa ra log hay email. | M |
 | NFR-PRV-03 | Hỗ trợ ẩn hoặc xóa hồ sơ khách theo yêu cầu (FR-CUS-10). | S |
 | NFR-PRV-04 | Bản sao trên Google Sheets nằm trong tài khoản của chủ tiệm, không chia sẻ công khai. Cân nhắc có đưa thông tin nhận dạng khách vào Sheets hay chỉ đưa số liệu tổng hợp (xem OQ-09). | M |
+| NFR-PRV-05 | Khi dùng AI (FR-AI): chỉ gửi cho mô hình dữ liệu tối thiểu cần để soạn nội dung; không gửi SĐT, ghi chú sức khỏe, ngày sinh đầy đủ. Nếu mô hình chạy ở nhà cung cấp bên ngoài thì phải có sự đồng ý của chủ tiệm (OQ-19). Nội dung gửi cho AI không ghi ra log. | M |
 
 ## 5.3 Độ tin cậy và sao lưu (REL)
 

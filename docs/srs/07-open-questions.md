@@ -28,6 +28,9 @@ Cột **Ai quyết định** cho biết cần hỏi ai. Câu hỏi đã có quy�
 | OQ-15 | Lương: ngoài tour có các khoản khác (lương cứng, thưởng, phạt, phụ cấp) cần ghi không? | FR-PAY | Chủ tiệm | Thấp (trước R3) | Open |
 | OQ-16 | Giao dịch nhập nhầm ở ngày đã chốt (nhầm khách, nhầm dịch vụ): bút toán chỉ sửa được **số tiền**. Có cần cách loại lượt đến đó khỏi thống kê của khách (số lần đến, tổng chi tiêu) không, hay chấp nhận để nguyên? Đề xuất: bút toán có cờ "hủy lượt đến" gắn với giao dịch gốc | BR-08, FR-CLS-04, FR-CUS-03 | Nhóm (đề xuất đã có trong ERD) | Trung bình | Proposed: cờ `adjustment.voids_visit` + view `effective_visit` (xem `docs/design/erd.md`); chờ chủ tiệm đồng ý |
 | OQ-17 | Tiền tour trả cho nhân viên có tính vào **Tổng chi** của ngày không? (BR-05 hiện chỉ gồm chi giảm giá, mua hàng, CTV, chi khác) | BR-05, BR-14, FR-PAY | Chủ tiệm | Thấp (trước R3) | Open |
+| OQ-18 | Tiệm có chịu phí cho kênh gửi tin tự động (Zalo ZNS cần Zalo OA, SMS brandname) không? Hiện nhóm đoán là không vì tiệm nhỏ; nếu không thì chỉ gửi thủ công (FR-AI-02) | FR-AI-02 | Chủ tiệm | Thấp (trước R3) | Open, chưa hỏi |
+| OQ-19 | Chủ tiệm có đồng ý cho hệ thống gửi tên gọi và lịch sử dịch vụ của khách sang mô hình AI không? Nếu tự host mô hình thì dữ liệu không rời máy chủ của tiệm | FR-AI-01, NFR-PRV-05 | Chủ tiệm | Thấp (trước R3) | Đình đồng ý; chờ chủ tiệm xác nhận |
+| OQ-20 | Chạy mô hình AI ở đâu: tự host bằng Ollama (Spring AI) trên máy riêng hay máy chủ mạnh hơn, hay gọi API bên ngoài? VPS hiện tại (4 GB RAM, NFR-PERF-03) không đủ chạy mô hình cùng hệ thống; VPS này phục vụ học tập và MVP cho người nhà dùng trước, khi sản phẩm được tin dùng sẽ có kinh phí thuê VPS mạnh hơn. Quyết định ghi thành ADR khi bắt đầu làm | FR-AI-05, C-01, NFR-PERF-03 | Nhóm | Thấp (trước R3) | Hướng dự kiến: dev chạy Ollama trên máy cá nhân; production tự host trên VPS mạnh hơn khi có kinh phí |
 
 ## Chi tiết OQ-03: lỗi trừ hai lần trong Excel và cách sửa
 
