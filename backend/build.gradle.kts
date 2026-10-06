@@ -26,6 +26,8 @@ dependencies {
     implementation(libs.spring.boot.starter.validation)
     implementation(libs.spring.boot.starter.webmvc)
     implementation(libs.flyway.database.postgresql)
+    implementation(libs.mapstruct)
+    annotationProcessor(libs.mapstruct.processor)
     runtimeOnly(libs.postgresql)
 
     testImplementation(libs.spring.boot.starter.actuator.test)
@@ -38,6 +40,7 @@ dependencies {
     testImplementation(libs.testcontainers.junit.jupiter)
     testImplementation(libs.testcontainers.postgresql)
     testRuntimeOnly(libs.junit.platform.launcher)
+    testAnnotationProcessor(libs.mapstruct.processor)
 }
 
 tasks.withType<Test> {

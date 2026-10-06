@@ -23,6 +23,7 @@ backend/
    │  ├─ config/                      # cấu hình Spring: Jackson, CORS, Clock (Asia/Ho_Chi_Minh), scheduling
    │  ├─ security/                    # SecurityConfig, JwtService, filter đọc JWT từ cookie
    │  ├─ common/                      # dùng chung, KHÔNG chứa nghiệp vụ
+   │  │  ├─ mapper/                   # MapStructConfig dùng chung cho mọi mapper
    │  │  ├─ exception/                # ApiError, GlobalExceptionHandler, BusinessException,
    │  │  │                            #   ánh xạ XL001/XL002/XL004 (S0-07)
    │  │  ├─ audit/                    # AuditService ghi audit_log (S1-04)
@@ -74,7 +75,7 @@ catalog/
 │  └─ response/
 │     └─ ServiceResponse.java         # record
 ├─ mapper/
-│  └─ ServiceMapper.java              # entity ↔ DTO, viết tay
+│  └─ ServiceMapper.java              # entity ↔ DTO bằng MapStruct (interface @Mapper)
 └─ exception/
    └─ ServiceNotFoundException.java   # kế thừa BusinessException ở common
 ```
@@ -93,6 +94,14 @@ Luồng gọi và quy tắc:
 - Không để hai module gọi vòng tròn lẫn nhau. Nếu cần, tách phần chung ra hoặc đổi chiều phụ thuộc.
 - Controller không trả entity ra ngoài; luôn trả DTO. Tên DTO: `Create...Request`, `Update...Request`,
   `...Response`. Chuyển đổi đặt ở `mapper/`, không rải trong controller.
+- Mapper dùng **MapStruct**, theo bốn quy tắc:
+  1. Mapper **chỉ chép dữ liệu**. Không tính tiền, giảm giá, doanh thu, trạng thái trong mapper (kể cả trong
+     `@Mapping(expression = ...)`); những việc đó ở service (BR-01, BR-04, BR-05).
+  2. Mọi mapper dùng `@Mapper(config = MapStructConfig.class)` (`common/mapper/`): `componentModel = "spring"`,
+     `unmappedTargetPolicy = ERROR` để build báo lỗi khi quên một trường.
+  3. Không map từ Request vào các trường nhạy cảm của entity (id, trạng thái, giá đã chốt, `created_by`...):
+     đánh dấu `@Mapping(target = "...", ignore = true)` rồi gán trong service.
+  4. Mapping quá phức tạp thì được viết tay (`default` method hoặc lớp riêng) trong cùng `mapper/`.
 - `@Transactional` đặt ở service, không ở controller hay repository.
 - URL: `/api/{module}/{tài-nguyên}`, danh từ số nhiều, kebab-case (`/api/catalog/services`,
   `/api/visits`). Hành động nghiệp vụ dùng `POST` lên tài nguyên con:

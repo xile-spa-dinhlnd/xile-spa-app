@@ -48,3 +48,7 @@ Hệ thống quản trị cho một tiệm nhỏ, một người dùng chính (c
   còn tạo dự án Spring Boot 3, và dòng 3.x đã hết hỗ trợ cộng đồng nên sớm muộn cũng phải nâng cấp. Khác biệt
   chính cần nhớ: Jackson 3 (package `tools.jackson`), starter tách nhỏ (ví dụ `spring-boot-starter-webmvc`,
   `spring-boot-starter-flyway`), Testcontainers 2. Các lựa chọn khác giữ nguyên.
+- **06/10/2026 (S0-04):** Thêm **MapStruct** cho mapper entity ↔ DTO. Sinh code lúc biên dịch (không dùng
+  reflection), build báo lỗi khi quên map một trường. Mapper chỉ chép dữ liệu, không chứa logic nghiệp vụ
+  (quy tắc trong `backend/AGENTS.md`). Đã cân nhắc: viết tay (dài, dễ sót trường), ModelMapper (reflection, lỗi
+  chỉ lộ lúc chạy).
