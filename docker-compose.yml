@@ -1,0 +1,35 @@
+# PostgreSQL cho máy dev (S0-05). Chỉ có database; backend và frontend chạy trực tiếp trên máy.
+# Docker hóa cả hệ thống và deploy để ở giai đoạn DevOps (D-02).
+#
+#   docker compose up -d      # bật database
+#   docker compose down       # tắt (giữ dữ liệu)
+#   docker compose down -v    # tắt và XÓA dữ liệu dev
+#
+# Thông số đọc từ file .env ở thư mục gốc (chép từ .env.example). Không có .env thì dùng giá trị mặc định
+# bên dưới, khớp với backend/src/main/resources/application-dev.yml.
+name: xile-spa
+
+services:
+  postgres:
+    # Image Debian (không dùng alpine): cần locale UTF-8 để lower() xử lý đúng chữ Việt (docs/design/erd.md).
+    image: postgres:16
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-xile_spa}
+      POSTGRES_USER: ${POSTGRES_USER:-xile}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-xile_dev}
+      POSTGRES_INITDB_ARGS: --encoding=UTF8 --locale=C.UTF-8
+      TZ: Asia/Ho_Chi_Minh
+    # Cổng 5433 trên máy (không dùng 5432) để không đụng PostgreSQL cài sẵn trên máy, nếu có.
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
