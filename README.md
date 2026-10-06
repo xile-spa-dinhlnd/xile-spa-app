@@ -12,7 +12,7 @@ Hệ thống quản trị cho tiệm Spa & Giãn cơ Xile: quản lý dịch v�
 
 | Lớp | Công nghệ |
 |---|---|
-| Backend | Java 21, Spring Boot 3, Gradle (Kotlin DSL), Spring Data JPA, Spring Security (JWT), Flyway |
+| Backend | Java 21, Spring Boot 4, Gradle (Kotlin DSL), Spring Data JPA, Spring Security (JWT), Flyway |
 | Database | PostgreSQL |
 | Frontend | React, TypeScript, Vite, Ant Design, TanStack Query |
 | DevOps | Docker Compose, GitHub Actions, Caddy, VPS |

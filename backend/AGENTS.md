@@ -1,14 +1,14 @@
 # backend/AGENTS.md — quy tắc riêng cho backend
 
 Đọc `../AGENTS.md` trước. File này chỉ bổ sung phần riêng của backend.
-Stack: Java 21, Spring Boot 3, Gradle (Kotlin DSL, dùng Gradle Wrapper), JPA, Spring Security, Flyway, PostgreSQL.
+Stack: Java 21, Spring Boot 4, Gradle (Kotlin DSL, dùng Gradle Wrapper), JPA, Spring Security, Flyway, PostgreSQL.
 
 ## Cấu trúc
 
 **Chia module theo tính năng ở cấp ngoài, chia tầng bên trong mỗi module** (controller, service,
 repository, entity, dto...). Đây là kiểu modular monolith phổ biến trong dự án Spring thực tế: bên trong
 mỗi module vẫn quen thuộc như MVC truyền thống, nhưng mỗi người làm trọn một module thì ít đụng file của
-nhau và sau này dễ tách. Tên package gốc `com.xilespa` là đề xuất; chốt ở card S0-04 rồi sửa lại dòng này.
+nhau và sau này dễ tách. Tên package gốc: `com.xilespa` (chốt ở S0-04).
 
 ```
 backend/
@@ -16,7 +16,7 @@ backend/
 ├─ gradle/
 │  ├─ wrapper/
 │  └─ libs.versions.toml              # version catalog: mọi phiên bản thư viện ở đây
-├─ Dockerfile
+├─ Dockerfile                          # thêm ở giai đoạn DevOps (D-02)
 └─ src/
    ├─ main/java/com/xilespa/
    │  ├─ XileSpaApplication.java
@@ -48,7 +48,7 @@ backend/
    └─ test/
       ├─ java/com/xilespa/            # cùng cây package với main
       │  ├─ support/                  # lớp nền Testcontainers, dữ liệu mẫu dùng chung
-      │  └─ ArchitectureTest.java     # kiểm tra ranh giới module (xem quy tắc bên dưới)
+      │  └─ ArchitectureTest.java     # (chưa có) kiểm tra ranh giới module, xem quy tắc bên dưới
       └─ resources/sql/schema_smoke_test.sql
 ```
 
@@ -89,7 +89,7 @@ Luồng gọi và quy tắc:
 - **Ranh giới module:** module A chỉ được dùng `service/` và `dto/` của module B. **Không** import
   `repository/`, `entity/`, `mapper/` của module khác. Giữa hai module tham chiếu bằng id (`Long serviceId`),
   không `@ManyToOne` sang entity của module khác. `ArchitectureTest` kiểm tra tự động quy tắc này
-  (đề xuất dùng ArchUnit, chỉ ở phạm vi test; thêm ở S0-04 và ghi trong PR theo ADR-0001).
+  (đề xuất dùng ArchUnit, chỉ ở phạm vi test; chưa thêm, khi thêm thì ghi trong PR theo ADR-0001).
 - Không để hai module gọi vòng tròn lẫn nhau. Nếu cần, tách phần chung ra hoặc đổi chiều phụ thuộc.
 - Controller không trả entity ra ngoài; luôn trả DTO. Tên DTO: `Create...Request`, `Update...Request`,
   `...Response`. Chuyển đổi đặt ở `mapper/`, không rải trong controller.
@@ -119,7 +119,24 @@ Trigger ném các mã SQLSTATE sau; backend bắt và dịch thành lỗi nghi�
 - `XL002`: bảng chỉ thêm (append-only) hoặc bút toán phải vào ngày còn mở.
 - `XL004`: không chốt ngày tương lai.
 
-Định dạng lỗi trả về là một kiểu chung (chốt ở S0-04), mọi API dùng lại.
+Định dạng lỗi chung (S0-04), mọi API dùng lại, frontend dựa vào đây (S0-08):
+
+```json
+{
+  "code": "VALIDATION_FAILED",
+  "message": "Dữ liệu không hợp lệ, vui lòng kiểm tra lại.",
+  "fieldErrors": [{ "field": "price", "message": "Giá không được âm" }],
+  "path": "/api/catalog/services",
+  "timestamp": "2026-10-06T22:08:14.894+07:00"
+}
+```
+
+- `code` lấy từ enum `ErrorCode` (`common/exception`); frontend xử lý theo `code`, hiển thị `message`.
+  Lỗi nghiệp vụ mới thì thêm mã vào `ErrorCode`, không trả chuỗi tự do.
+- Ném lỗi nghiệp vụ bằng `BusinessException` (hoặc lớp con trong `exception/` của module), không tự dựng
+  `ResponseEntity` lỗi trong controller.
+- Thông báo lỗi validation viết tiếng Việt ngay trên annotation: `@NotBlank(message = "Tên không được để trống")`.
+- Lỗi 500 không bao giờ trả chi tiết kỹ thuật; chi tiết chỉ ghi vào log.
 
 ## Chốt sổ và đồng thời
 
@@ -138,5 +155,9 @@ Trigger ném các mã SQLSTATE sau; backend bắt và dịch thành lỗi nghi�
 
 - Test tích hợp dùng **Testcontainers với PostgreSQL thật**, không dùng H2 (trigger và kiểu dữ liệu của Postgres khác H2).
 - Phần tiền, chốt sổ, bút toán luôn có test. Bộ test schema: `src/test/resources/sql/schema_smoke_test.sql`.
-- Chạy: `./gradlew test` (sẽ cập nhật sau khi có khung S0-04).
-- Format: Spotless (cài ở S0-04). Chạy trước khi commit.
+- Test tích hợp gắn `@IntegrationTest` (`src/test/java/com/xilespa/support`): chạy cả ứng dụng với Postgres 16
+  thật và MockMvc. Cần **Docker Desktop đang chạy**.
+- Chạy (trong `backend/`, cần JDK 21): `./gradlew spotlessApply test`. Chạy ứng dụng: `./gradlew bootRun`
+  (profile `dev`, cần Postgres ở máy, card S0-05).
+- Format: Spotless (google-java-format kiểu AOSP, thụt 4 khoảng). Chạy `spotlessApply` trước khi commit.
+- Spring Boot 4 dùng Jackson 3: import `tools.jackson.databind...`, không phải `com.fasterxml.jackson.databind...`.

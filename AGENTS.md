@@ -35,7 +35,7 @@ Quy tắc riêng của từng phần: `backend/AGENTS.md`, `frontend/AGENTS.md`.
 
 ## 3. Công nghệ
 
-Java 21 · Spring Boot 3 · Gradle (Kotlin DSL) · Spring Data JPA · Spring Security (JWT trong cookie
+Java 21 · Spring Boot 4 · Gradle (Kotlin DSL) · Spring Data JPA · Spring Security (JWT trong cookie
 `httpOnly`) · Flyway · PostgreSQL · React + TypeScript (Vite) · Ant Design · TanStack Query ·
 JUnit 5 + Testcontainers · Vitest · Docker Compose · GitHub Actions.
 

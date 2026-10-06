@@ -12,7 +12,7 @@ Hệ thống quản trị cho một tiệm nhỏ, một người dùng chính (c
 
 | Hạng mục | Chọn | Đã xem xét | Lý do chọn |
 |---|---|---|---|
-| Ngôn ngữ và khung backend | **Java 21 + Spring Boot 3** | NestJS, Go | Cả nhóm đã học Spring Boot. Phần cần làm (transaction, bảo mật, tác vụ nền, migration) đều có sẵn trong hệ sinh thái. Thị trường tuyển dụng Java tại Việt Nam lớn. |
+| Ngôn ngữ và khung backend | **Java 21 + Spring Boot 4** | NestJS, Go | Cả nhóm đã học Spring Boot. Phần cần làm (transaction, bảo mật, tác vụ nền, migration) đều có sẵn trong hệ sinh thái. Thị trường tuyển dụng Java tại Việt Nam lớn. |
 | Công cụ build | **Gradle (Kotlin DSL)** | Maven | Cấu hình ngắn gọn, build tăng dần và cache nhanh hơn, phổ biến ở các dự án mới. Dùng Gradle Wrapper, version catalog. |
 | Kiến trúc | **Modular monolith** chia package theo tính năng | Microservices | Một đội hai người, một tiệm nhỏ. Microservices làm tăng chi phí vận hành và RAM mà không có lợi ích tương ứng. Chia package theo tính năng khớp với cách chia việc và để dành khả năng tách sau này. |
 | Cơ sở dữ liệu | **PostgreSQL** + Flyway | MySQL | Ràng buộc và kiểu dữ liệu mạnh, phổ biến trong hệ thống mới. Flyway để thay đổi cấu trúc có phiên bản. |
@@ -41,3 +41,10 @@ Hệ thống quản trị cho một tiệm nhỏ, một người dùng chính (c
 
 - Nếu RAM thực tế không đủ cho JVM cùng các thành phần khác, cân nhắc giảm thành phần hoặc nâng cấp VPS.
 - Nếu cần nhiều tác vụ nền hơn hoặc nhiều người dùng, cân nhắc thêm Redis và hàng đợi.
+
+## Cập nhật
+
+- **06/10/2026 (S0-04):** Đổi từ Spring Boot 3 sang **Spring Boot 4** (bản 4.1). Lý do: Spring Initializr không
+  còn tạo dự án Spring Boot 3, và dòng 3.x đã hết hỗ trợ cộng đồng nên sớm muộn cũng phải nâng cấp. Khác biệt
+  chính cần nhớ: Jackson 3 (package `tools.jackson`), starter tách nhỏ (ví dụ `spring-boot-starter-webmvc`,
+  `spring-boot-starter-flyway`), Testcontainers 2. Các lựa chọn khác giữ nguyên.
