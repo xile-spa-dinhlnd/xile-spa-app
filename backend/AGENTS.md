@@ -124,9 +124,15 @@ Luồng gọi và quy tắc:
 
 Trigger ném các mã SQLSTATE sau; backend bắt và dịch thành lỗi nghiệp vụ có thông báo tiếng Việt (S0-07, `docs/design/erd.md` mục 5.5):
 
-- `XL001`: ngày đã chốt, không được tạo/sửa/hủy.
-- `XL002`: bảng chỉ thêm (append-only) hoặc bút toán phải vào ngày còn mở.
-- `XL004`: không chốt ngày tương lai.
+| SQLSTATE | Ý nghĩa                                                         | `code` trả về        | HTTP |
+| -------- | --------------------------------------------------------------- | -------------------- | ---- |
+| `XL001`  | Ngày đã chốt: không được thêm, sửa, hủy (kể cả bút toán vào ngày đó) | `DAY_CLOSED`         | 409  |
+| `XL002`  | Bảng chỉ thêm (append-only), hoặc cấm xóa cứng                  | `RECORD_IMMUTABLE`   | 409  |
+| `XL004`  | Không chốt sổ ngày tương lai                                    | `FUTURE_DAY_CLOSING` | 400  |
+
+Việc dịch nằm ở `common/exception/DatabaseErrors`, được `GlobalExceptionHandler` gọi cho
+`DataAccessException` và `TransactionSystemException`. Lỗi cơ sở dữ liệu khác vẫn là `INTERNAL_ERROR` (500,
+có ghi log). Trigger là rào chắn cuối: service vẫn nên tự kiểm tra trước (ví dụ ngày đã chốt chưa).
 
 Định dạng lỗi chung (S0-04), mọi API dùng lại, frontend dựa vào đây (S0-08):
 

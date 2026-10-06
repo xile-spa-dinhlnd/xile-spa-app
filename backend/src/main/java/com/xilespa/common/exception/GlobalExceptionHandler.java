@@ -4,9 +4,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.transaction.TransactionSystemException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -68,6 +70,25 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AccessDeniedException.class)
     ResponseEntity<ApiError> handleAccessDenied(HttpServletRequest request) {
         return respond(ErrorCode.FORBIDDEN, request);
+    }
+
+    /**
+     * Lỗi từ cơ sở dữ liệu. Các mã do trigger ném ra (XL001, XL002, XL004) là lỗi nghiệp vụ có chủ
+     * đích, trả thông báo tiếng Việt; các lỗi còn lại coi là lỗi hệ thống.
+     */
+    @ExceptionHandler({DataAccessException.class, TransactionSystemException.class})
+    ResponseEntity<ApiError> handleDatabase(Exception ex, HttpServletRequest request) {
+        return DatabaseErrors.translate(ex)
+                .map(
+                        code -> {
+                            log.info(
+                                    "Từ chối bởi ràng buộc dữ liệu {} tại {} {}",
+                                    code,
+                                    request.getMethod(),
+                                    request.getRequestURI());
+                            return respond(code, request);
+                        })
+                .orElseGet(() -> handleUnexpected(ex, request));
     }
 
     @ExceptionHandler(Exception.class)

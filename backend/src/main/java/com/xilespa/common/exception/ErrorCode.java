@@ -14,6 +14,17 @@ public enum ErrorCode {
     NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy dữ liệu."),
     METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "Thao tác không được hỗ trợ."),
     CONFLICT(HttpStatus.CONFLICT, "Dữ liệu đã thay đổi hoặc bị trùng, vui lòng thử lại."),
+
+    // Lỗi do trigger của cơ sở dữ liệu ném ra (docs/design/erd.md mục 5.5), xem DatabaseErrors.
+    DAY_CLOSED(
+            HttpStatus.CONFLICT,
+            "Ngày này đã chốt sổ nên không thể thêm, sửa hay hủy dữ liệu. Muốn sửa sai, hãy ghi bút"
+                    + " toán điều chỉnh."),
+    RECORD_IMMUTABLE(
+            HttpStatus.CONFLICT,
+            "Dữ liệu này không được sửa hoặc xóa. Muốn sửa sai, hãy hủy bản ghi hoặc ghi bút toán"
+                    + " điều chỉnh."),
+    FUTURE_DAY_CLOSING(HttpStatus.BAD_REQUEST, "Không thể chốt sổ cho ngày trong tương lai."),
     INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "Hệ thống gặp lỗi, vui lòng thử lại sau.");
 
     private final HttpStatus status;
