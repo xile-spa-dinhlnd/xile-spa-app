@@ -47,6 +47,13 @@ tasks.withType<Test> {
     useJUnitPlatform()
     // Phiên bản image Postgres cho Testcontainers, khớp với môi trường thật (PostgreSQL 16).
     systemProperty("xile.test.postgres-image", "postgres:" + libs.versions.postgres.image.get())
+    // Múi giờ nghiệp vụ (BR-02): tránh lỗi Windows dùng Asia/Saigon bị Postgres từ chối
+    systemProperty("user.timezone", "Asia/Ho_Chi_Minh")
+}
+
+tasks.withType<JavaExec> {
+    // Múi giờ nghiệp vụ (BR-02): áp dụng cho bootRun khi chạy dev trên máy Windows
+    systemProperty("user.timezone", "Asia/Ho_Chi_Minh")
 }
 
 spotless {

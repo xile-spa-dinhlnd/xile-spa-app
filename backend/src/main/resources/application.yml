@@ -30,3 +30,18 @@ server:
   error:
     include-message: never
     include-stacktrace: never
+
+xile:
+  init:
+    owner:
+      email: ${APP_OWNER_EMAIL:}
+      password: ${APP_OWNER_PASSWORD:}
+      display-name: ${APP_OWNER_NAME:Chủ tiệm Xile}
+  security:
+    jwt:
+      secret: ${JWT_SECRET:}
+      access-token-duration: ${JWT_ACCESS_DURATION:15m}
+      refresh-token-duration: ${JWT_REFRESH_DURATION:7d}
+      cookie-secure: ${JWT_COOKIE_SECURE:false}
+
+
