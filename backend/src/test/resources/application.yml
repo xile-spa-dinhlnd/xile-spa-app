@@ -3,3 +3,9 @@ xile:
   init:
     owner:
       enabled: false
+  security:
+    jwt:
+      secret: test-secret-key-at-least-256-bits-long-for-hmac-sha256-algorithm-test
+      access-token-duration: 15m
+      refresh-token-duration: 7d
+      cookie-secure: false

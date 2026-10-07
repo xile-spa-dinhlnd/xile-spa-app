@@ -16,4 +16,11 @@ xile:
       email: ${APP_OWNER_EMAIL:owner@xilespa.vn}
       password: ${APP_OWNER_PASSWORD:xile_dev_123}
       display-name: ${APP_OWNER_NAME:Chủ tiệm Xile}
+  security:
+    jwt:
+      secret: ${JWT_SECRET:xile-spa-dev-secret-key-must-be-at-least-256-bits-long-for-hmac-sha256}
+      access-token-duration: 15m
+      refresh-token-duration: 7d
+      cookie-secure: false
+
 
