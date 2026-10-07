@@ -11,11 +11,11 @@ export function DashboardPage() {
         {health.isPending ? (
           <Skeleton active paragraph={false} />
         ) : health.isError ? (
-          <Alert type="error" showIcon message={health.error.message} />
+          <Alert type="error" showIcon title={health.error.message} />
         ) : health.data.status === 'UP' ? (
-          <Alert type="success" showIcon message="Máy chủ đang hoạt động bình thường." />
+          <Alert type="success" showIcon title="Máy chủ đang hoạt động bình thường." />
         ) : (
-          <Alert type="warning" showIcon message="Máy chủ đang gặp sự cố." />
+          <Alert type="warning" showIcon title="Máy chủ đang gặp sự cố." />
         )}
       </Card>
     </>
