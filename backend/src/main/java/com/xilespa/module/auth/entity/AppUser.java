@@ -1,5 +1,6 @@
 package com.xilespa.module.auth.entity;
 
+import com.xilespa.module.auth.enums.UserRole;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -10,7 +11,10 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
 
-/** Thực thể người dùng ứng dụng, ánh xạ bảng {@code app_user} (V1__core_schema.sql). */
+/**
+ * Thực thể người dùng ứng dụng, ánh xạ bảng {@code app_user} (V1__core_schema.sql). Áp dụng Rich
+ * Domain Model: đóng gói dữ liệu, chỉ thay đổi trạng thái qua các phương thức nghiệp vụ.
+ */
 @Entity
 @Table(name = "app_user")
 public class AppUser {
@@ -63,91 +67,92 @@ public class AppUser {
         this.updatedAt = Instant.now();
     }
 
-    public Long getId() {
-        return id;
+    // --- Domain Methods (Hành vi nghiệp vụ) ---
+
+    /** Ghi nhận một lần đăng nhập thất bại (chống dò mật khẩu, FR-AUTH-05). */
+    public void recordFailedLogin(Instant now) {
+        this.failedLoginCount++;
+        this.updatedAt = now;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    /** Ghi nhận đăng nhập thành công: xóa bộ đếm lỗi và cập nhật thời điểm đăng nhập gần nhất. */
+    public void recordSuccessfulLogin(Instant now) {
+        this.failedLoginCount = 0;
+        this.lastLoginAt = now;
+        this.updatedAt = now;
+    }
+
+    /** Đổi mật khẩu tài khoản (FR-AUTH-04). */
+    public void changePassword(String newPasswordHash, Instant now) {
+        this.passwordHash = newPasswordHash;
+        this.updatedAt = now;
+    }
+
+    /** Cập nhật tên hiển thị người dùng. */
+    public void updateDisplayName(String newDisplayName, Instant now) {
+        this.displayName = newDisplayName;
+        this.updatedAt = now;
+    }
+
+    /** Tạm khóa tài khoản đến một thời điểm nhất định. */
+    public void lockUntil(Instant lockTime, Instant now) {
+        this.lockedUntil = lockTime;
+        this.updatedAt = now;
+    }
+
+    public void enable(Instant now) {
+        this.enabled = true;
+        this.updatedAt = now;
+    }
+
+    public void disable(Instant now) {
+        this.enabled = false;
+        this.updatedAt = now;
+    }
+
+    // --- Getters ---
+
+    public Long getId() {
+        return id;
     }
 
     public String getEmail() {
         return email;
     }
 
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
     public String getPasswordHash() {
         return passwordHash;
-    }
-
-    public void setPasswordHash(String passwordHash) {
-        this.passwordHash = passwordHash;
     }
 
     public String getDisplayName() {
         return displayName;
     }
 
-    public void setDisplayName(String displayName) {
-        this.displayName = displayName;
-    }
-
     public UserRole getRole() {
         return role;
-    }
-
-    public void setRole(UserRole role) {
-        this.role = role;
     }
 
     public boolean isEnabled() {
         return enabled;
     }
 
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
-    }
-
     public int getFailedLoginCount() {
         return failedLoginCount;
-    }
-
-    public void setFailedLoginCount(int failedLoginCount) {
-        this.failedLoginCount = failedLoginCount;
     }
 
     public Instant getLockedUntil() {
         return lockedUntil;
     }
 
-    public void setLockedUntil(Instant lockedUntil) {
-        this.lockedUntil = lockedUntil;
-    }
-
     public Instant getLastLoginAt() {
         return lastLoginAt;
-    }
-
-    public void setLastLoginAt(Instant lastLoginAt) {
-        this.lastLoginAt = lastLoginAt;
     }
 
     public Instant getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(Instant createdAt) {
-        this.createdAt = createdAt;
-    }
-
     public Instant getUpdatedAt() {
         return updatedAt;
-    }
-
-    public void setUpdatedAt(Instant updatedAt) {
-        this.updatedAt = updatedAt;
     }
 }

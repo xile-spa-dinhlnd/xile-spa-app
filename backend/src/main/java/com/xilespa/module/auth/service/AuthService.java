@@ -3,6 +3,8 @@ package com.xilespa.module.auth.service;
 import com.xilespa.common.exception.BusinessException;
 import com.xilespa.common.exception.ErrorCode;
 import com.xilespa.module.auth.dto.request.LoginRequest;
+import com.xilespa.module.auth.dto.response.LoginResponse;
+import com.xilespa.module.auth.dto.response.RefreshResponse;
 import com.xilespa.module.auth.dto.response.UserResponse;
 import com.xilespa.module.auth.entity.AppUser;
 import com.xilespa.module.auth.entity.RefreshToken;
@@ -15,6 +17,7 @@ import java.security.SecureRandom;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.Base64;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -28,8 +31,16 @@ public class AuthService {
     private static final Logger log = LoggerFactory.getLogger(AuthService.class);
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
+    /**
+     * Chuỗi băm BCrypt hợp lệ giả lập dùng để chống Timing Attack khi người dùng nhập email không
+     * tồn tại trong hệ thống (NFR-SEC-02).
+     */
+    private static final String DUMMY_PASSWORD_HASH =
+            "$2a$10$7EqJtq98hPqEX7fNZaFWoOhi59z6p/0kI2Xg9C4H9L5S6V7K8W9X.";
+
     private final AppUserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final AuthSecurityAuditService authSecurityAuditService;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final JwtProperties jwtProperties;
@@ -39,6 +50,7 @@ public class AuthService {
     public AuthService(
             AppUserRepository userRepository,
             RefreshTokenRepository refreshTokenRepository,
+            AuthSecurityAuditService authSecurityAuditService,
             PasswordEncoder passwordEncoder,
             JwtService jwtService,
             JwtProperties jwtProperties,
@@ -46,6 +58,7 @@ public class AuthService {
             Clock clock) {
         this.userRepository = userRepository;
         this.refreshTokenRepository = refreshTokenRepository;
+        this.authSecurityAuditService = authSecurityAuditService;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.jwtProperties = jwtProperties;
@@ -53,25 +66,25 @@ public class AuthService {
         this.clock = clock;
     }
 
-    public record LoginResult(UserResponse user, String accessToken, String rawRefreshToken) {}
-
-    public record RefreshResult(String accessToken, String rawRefreshToken) {}
-
     @Transactional
-    public LoginResult login(LoginRequest request) {
+    public LoginResponse login(LoginRequest request) {
         String email = request.email().trim().toLowerCase();
-        AppUser user =
-                userRepository
-                        .findByEmailIgnoreCase(email)
-                        .orElseThrow(
-                                () ->
-                                        new BusinessException(
-                                                ErrorCode.UNAUTHORIZED,
-                                                "Email hoặc mật khẩu không đúng."));
+        Instant now = clock.instant();
+
+        Optional<AppUser> userOpt = userRepository.findByEmailIgnoreCase(email);
+        if (userOpt.isEmpty()) {
+            // Chống Timing Attack: Luôn gọi BCrypt matches với dummy hash để giữ thời gian phản hồi
+            // đồng nhất
+            passwordEncoder.matches(request.password(), DUMMY_PASSWORD_HASH);
+            throw new BusinessException(ErrorCode.UNAUTHORIZED, "Email hoặc mật khẩu không đúng.");
+        }
+
+        AppUser user = userOpt.get();
 
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
-            user.setFailedLoginCount(user.getFailedLoginCount() + 1);
-            userRepository.save(user);
+            // Ghi nhận số lần đăng nhập sai trong transaction độc lập (không bị rollback bởi
+            // exception bên dưới)
+            authSecurityAuditService.recordFailedLogin(user.getId(), now);
             throw new BusinessException(ErrorCode.UNAUTHORIZED, "Email hoặc mật khẩu không đúng.");
         }
 
@@ -80,14 +93,12 @@ public class AuthService {
                     ErrorCode.UNAUTHORIZED, "Tài khoản của bạn đã bị vô hiệu hóa.");
         }
 
-        Instant now = clock.instant();
         if (user.getLockedUntil() != null && user.getLockedUntil().isAfter(now)) {
             throw new BusinessException(
                     ErrorCode.UNAUTHORIZED, "Tài khoản đang bị tạm khóa. Vui lòng thử lại sau.");
         }
 
-        user.setFailedLoginCount(0);
-        user.setLastLoginAt(now);
+        user.recordSuccessfulLogin(now);
         userRepository.save(user);
 
         String accessToken =
@@ -104,11 +115,11 @@ public class AuthService {
         RefreshToken refreshToken = new RefreshToken(user, tokenHash, refreshExpiresAt);
         refreshTokenRepository.save(refreshToken);
 
-        return new LoginResult(userMapper.toResponse(user), accessToken, rawRefreshToken);
+        return new LoginResponse(userMapper.toResponse(user), accessToken, rawRefreshToken);
     }
 
     @Transactional
-    public RefreshResult refresh(String rawRefreshToken) {
+    public RefreshResponse refresh(String rawRefreshToken) {
         if (rawRefreshToken == null || rawRefreshToken.isBlank()) {
             throw new BusinessException(
                     ErrorCode.UNAUTHORIZED, "Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
@@ -125,12 +136,13 @@ public class AuthService {
                                                 ErrorCode.UNAUTHORIZED,
                                                 "Phiên đăng nhập không hợp lệ hoặc đã hết hạn."));
 
-        // Phát hiện tái sử dụng Refresh Token đã bị thu hồi (chống trộm token)
+        // Phát hiện tái sử dụng Refresh Token đã bị thu hồi (chống trộm token, FR-AUTH-02)
         if (token.isRevoked()) {
             log.warn(
                     "Phát hiện tái sử dụng Refresh Token đã bị thu hồi cho userId={}. Tiến hành thu hồi toàn bộ phiên.",
                     token.getUser().getId());
-            refreshTokenRepository.revokeAllActiveByUserId(token.getUser().getId());
+            // Thu hồi toàn bộ phiên trong transaction độc lập để COMMIT ngay lập tức vào CSDL
+            authSecurityAuditService.revokeAllUserTokensOnReuse(token.getUser().getId());
             throw new BusinessException(
                     ErrorCode.UNAUTHORIZED,
                     "Phiên đăng nhập không an toàn. Vui lòng đăng nhập lại.");
@@ -165,7 +177,7 @@ public class AuthService {
                         user.getDisplayName(),
                         user.getRole().name());
 
-        return new RefreshResult(newAccessToken, newRawRefreshToken);
+        return new RefreshResponse(newAccessToken, newRawRefreshToken);
     }
 
     @Transactional

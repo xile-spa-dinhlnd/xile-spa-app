@@ -51,6 +51,11 @@ tasks.withType<Test> {
     systemProperty("user.timezone", "Asia/Ho_Chi_Minh")
 }
 
+tasks.withType<JavaExec> {
+    // Múi giờ nghiệp vụ (BR-02): áp dụng cho bootRun khi chạy dev trên máy Windows
+    systemProperty("user.timezone", "Asia/Ho_Chi_Minh")
+}
+
 spotless {
     java {
         // Kiểu AOSP: thụt 4 khoảng, khớp .editorconfig.

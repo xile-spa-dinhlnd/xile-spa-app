@@ -1,10 +1,10 @@
 package com.xilespa.module.auth.controller;
 
 import com.xilespa.module.auth.dto.request.LoginRequest;
+import com.xilespa.module.auth.dto.response.LoginResponse;
+import com.xilespa.module.auth.dto.response.RefreshResponse;
 import com.xilespa.module.auth.dto.response.UserResponse;
 import com.xilespa.module.auth.service.AuthService;
-import com.xilespa.module.auth.service.AuthService.LoginResult;
-import com.xilespa.module.auth.service.AuthService.RefreshResult;
 import com.xilespa.security.CookieHelper;
 import com.xilespa.security.UserPrincipal;
 import jakarta.servlet.http.HttpServletRequest;
@@ -36,7 +36,7 @@ public class AuthController {
     public ResponseEntity<UserResponse> login(
             @Valid @RequestBody LoginRequest request, HttpServletResponse response) {
 
-        LoginResult result = authService.login(request);
+        LoginResponse result = authService.login(request);
         response.addHeader(
                 HttpHeaders.SET_COOKIE,
                 cookieHelper.createAccessTokenCookie(result.accessToken()).toString());
@@ -52,7 +52,7 @@ public class AuthController {
 
         String rawRefreshToken =
                 CookieHelper.extractCookie(request, CookieHelper.REFRESH_TOKEN_COOKIE).orElse(null);
-        RefreshResult result = authService.refresh(rawRefreshToken);
+        RefreshResponse result = authService.refresh(rawRefreshToken);
 
         response.addHeader(
                 HttpHeaders.SET_COOKIE,

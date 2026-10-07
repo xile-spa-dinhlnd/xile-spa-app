@@ -3,6 +3,7 @@ package com.xilespa.module.auth.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -10,15 +11,15 @@ import static org.mockito.Mockito.when;
 import com.xilespa.common.exception.BusinessException;
 import com.xilespa.common.exception.ErrorCode;
 import com.xilespa.module.auth.dto.request.LoginRequest;
+import com.xilespa.module.auth.dto.response.LoginResponse;
+import com.xilespa.module.auth.dto.response.RefreshResponse;
 import com.xilespa.module.auth.dto.response.UserResponse;
 import com.xilespa.module.auth.entity.AppUser;
 import com.xilespa.module.auth.entity.RefreshToken;
-import com.xilespa.module.auth.entity.UserRole;
+import com.xilespa.module.auth.enums.UserRole;
 import com.xilespa.module.auth.mapper.UserMapper;
 import com.xilespa.module.auth.repository.AppUserRepository;
 import com.xilespa.module.auth.repository.RefreshTokenRepository;
-import com.xilespa.module.auth.service.AuthService.LoginResult;
-import com.xilespa.module.auth.service.AuthService.RefreshResult;
 import com.xilespa.security.JwtProperties;
 import com.xilespa.security.JwtService;
 import java.time.Clock;
@@ -34,12 +35,14 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {
 
     @Mock private AppUserRepository userRepository;
     @Mock private RefreshTokenRepository refreshTokenRepository;
+    @Mock private AuthSecurityAuditService authSecurityAuditService;
     @Mock private PasswordEncoder passwordEncoder;
     @Mock private JwtService jwtService;
     @Mock private UserMapper userMapper;
@@ -57,6 +60,7 @@ class AuthServiceTest {
                 new AuthService(
                         userRepository,
                         refreshTokenRepository,
+                        authSecurityAuditService,
                         passwordEncoder,
                         jwtService,
                         properties,
@@ -70,7 +74,7 @@ class AuthServiceTest {
         // Arrange
         LoginRequest request = new LoginRequest("owner@xilespa.vn", "password123");
         AppUser user = new AppUser("owner@xilespa.vn", "encoded_hash", "Chủ tiệm", UserRole.OWNER);
-        user.setId(1L);
+        ReflectionTestUtils.setField(user, "id", 1L);
 
         when(userRepository.findByEmailIgnoreCase("owner@xilespa.vn"))
                 .thenReturn(Optional.of(user));
@@ -81,7 +85,7 @@ class AuthServiceTest {
                 .thenReturn(new UserResponse(1L, "owner@xilespa.vn", "Chủ tiệm", UserRole.OWNER));
 
         // Act
-        LoginResult result = authService.login(request);
+        LoginResponse result = authService.login(request);
 
         // Assert
         assertThat(result.accessToken()).isEqualTo("access.jwt.token");
@@ -94,8 +98,8 @@ class AuthServiceTest {
     }
 
     @Test
-    @DisplayName("Đăng nhập thất bại khi không tìm thấy email (báo lỗi chung không lộ thông tin)")
-    void login_whenUserNotFound_shouldThrowUnauthorized() {
+    @DisplayName("Đăng nhập thất bại khi không tìm thấy email (gọi băm giả chống Timing Attack)")
+    void login_whenUserNotFound_shouldCallDummyHashAndThrowUnauthorized() {
         // Arrange
         LoginRequest request = new LoginRequest("unknown@xilespa.vn", "password123");
         when(userRepository.findByEmailIgnoreCase("unknown@xilespa.vn"))
@@ -112,16 +116,18 @@ class AuthServiceTest {
                                     .isEqualTo("Email hoặc mật khẩu không đúng.");
                         });
 
+        // Xác nhận đã gọi BCrypt matches với dummy hash để giữ thời gian phản hồi cố định
+        verify(passwordEncoder).matches(eq("password123"), any(String.class));
         verify(refreshTokenRepository, never()).save(any());
     }
 
     @Test
-    @DisplayName("Đăng nhập thất bại khi sai mật khẩu và tăng số lần đăng nhập sai")
-    void login_whenWrongPassword_shouldIncrementFailedCountAndThrowUnauthorized() {
+    @DisplayName("Đăng nhập thất bại khi sai mật khẩu và gọi audit service ghi nhận số lần sai")
+    void login_whenWrongPassword_shouldRecordFailedAttemptAndThrowUnauthorized() {
         // Arrange
         LoginRequest request = new LoginRequest("owner@xilespa.vn", "wrong_password");
         AppUser user = new AppUser("owner@xilespa.vn", "encoded_hash", "Chủ tiệm", UserRole.OWNER);
-        user.setFailedLoginCount(1);
+        ReflectionTestUtils.setField(user, "id", 10L);
 
         when(userRepository.findByEmailIgnoreCase("owner@xilespa.vn"))
                 .thenReturn(Optional.of(user));
@@ -138,8 +144,7 @@ class AuthServiceTest {
                                     .isEqualTo("Email hoặc mật khẩu không đúng.");
                         });
 
-        assertThat(user.getFailedLoginCount()).isEqualTo(2);
-        verify(userRepository).save(user);
+        verify(authSecurityAuditService).recordFailedLogin(10L, now);
         verify(refreshTokenRepository, never()).save(any());
     }
 
@@ -149,7 +154,7 @@ class AuthServiceTest {
         // Arrange
         LoginRequest request = new LoginRequest("owner@xilespa.vn", "password123");
         AppUser user = new AppUser("owner@xilespa.vn", "encoded_hash", "Chủ tiệm", UserRole.OWNER);
-        user.setEnabled(false);
+        user.disable(now);
 
         when(userRepository.findByEmailIgnoreCase("owner@xilespa.vn"))
                 .thenReturn(Optional.of(user));
@@ -174,7 +179,7 @@ class AuthServiceTest {
         String tokenHash = JwtService.hashToken(rawToken);
 
         AppUser user = new AppUser("owner@xilespa.vn", "hash", "Chủ tiệm", UserRole.OWNER);
-        user.setId(1L);
+        ReflectionTestUtils.setField(user, "id", 1L);
 
         RefreshToken oldToken = new RefreshToken(user, tokenHash, now.plus(Duration.ofDays(1)));
         when(refreshTokenRepository.findByTokenHash(tokenHash)).thenReturn(Optional.of(oldToken));
@@ -182,7 +187,7 @@ class AuthServiceTest {
                 .thenReturn("new.access.token");
 
         // Act
-        RefreshResult result = authService.refresh(rawToken);
+        RefreshResponse result = authService.refresh(rawToken);
 
         // Assert
         assertThat(result.accessToken()).isEqualTo("new.access.token");
@@ -202,14 +207,15 @@ class AuthServiceTest {
     }
 
     @Test
-    @DisplayName("Phát hiện tái sử dụng token đã thu hồi -> thu hồi toàn bộ phiên của người dùng")
-    void refresh_whenTokenAlreadyRevoked_shouldRevokeAllUserTokens() {
+    @DisplayName(
+            "Phát hiện tái sử dụng token đã thu hồi -> gọi audit service thu hồi toàn bộ phiên")
+    void refresh_whenTokenAlreadyRevoked_shouldCallAuditToRevokeAllUserTokens() {
         // Arrange
         String rawToken = "already-revoked-token";
         String tokenHash = JwtService.hashToken(rawToken);
 
         AppUser user = new AppUser("owner@xilespa.vn", "hash", "Chủ tiệm", UserRole.OWNER);
-        user.setId(99L);
+        ReflectionTestUtils.setField(user, "id", 99L);
 
         RefreshToken revokedToken = new RefreshToken(user, tokenHash, now.plus(Duration.ofDays(1)));
         revokedToken.revoke(now.minusSeconds(3600));
@@ -227,7 +233,7 @@ class AuthServiceTest {
                             assertThat(be.getMessage()).contains("không an toàn");
                         });
 
-        verify(refreshTokenRepository).revokeAllActiveByUserId(99L);
+        verify(authSecurityAuditService).revokeAllUserTokensOnReuse(99L);
     }
 
     @Test

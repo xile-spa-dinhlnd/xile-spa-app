@@ -1,7 +1,7 @@
 package com.xilespa.module.auth.repository;
 
 import com.xilespa.module.auth.entity.AppUser;
-import com.xilespa.module.auth.entity.UserRole;
+import com.xilespa.module.auth.enums.UserRole;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;

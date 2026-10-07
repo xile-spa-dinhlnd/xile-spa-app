@@ -3,7 +3,7 @@ package com.xilespa.module.auth;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.xilespa.module.auth.entity.AppUser;
-import com.xilespa.module.auth.entity.UserRole;
+import com.xilespa.module.auth.enums.UserRole;
 import com.xilespa.module.auth.repository.AppUserRepository;
 import com.xilespa.support.IntegrationTest;
 import java.util.Optional;

@@ -9,7 +9,7 @@ import static org.mockito.Mockito.when;
 
 import com.xilespa.module.auth.config.OwnerInitializerProperties;
 import com.xilespa.module.auth.entity.AppUser;
-import com.xilespa.module.auth.entity.UserRole;
+import com.xilespa.module.auth.enums.UserRole;
 import com.xilespa.module.auth.repository.AppUserRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

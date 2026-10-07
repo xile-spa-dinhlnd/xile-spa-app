@@ -1,4 +1,4 @@
-package com.xilespa.module.auth.entity;
+package com.xilespa.module.auth.enums;
 
 /**
  * Vai trò người dùng trong hệ thống (khớp với ràng buộc ck_app_user_role ở CSDL). - OWNER: Chủ

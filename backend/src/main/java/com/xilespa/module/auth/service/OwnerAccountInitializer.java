@@ -2,7 +2,7 @@ package com.xilespa.module.auth.service;
 
 import com.xilespa.module.auth.config.OwnerInitializerProperties;
 import com.xilespa.module.auth.entity.AppUser;
-import com.xilespa.module.auth.entity.UserRole;
+import com.xilespa.module.auth.enums.UserRole;
 import com.xilespa.module.auth.repository.AppUserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

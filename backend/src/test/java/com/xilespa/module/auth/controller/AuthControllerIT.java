@@ -8,7 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.xilespa.module.auth.entity.AppUser;
-import com.xilespa.module.auth.entity.UserRole;
+import com.xilespa.module.auth.enums.UserRole;
 import com.xilespa.module.auth.repository.AppUserRepository;
 import com.xilespa.module.auth.repository.RefreshTokenRepository;
 import com.xilespa.security.CookieHelper;
@@ -101,6 +101,11 @@ class AuthControllerIT {
                 .andExpect(jsonPath("$.code").value("UNAUTHORIZED"))
                 .andExpect(jsonPath("$.message").value("Email hoặc mật khẩu không đúng."))
                 .andExpect(cookie().doesNotExist(CookieHelper.ACCESS_TOKEN_COOKIE));
+
+        // Kiểm tra trực tiếp CSDL: failed_login_count phải được tăng lên 1 (không bị rollback bởi
+        // exception 401)
+        AppUser reloadedUser = userRepository.findById(testUser.getId()).orElseThrow();
+        assertThat(reloadedUser.getFailedLoginCount()).isEqualTo(1);
     }
 
     @Test
@@ -135,6 +140,51 @@ class AuthControllerIT {
 
         // Token cũ đã bị revoked, tổng cộng có 2 token trong DB
         assertThat(refreshTokenRepository.count()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName(
+            "Phát hiện tái sử dụng token đã thu hồi: trả về 401 và thu hồi toàn bộ token của user vào CSDL")
+    void refresh_whenTokenRevoked_returns401AndRevokesAllTokensInDb() throws Exception {
+        // 1. Đăng nhập lấy token 1
+        String loginPayload =
+                """
+                {
+                    "email": "auth_it@xilespa.vn",
+                    "password": "SecretPass123"
+                }
+                """;
+
+        MvcResult loginResult =
+                mockMvc.perform(
+                                post("/api/auth/login")
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .content(loginPayload))
+                        .andExpect(status().isOk())
+                        .andReturn();
+
+        Cookie stolenTokenCookie =
+                loginResult.getResponse().getCookie(CookieHelper.REFRESH_TOKEN_COOKIE);
+
+        // 2. Refresh hợp lệ lần 1 -> token 1 bị revoke, cấp token 2
+        MvcResult rotateResult =
+                mockMvc.perform(post("/api/auth/refresh").cookie(stolenTokenCookie))
+                        .andExpect(status().isOk())
+                        .andReturn();
+
+        // 3. Kẻ gian cố tình dùng lại token 1 đã bị revoke
+        mockMvc.perform(post("/api/auth/refresh").cookie(stolenTokenCookie))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"))
+                .andExpect(
+                        jsonPath("$.message")
+                                .value("Phiên đăng nhập không an toàn. Vui lòng đăng nhập lại."));
+
+        // Kiểm tra trực tiếp CSDL: tất cả token của user phải ở trạng thái revoked (không bị
+        // rollback bởi 401)
+        var allTokens = refreshTokenRepository.findAll();
+        assertThat(allTokens).isNotEmpty();
+        assertThat(allTokens).allMatch(com.xilespa.module.auth.entity.RefreshToken::isRevoked);
     }
 
     @Test
