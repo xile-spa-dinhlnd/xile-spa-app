@@ -1,0 +1,5 @@
+# Cấu hình riêng cho môi trường test: tắt tự động tạo tài khoản chủ tiệm để giữ DB sạch cho SchemaSmokeIT
+xile:
+  init:
+    owner:
+      enabled: false

@@ -30,3 +30,11 @@ server:
   error:
     include-message: never
     include-stacktrace: never
+
+xile:
+  init:
+    owner:
+      email: ${APP_OWNER_EMAIL:}
+      password: ${APP_OWNER_PASSWORD:}
+      display-name: ${APP_OWNER_NAME:Chủ tiệm Xile}
+
