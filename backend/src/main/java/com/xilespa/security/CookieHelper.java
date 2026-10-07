@@ -27,7 +27,7 @@ public class CookieHelper {
                 .secure(properties.cookieSecure())
                 .path("/")
                 .maxAge(properties.accessTokenDuration())
-                .sameSite("Lax")
+                .sameSite("Strict")
                 .build();
     }
 
@@ -37,7 +37,7 @@ public class CookieHelper {
                 .secure(properties.cookieSecure())
                 .path(REFRESH_TOKEN_PATH)
                 .maxAge(properties.refreshTokenDuration())
-                .sameSite("Lax")
+                .sameSite("Strict")
                 .build();
     }
 
@@ -47,7 +47,7 @@ public class CookieHelper {
                 .secure(properties.cookieSecure())
                 .path("/")
                 .maxAge(0)
-                .sameSite("Lax")
+                .sameSite("Strict")
                 .build();
     }
 
@@ -57,7 +57,7 @@ public class CookieHelper {
                 .secure(properties.cookieSecure())
                 .path(REFRESH_TOKEN_PATH)
                 .maxAge(0)
-                .sameSite("Lax")
+                .sameSite("Strict")
                 .build();
     }
 

@@ -102,6 +102,21 @@ class JwtServiceTest {
         JwtProperties emptyProps =
                 new JwtProperties("", Duration.ofMinutes(15), Duration.ofDays(7), false);
         assertThatThrownBy(() -> new JwtService(clock, new ObjectMapper(), emptyProps))
-                .isInstanceOf(IllegalStateException.class);
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("không được để trống");
+    }
+
+    @Test
+    @DisplayName("Ném lỗi khi secret ngắn hơn 32 bytes (256 bits)")
+    void constructor_whenSecretTooShort_shouldThrowException() {
+        JwtProperties shortProps =
+                new JwtProperties(
+                        "short-secret-under-32-bytes",
+                        Duration.ofMinutes(15),
+                        Duration.ofDays(7),
+                        false);
+        assertThatThrownBy(() -> new JwtService(clock, new ObjectMapper(), shortProps))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("ít nhất 32 bytes");
     }
 }

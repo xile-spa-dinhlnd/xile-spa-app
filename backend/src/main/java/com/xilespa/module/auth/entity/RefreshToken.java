@@ -13,7 +13,8 @@ import java.time.Instant;
 
 /**
  * Thực thể Refresh Token, ánh xạ bảng {@code refresh_token} (V1__core_schema.sql). Chỉ lưu băm
- * SHA-256 của token, không bao giờ lưu token thô (FR-AUTH-02, NFR-SEC-04).
+ * SHA-256 của token, không bao giờ lưu token thô (FR-AUTH-02, NFR-SEC-04). Áp dụng Rich Domain
+ * Model: loại bỏ toàn bộ setter tự do, chỉ thay đổi trạng thái qua revoke().
  */
 @Entity
 @Table(name = "refresh_token")
@@ -60,55 +61,34 @@ public class RefreshToken {
         return !isRevoked() && !isExpired(now);
     }
 
+    /** Thu hồi token (khi đăng xuất, làm mới phiên hoặc phát hiện xâm nhập). */
     public void revoke(Instant now) {
         this.revokedAt = now;
     }
 
+    // --- Getters ---
+
     public Long getId() {
         return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public AppUser getUser() {
         return user;
     }
 
-    public void setUser(AppUser user) {
-        this.user = user;
-    }
-
     public String getTokenHash() {
         return tokenHash;
-    }
-
-    public void setTokenHash(String tokenHash) {
-        this.tokenHash = tokenHash;
     }
 
     public Instant getExpiresAt() {
         return expiresAt;
     }
 
-    public void setExpiresAt(Instant expiresAt) {
-        this.expiresAt = expiresAt;
-    }
-
     public Instant getRevokedAt() {
         return revokedAt;
     }
 
-    public void setRevokedAt(Instant revokedAt) {
-        this.revokedAt = revokedAt;
-    }
-
     public Instant getCreatedAt() {
         return createdAt;
-    }
-
-    public void setCreatedAt(Instant createdAt) {
-        this.createdAt = createdAt;
     }
 }

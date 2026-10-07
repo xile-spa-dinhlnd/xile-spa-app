@@ -43,7 +43,12 @@ public class JwtService {
 
         String secret = properties.secret();
         if (secret == null || secret.isBlank()) {
-            throw new IllegalStateException("Cấu hình jwt.secret không được để trống");
+            throw new IllegalStateException(
+                    "Cấu hình jwt.secret không được để trống (xile.security.jwt.secret).");
+        }
+        if (secret.getBytes(StandardCharsets.UTF_8).length < 32) {
+            throw new IllegalStateException(
+                    "JWT secret key phải có độ dài ít nhất 32 bytes (256 bits) cho thuật toán HMAC-SHA256 (NFR-SEC-04).");
         }
         this.secretKeySpec =
                 new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), HMAC_ALGORITHM);

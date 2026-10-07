@@ -65,19 +65,26 @@ class AuthControllerIT {
                 }
                 """;
 
-        mockMvc.perform(
-                        post("/api/auth/login")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(loginPayload))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(testUser.getId()))
-                .andExpect(jsonPath("$.email").value("auth_it@xilespa.vn"))
-                .andExpect(jsonPath("$.displayName").value("Chủ tiệm IT"))
-                .andExpect(jsonPath("$.role").value("OWNER"))
-                .andExpect(cookie().exists(CookieHelper.ACCESS_TOKEN_COOKIE))
-                .andExpect(cookie().httpOnly(CookieHelper.ACCESS_TOKEN_COOKIE, true))
-                .andExpect(cookie().exists(CookieHelper.REFRESH_TOKEN_COOKIE))
-                .andExpect(cookie().httpOnly(CookieHelper.REFRESH_TOKEN_COOKIE, true));
+        MvcResult mvcResult =
+                mockMvc.perform(
+                                post("/api/auth/login")
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .content(loginPayload))
+                        .andExpect(status().isOk())
+                        .andExpect(jsonPath("$.id").value(testUser.getId()))
+                        .andExpect(jsonPath("$.email").value("auth_it@xilespa.vn"))
+                        .andExpect(jsonPath("$.displayName").value("Chủ tiệm IT"))
+                        .andExpect(jsonPath("$.role").value("OWNER"))
+                        .andExpect(cookie().exists(CookieHelper.ACCESS_TOKEN_COOKIE))
+                        .andExpect(cookie().httpOnly(CookieHelper.ACCESS_TOKEN_COOKIE, true))
+                        .andExpect(cookie().exists(CookieHelper.REFRESH_TOKEN_COOKIE))
+                        .andExpect(cookie().httpOnly(CookieHelper.REFRESH_TOKEN_COOKIE, true))
+                        .andReturn();
+
+        var setCookies = mvcResult.getResponse().getHeaders("Set-Cookie");
+        assertThat(setCookies).isNotEmpty();
+        assertThat(setCookies)
+                .allMatch(c -> c.contains("SameSite=Strict") && c.contains("HttpOnly"));
 
         assertThat(refreshTokenRepository.count()).isEqualTo(1);
     }

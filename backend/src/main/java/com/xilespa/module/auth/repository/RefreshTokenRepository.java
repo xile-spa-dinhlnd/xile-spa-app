@@ -17,5 +17,5 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long
     @Modifying
     @Query(
             "UPDATE RefreshToken r SET r.revokedAt = CURRENT_TIMESTAMP WHERE r.user.id = :userId AND r.revokedAt IS NULL")
-    int revokeAllActiveByUserId(@Param("userId") Long userId);
+    void revokeAllActiveByUserId(@Param("userId") Long userId);
 }
