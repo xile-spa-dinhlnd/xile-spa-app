@@ -4,11 +4,13 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 import java.util.Optional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Component;
 
 /** Tiện ích tạo và xóa cookie httpOnly cho access_token và refresh_token (NFR-SEC-04). */
 @Component
+@RequiredArgsConstructor
 public class CookieHelper {
 
     public static final String ACCESS_TOKEN_COOKIE = "access_token";
@@ -16,10 +18,6 @@ public class CookieHelper {
     private static final String REFRESH_TOKEN_PATH = "/api/auth";
 
     private final JwtProperties properties;
-
-    public CookieHelper(JwtProperties properties) {
-        this.properties = properties;
-    }
 
     public ResponseCookie createAccessTokenCookie(String token) {
         return ResponseCookie.from(ACCESS_TOKEN_COOKIE, token)

@@ -81,22 +81,6 @@ class JwtServiceTest {
     }
 
     @Test
-    @DisplayName("Băm token SHA-256 nhất quán và đúng định dạng hex 64 ký tự")
-    void hashToken_sha256Hex() {
-        // Arrange
-        String rawToken = "raw-refresh-token-123456";
-
-        // Act
-        String hash1 = JwtService.hashToken(rawToken);
-        String hash2 = JwtService.hashToken(rawToken);
-
-        // Assert
-        assertThat(hash1).hasSize(64);
-        assertThat(hash1).isEqualTo(hash2);
-        assertThat(JwtService.hashToken("different-token")).isNotEqualTo(hash1);
-    }
-
-    @Test
     @DisplayName("Ném lỗi khi secret để trống")
     void constructor_whenSecretBlank_shouldThrowException() {
         JwtProperties emptyProps =

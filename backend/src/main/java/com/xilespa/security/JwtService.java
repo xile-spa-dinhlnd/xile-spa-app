@@ -2,11 +2,9 @@ package com.xilespa.security;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.Base64;
-import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -19,15 +17,14 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 /**
- * Xử lý tạo và xác thực Access Token (JWT HMAC-SHA256) và băm Refresh Token (SHA-256). Sử dụng JDK
- * JCA chuẩn và Jackson 3, không cần dependency bổ sung (ADR-0001, NFR-SEC-04).
+ * Xử lý tạo và xác thực Access Token (JWT HMAC-SHA256). Băm refresh token: {@link TokenHasher}. Sử
+ * dụng JDK JCA chuẩn và Jackson 3, không cần dependency bổ sung (ADR-0001, NFR-SEC-04).
  */
 @Service
 public class JwtService {
 
     private static final Logger log = LoggerFactory.getLogger(JwtService.class);
     private static final String HMAC_ALGORITHM = "HmacSHA256";
-    private static final String SHA256_ALGORITHM = "SHA-256";
     private static final Base64.Encoder B64_URL_ENCODER = Base64.getUrlEncoder().withoutPadding();
     private static final Base64.Decoder B64_URL_DECODER = Base64.getUrlDecoder();
 
@@ -120,29 +117,15 @@ public class JwtService {
                 return Optional.empty();
             }
 
-            long userId = Long.parseLong(payloadNode.path("sub").asText());
-            String email = payloadNode.path("email").asText();
-            String displayName = payloadNode.path("name").asText();
-            String role = payloadNode.path("role").asText();
+            long userId = Long.parseLong(payloadNode.path("sub").asString());
+            String email = payloadNode.path("email").asString();
+            String displayName = payloadNode.path("name").asString();
+            String role = payloadNode.path("role").asString();
 
             return Optional.of(new JwtClaims(userId, email, displayName, role, expiresAt));
         } catch (Exception e) {
             log.debug("Token không hợp lệ hoặc giải mã thất bại: {}", e.getMessage());
             return Optional.empty();
-        }
-    }
-
-    /** Băm chuỗi Refresh Token thô bằng SHA-256 dạng hex để lưu trữ an toàn trong CSDL. */
-    public static String hashToken(String rawToken) {
-        if (rawToken == null || rawToken.isBlank()) {
-            throw new IllegalArgumentException("Token không được để trống khi băm");
-        }
-        try {
-            MessageDigest digest = MessageDigest.getInstance(SHA256_ALGORITHM);
-            byte[] hash = digest.digest(rawToken.getBytes(StandardCharsets.UTF_8));
-            return HexFormat.of().formatHex(hash);
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("Thuật toán SHA-256 không khả dụng", e);
         }
     }
 

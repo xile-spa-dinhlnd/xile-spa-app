@@ -27,6 +27,10 @@ dependencies {
     implementation(libs.spring.boot.starter.webmvc)
     implementation(libs.flyway.database.postgresql)
     implementation(libs.mapstruct)
+    // Thứ tự annotation processor: Lombok trước, rồi binding, rồi MapStruct (MapStruct cần getter do Lombok sinh).
+    compileOnly(libs.lombok)
+    annotationProcessor(libs.lombok)
+    annotationProcessor(libs.lombok.mapstruct.binding)
     annotationProcessor(libs.mapstruct.processor)
     runtimeOnly(libs.postgresql)
 
@@ -40,6 +44,9 @@ dependencies {
     testImplementation(libs.testcontainers.junit.jupiter)
     testImplementation(libs.testcontainers.postgresql)
     testRuntimeOnly(libs.junit.platform.launcher)
+    testCompileOnly(libs.lombok)
+    testAnnotationProcessor(libs.lombok)
+    testAnnotationProcessor(libs.lombok.mapstruct.binding)
     testAnnotationProcessor(libs.mapstruct.processor)
 }
 

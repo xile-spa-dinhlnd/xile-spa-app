@@ -10,13 +10,19 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 /**
  * Thực thể người dùng ứng dụng, ánh xạ bảng {@code app_user} (V1__core_schema.sql). Áp dụng Rich
- * Domain Model: đóng gói dữ liệu, chỉ thay đổi trạng thái qua các phương thức nghiệp vụ.
+ * Domain Model: đóng gói dữ liệu, chỉ thay đổi trạng thái qua các phương thức nghiệp vụ. Lombok chỉ
+ * sinh getter và constructor rỗng cho JPA (quy tắc trong {@code backend/AGENTS.md}).
  */
 @Entity
 @Table(name = "app_user")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class AppUser {
 
     @Id
@@ -49,22 +55,27 @@ public class AppUser {
     private Instant lastLoginAt;
 
     @Column(name = "created_at", nullable = false, updatable = false)
-    private Instant createdAt = Instant.now();
+    private Instant createdAt;
 
     @Column(name = "updated_at", nullable = false)
-    private Instant updatedAt = Instant.now();
+    private Instant updatedAt;
 
-    public AppUser() {}
-
-    public AppUser(String email, String passwordHash, String displayName, UserRole role) {
+    /**
+     * Tạo tài khoản mới.
+     *
+     * @param now thời điểm tạo, lấy từ {@link java.time.Clock} của hệ thống (không dùng
+     *     Instant.now())
+     */
+    public AppUser(
+            String email, String passwordHash, String displayName, UserRole role, Instant now) {
         this.email = email;
         this.passwordHash = passwordHash;
         this.displayName = displayName;
         this.role = role;
         this.enabled = true;
         this.failedLoginCount = 0;
-        this.createdAt = Instant.now();
-        this.updatedAt = Instant.now();
+        this.createdAt = now;
+        this.updatedAt = now;
     }
 
     // --- Domain Methods (Hành vi nghiệp vụ) ---
@@ -108,51 +119,5 @@ public class AppUser {
     public void disable(Instant now) {
         this.enabled = false;
         this.updatedAt = now;
-    }
-
-    // --- Getters ---
-
-    public Long getId() {
-        return id;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public String getPasswordHash() {
-        return passwordHash;
-    }
-
-    public String getDisplayName() {
-        return displayName;
-    }
-
-    public UserRole getRole() {
-        return role;
-    }
-
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    public int getFailedLoginCount() {
-        return failedLoginCount;
-    }
-
-    public Instant getLockedUntil() {
-        return lockedUntil;
-    }
-
-    public Instant getLastLoginAt() {
-        return lastLoginAt;
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    public Instant getUpdatedAt() {
-        return updatedAt;
     }
 }

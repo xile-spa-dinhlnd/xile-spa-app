@@ -44,7 +44,8 @@ class AuthControllerIT {
                         "auth_it@xilespa.vn",
                         passwordEncoder.encode("SecretPass123"),
                         "Chủ tiệm IT",
-                        UserRole.OWNER);
+                        UserRole.OWNER,
+                        java.time.Instant.now());
         testUser = userRepository.save(testUser);
     }
 

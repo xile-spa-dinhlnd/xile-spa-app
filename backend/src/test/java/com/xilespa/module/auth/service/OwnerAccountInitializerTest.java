@@ -23,6 +23,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @ExtendWith(MockitoExtension.class)
 class OwnerAccountInitializerTest {
 
+    private final java.time.Clock clock =
+            java.time.Clock.fixed(
+                    java.time.Instant.parse("2026-10-11T03:00:00Z"), java.time.ZoneOffset.UTC);
+
     @Mock private AppUserRepository userRepository;
 
     @Mock private PasswordEncoder passwordEncoder;
@@ -34,7 +38,7 @@ class OwnerAccountInitializerTest {
         OwnerInitializerProperties properties =
                 new OwnerInitializerProperties(false, "owner@xilespa.vn", "secret123", "Chủ tiệm");
         OwnerAccountInitializer initializer =
-                new OwnerAccountInitializer(userRepository, passwordEncoder, properties);
+                new OwnerAccountInitializer(userRepository, passwordEncoder, properties, clock);
 
         // Act
         initializer.run(new DefaultApplicationArguments());
@@ -49,7 +53,7 @@ class OwnerAccountInitializerTest {
         // Arrange
         OwnerInitializerProperties properties = new OwnerInitializerProperties(true, "", "", "");
         OwnerAccountInitializer initializer =
-                new OwnerAccountInitializer(userRepository, passwordEncoder, properties);
+                new OwnerAccountInitializer(userRepository, passwordEncoder, properties, clock);
 
         // Act
         initializer.run(new DefaultApplicationArguments());
@@ -66,7 +70,7 @@ class OwnerAccountInitializerTest {
                 new OwnerInitializerProperties(true, "owner@xilespa.vn", "secret123", "Chủ tiệm");
         when(userRepository.existsByRole(UserRole.OWNER)).thenReturn(true);
         OwnerAccountInitializer initializer =
-                new OwnerAccountInitializer(userRepository, passwordEncoder, properties);
+                new OwnerAccountInitializer(userRepository, passwordEncoder, properties, clock);
 
         // Act
         initializer.run(new DefaultApplicationArguments());
@@ -85,7 +89,7 @@ class OwnerAccountInitializerTest {
         when(userRepository.existsByRole(UserRole.OWNER)).thenReturn(false);
         when(userRepository.existsByEmailIgnoreCase("owner@xilespa.vn")).thenReturn(true);
         OwnerAccountInitializer initializer =
-                new OwnerAccountInitializer(userRepository, passwordEncoder, properties);
+                new OwnerAccountInitializer(userRepository, passwordEncoder, properties, clock);
 
         // Act
         initializer.run(new DefaultApplicationArguments());
@@ -106,7 +110,7 @@ class OwnerAccountInitializerTest {
         when(userRepository.existsByEmailIgnoreCase("owner@xilespa.vn")).thenReturn(false);
         when(passwordEncoder.encode("my_password_123")).thenReturn("hashed_password_xyz");
         OwnerAccountInitializer initializer =
-                new OwnerAccountInitializer(userRepository, passwordEncoder, properties);
+                new OwnerAccountInitializer(userRepository, passwordEncoder, properties, clock);
 
         // Act
         initializer.run(new DefaultApplicationArguments());

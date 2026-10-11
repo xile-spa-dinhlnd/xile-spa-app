@@ -3,6 +3,7 @@ package com.xilespa.module.auth.service;
 import com.xilespa.module.auth.repository.AppUserRepository;
 import com.xilespa.module.auth.repository.RefreshTokenRepository;
 import java.time.Instant;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,16 +15,11 @@ import org.springframework.transaction.annotation.Transactional;
  * ngoại lệ 401 Unauthorized.
  */
 @Service
+@RequiredArgsConstructor
 public class AuthSecurityAuditService {
 
     private final AppUserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
-
-    public AuthSecurityAuditService(
-            AppUserRepository userRepository, RefreshTokenRepository refreshTokenRepository) {
-        this.userRepository = userRepository;
-        this.refreshTokenRepository = refreshTokenRepository;
-    }
 
     /**
      * Ghi nhận một lần đăng nhập thất bại vào CSDL trong transaction độc lập (FR-AUTH-05). Đảm bảo

@@ -62,12 +62,15 @@ catalog/
 │  └─ ComboController.java
 ├─ service/
 │  ├─ ServiceService.java             # nghiệp vụ + @Transactional; module khác chỉ gọi vào đây
-│  └─ ComboService.java
+│  ├─ ComboService.java
+│  └─ model/                          # kiểu dữ liệu nội bộ của service (record), không trả ra API
 ├─ repository/
 │  └─ ServiceRepository.java          # Spring Data JPA
 ├─ entity/
 │  ├─ Service.java                    # entity JPA, ánh xạ đúng bảng trong migration
 │  └─ ServicePriceHistory.java
+├─ enums/
+│  └─ ServiceStatus.java              # enum dùng cho cột của entity, mỗi enum một file
 ├─ dto/
 │  ├─ request/
 │  │  ├─ CreateServiceRequest.java    # record + annotation kiểm tra (@NotBlank, @PositiveOrZero...)
@@ -102,7 +105,21 @@ Luồng gọi và quy tắc:
   3. Không map từ Request vào các trường nhạy cảm của entity (id, trạng thái, giá đã chốt, `created_by`...):
      đánh dấu `@Mapping(target = "...", ignore = true)` rồi gán trong service.
   4. Mapping quá phức tạp thì được viết tay (`default` method hoặc lớp riêng) trong cùng `mapper/`.
-- `@Transactional` đặt ở service, không ở controller hay repository.
+- Enum dùng cho cột của entity đặt ở `module/<tên>/enums/`, mỗi enum một file; lưu bằng
+  `@Enumerated(EnumType.STRING)`.
+- Kết quả nội bộ của service mà không được trả thẳng ra API (ví dụ chứa token) đặt ở `service/model/`,
+  tên `...Result`, không đặt trong `dto/`.
+- **Lombok** (dùng có giới hạn, cấu hình trong `backend/lombok.config`):
+  - Entity: chỉ `@Getter` và `@NoArgsConstructor(access = AccessLevel.PROTECTED)`. Thay đổi trạng thái qua
+    method nghiệp vụ có tên rõ nghĩa (`deactivate()`, `changePrice(...)`, `recordFailedLogin(...)`), không setter.
+  - Service, controller, component: `@RequiredArgsConstructor` cho các trường `final`.
+  - **Cấm** `@Data`, `@Setter`, `@Builder`, `@AllArgsConstructor` (`lombok.config` báo lỗi khi build);
+    không dùng `@EqualsAndHashCode`, `@ToString` trên entity. DTO vẫn dùng `record`.
+- Thời điểm tạo, sửa trong entity lấy từ `Clock` (truyền `Instant now` từ service), không gọi
+  `Instant.now()` trong entity.
+- `@Transactional` đặt ở service, không ở controller hay repository. Ghi nhận cần giữ lại kể cả khi request
+  kết thúc bằng lỗi (đếm đăng nhập sai, thu hồi phiên...) chạy trong service riêng với
+  `Propagation.REQUIRES_NEW` (ví dụ `AuthSecurityAuditService`).
 - URL: `/api/{module}/{tài-nguyên}`, danh từ số nhiều, kebab-case (`/api/catalog/services`,
   `/api/visits`). Hành động nghiệp vụ dùng `POST` lên tài nguyên con:
   `POST /api/catalog/services/{id}/deactivate`, `POST /api/closings/{date}`.
@@ -161,9 +178,15 @@ có ghi log). Trigger là rào chắn cuối: service vẫn nên tự kiểm tra
 ## Bảo mật
 
 - Mật khẩu băm Argon2 hoặc BCrypt. Không log mật khẩu, token, refresh token.
-- Refresh token **chỉ lưu bản băm**. Access token trong cookie `httpOnly`, `Secure`, `SameSite`.
+- Refresh token **chỉ lưu bản băm** SHA-256 (`security/TokenHasher`). Access token và refresh token nằm
+  trong cookie `HttpOnly`, `SameSite=Strict`, `Secure` (bật ở prod).
 - Mọi endpoint ngoài đăng nhập/quên mật khẩu đều yêu cầu xác thực; chưa đăng nhập trả 401.
-- Thông báo sai đăng nhập không tiết lộ email có tồn tại hay không.
+- Thông báo sai đăng nhập không tiết lộ email có tồn tại hay không, kể cả qua thời gian phản hồi: khi
+  không tìm thấy email vẫn chạy bcrypt với một hash giả.
+- **CSRF:** không dùng CSRF token (`SecurityConfig` tắt `csrf`). Chống CSRF bằng cookie `SameSite=Strict`, vì
+  frontend và API cùng một site (khi dev qua proxy của Vite, khi chạy thật cùng tên miền). Nếu sau này
+  frontend và API khác tên miền gốc thì phải xem lại quyết định này.
+- **API thay đổi dữ liệu không bao giờ dùng `GET`**, chỉ dùng `POST`, `PUT`, `PATCH`, `DELETE`.
 - Bí mật đọc từ biến môi trường theo profile `dev`/`prod`; không commit.
 
 ## Test

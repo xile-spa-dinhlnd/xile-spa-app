@@ -4,6 +4,8 @@ import com.xilespa.module.auth.config.OwnerInitializerProperties;
 import com.xilespa.module.auth.entity.AppUser;
 import com.xilespa.module.auth.enums.UserRole;
 import com.xilespa.module.auth.repository.AppUserRepository;
+import java.time.Clock;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
@@ -18,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
  * đối không ghi mật khẩu ra log (NFR-SEC-02).
  */
 @Component
+@RequiredArgsConstructor
 public class OwnerAccountInitializer implements ApplicationRunner {
 
     private static final Logger log = LoggerFactory.getLogger(OwnerAccountInitializer.class);
@@ -25,15 +28,7 @@ public class OwnerAccountInitializer implements ApplicationRunner {
     private final AppUserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final OwnerInitializerProperties properties;
-
-    public OwnerAccountInitializer(
-            AppUserRepository userRepository,
-            PasswordEncoder passwordEncoder,
-            OwnerInitializerProperties properties) {
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.properties = properties;
-    }
+    private final Clock clock;
 
     @Override
     @Transactional
@@ -61,7 +56,8 @@ public class OwnerAccountInitializer implements ApplicationRunner {
                         email,
                         passwordEncoder.encode(properties.password()),
                         displayName,
-                        UserRole.OWNER);
+                        UserRole.OWNER,
+                        clock.instant());
 
         userRepository.save(owner);
         log.info(

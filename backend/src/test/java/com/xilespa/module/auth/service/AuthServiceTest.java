@@ -11,8 +11,6 @@ import static org.mockito.Mockito.when;
 import com.xilespa.common.exception.BusinessException;
 import com.xilespa.common.exception.ErrorCode;
 import com.xilespa.module.auth.dto.request.LoginRequest;
-import com.xilespa.module.auth.dto.response.LoginResponse;
-import com.xilespa.module.auth.dto.response.RefreshResponse;
 import com.xilespa.module.auth.dto.response.UserResponse;
 import com.xilespa.module.auth.entity.AppUser;
 import com.xilespa.module.auth.entity.RefreshToken;
@@ -20,8 +18,11 @@ import com.xilespa.module.auth.enums.UserRole;
 import com.xilespa.module.auth.mapper.UserMapper;
 import com.xilespa.module.auth.repository.AppUserRepository;
 import com.xilespa.module.auth.repository.RefreshTokenRepository;
+import com.xilespa.module.auth.service.model.LoginResult;
+import com.xilespa.module.auth.service.model.RefreshResult;
 import com.xilespa.security.JwtProperties;
 import com.xilespa.security.JwtService;
+import com.xilespa.security.TokenHasher;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -73,7 +74,8 @@ class AuthServiceTest {
     void login_whenValidCredentials_shouldSucceed() {
         // Arrange
         LoginRequest request = new LoginRequest("owner@xilespa.vn", "password123");
-        AppUser user = new AppUser("owner@xilespa.vn", "encoded_hash", "Chủ tiệm", UserRole.OWNER);
+        AppUser user =
+                new AppUser("owner@xilespa.vn", "encoded_hash", "Chủ tiệm", UserRole.OWNER, now);
         ReflectionTestUtils.setField(user, "id", 1L);
 
         when(userRepository.findByEmailIgnoreCase("owner@xilespa.vn"))
@@ -85,7 +87,7 @@ class AuthServiceTest {
                 .thenReturn(new UserResponse(1L, "owner@xilespa.vn", "Chủ tiệm", UserRole.OWNER));
 
         // Act
-        LoginResponse result = authService.login(request);
+        LoginResult result = authService.login(request);
 
         // Assert
         assertThat(result.accessToken()).isEqualTo("access.jwt.token");
@@ -126,7 +128,8 @@ class AuthServiceTest {
     void login_whenWrongPassword_shouldRecordFailedAttemptAndThrowUnauthorized() {
         // Arrange
         LoginRequest request = new LoginRequest("owner@xilespa.vn", "wrong_password");
-        AppUser user = new AppUser("owner@xilespa.vn", "encoded_hash", "Chủ tiệm", UserRole.OWNER);
+        AppUser user =
+                new AppUser("owner@xilespa.vn", "encoded_hash", "Chủ tiệm", UserRole.OWNER, now);
         ReflectionTestUtils.setField(user, "id", 10L);
 
         when(userRepository.findByEmailIgnoreCase("owner@xilespa.vn"))
@@ -153,7 +156,8 @@ class AuthServiceTest {
     void login_whenUserDisabled_shouldThrowUnauthorized() {
         // Arrange
         LoginRequest request = new LoginRequest("owner@xilespa.vn", "password123");
-        AppUser user = new AppUser("owner@xilespa.vn", "encoded_hash", "Chủ tiệm", UserRole.OWNER);
+        AppUser user =
+                new AppUser("owner@xilespa.vn", "encoded_hash", "Chủ tiệm", UserRole.OWNER, now);
         user.disable(now);
 
         when(userRepository.findByEmailIgnoreCase("owner@xilespa.vn"))
@@ -176,18 +180,19 @@ class AuthServiceTest {
     void refresh_whenValidToken_shouldRotateAndReturnNewTokens() {
         // Arrange
         String rawToken = "valid-raw-refresh-token";
-        String tokenHash = JwtService.hashToken(rawToken);
+        String tokenHash = TokenHasher.hash(rawToken);
 
-        AppUser user = new AppUser("owner@xilespa.vn", "hash", "Chủ tiệm", UserRole.OWNER);
+        AppUser user = new AppUser("owner@xilespa.vn", "hash", "Chủ tiệm", UserRole.OWNER, now);
         ReflectionTestUtils.setField(user, "id", 1L);
 
-        RefreshToken oldToken = new RefreshToken(user, tokenHash, now.plus(Duration.ofDays(1)));
+        RefreshToken oldToken =
+                new RefreshToken(user, tokenHash, now.plus(Duration.ofDays(1)), now);
         when(refreshTokenRepository.findByTokenHash(tokenHash)).thenReturn(Optional.of(oldToken));
         when(jwtService.generateAccessToken(1L, "owner@xilespa.vn", "Chủ tiệm", "OWNER"))
                 .thenReturn("new.access.token");
 
         // Act
-        RefreshResponse result = authService.refresh(rawToken);
+        RefreshResult result = authService.refresh(rawToken);
 
         // Assert
         assertThat(result.accessToken()).isEqualTo("new.access.token");
@@ -212,12 +217,13 @@ class AuthServiceTest {
     void refresh_whenTokenAlreadyRevoked_shouldCallAuditToRevokeAllUserTokens() {
         // Arrange
         String rawToken = "already-revoked-token";
-        String tokenHash = JwtService.hashToken(rawToken);
+        String tokenHash = TokenHasher.hash(rawToken);
 
-        AppUser user = new AppUser("owner@xilespa.vn", "hash", "Chủ tiệm", UserRole.OWNER);
+        AppUser user = new AppUser("owner@xilespa.vn", "hash", "Chủ tiệm", UserRole.OWNER, now);
         ReflectionTestUtils.setField(user, "id", 99L);
 
-        RefreshToken revokedToken = new RefreshToken(user, tokenHash, now.plus(Duration.ofDays(1)));
+        RefreshToken revokedToken =
+                new RefreshToken(user, tokenHash, now.plus(Duration.ofDays(1)), now);
         revokedToken.revoke(now.minusSeconds(3600));
 
         when(refreshTokenRepository.findByTokenHash(tokenHash))
@@ -241,10 +247,10 @@ class AuthServiceTest {
     void refresh_whenTokenExpired_shouldThrowUnauthorized() {
         // Arrange
         String rawToken = "expired-token";
-        String tokenHash = JwtService.hashToken(rawToken);
+        String tokenHash = TokenHasher.hash(rawToken);
 
-        AppUser user = new AppUser("owner@xilespa.vn", "hash", "Chủ tiệm", UserRole.OWNER);
-        RefreshToken expiredToken = new RefreshToken(user, tokenHash, now.minusSeconds(10));
+        AppUser user = new AppUser("owner@xilespa.vn", "hash", "Chủ tiệm", UserRole.OWNER, now);
+        RefreshToken expiredToken = new RefreshToken(user, tokenHash, now.minusSeconds(10), now);
 
         when(refreshTokenRepository.findByTokenHash(tokenHash))
                 .thenReturn(Optional.of(expiredToken));
@@ -265,10 +271,10 @@ class AuthServiceTest {
     void logout_shouldRevokeTokenInDatabase() {
         // Arrange
         String rawToken = "logout-raw-token";
-        String tokenHash = JwtService.hashToken(rawToken);
+        String tokenHash = TokenHasher.hash(rawToken);
 
-        AppUser user = new AppUser("owner@xilespa.vn", "hash", "Chủ tiệm", UserRole.OWNER);
-        RefreshToken token = new RefreshToken(user, tokenHash, now.plus(Duration.ofDays(1)));
+        AppUser user = new AppUser("owner@xilespa.vn", "hash", "Chủ tiệm", UserRole.OWNER, now);
+        RefreshToken token = new RefreshToken(user, tokenHash, now.plus(Duration.ofDays(1)), now);
 
         when(refreshTokenRepository.findByTokenHash(tokenHash)).thenReturn(Optional.of(token));
 

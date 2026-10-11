@@ -10,6 +10,9 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 /**
  * Thực thể Refresh Token, ánh xạ bảng {@code refresh_token} (V1__core_schema.sql). Chỉ lưu băm
@@ -18,6 +21,8 @@ import java.time.Instant;
  */
 @Entity
 @Table(name = "refresh_token")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class RefreshToken {
 
     @Id
@@ -38,15 +43,17 @@ public class RefreshToken {
     private Instant revokedAt;
 
     @Column(name = "created_at", nullable = false, updatable = false)
-    private Instant createdAt = Instant.now();
+    private Instant createdAt;
 
-    public RefreshToken() {}
-
-    public RefreshToken(AppUser user, String tokenHash, Instant expiresAt) {
+    /**
+     * @param now thời điểm tạo, lấy từ {@link java.time.Clock} của hệ thống (không dùng
+     *     Instant.now())
+     */
+    public RefreshToken(AppUser user, String tokenHash, Instant expiresAt, Instant now) {
         this.user = user;
         this.tokenHash = tokenHash;
         this.expiresAt = expiresAt;
-        this.createdAt = Instant.now();
+        this.createdAt = now;
     }
 
     public boolean isExpired(Instant now) {
@@ -64,31 +71,5 @@ public class RefreshToken {
     /** Thu hồi token (khi đăng xuất, làm mới phiên hoặc phát hiện xâm nhập). */
     public void revoke(Instant now) {
         this.revokedAt = now;
-    }
-
-    // --- Getters ---
-
-    public Long getId() {
-        return id;
-    }
-
-    public AppUser getUser() {
-        return user;
-    }
-
-    public String getTokenHash() {
-        return tokenHash;
-    }
-
-    public Instant getExpiresAt() {
-        return expiresAt;
-    }
-
-    public Instant getRevokedAt() {
-        return revokedAt;
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
     }
 }

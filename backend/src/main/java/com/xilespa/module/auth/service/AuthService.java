@@ -3,21 +3,23 @@ package com.xilespa.module.auth.service;
 import com.xilespa.common.exception.BusinessException;
 import com.xilespa.common.exception.ErrorCode;
 import com.xilespa.module.auth.dto.request.LoginRequest;
-import com.xilespa.module.auth.dto.response.LoginResponse;
-import com.xilespa.module.auth.dto.response.RefreshResponse;
 import com.xilespa.module.auth.dto.response.UserResponse;
 import com.xilespa.module.auth.entity.AppUser;
 import com.xilespa.module.auth.entity.RefreshToken;
 import com.xilespa.module.auth.mapper.UserMapper;
 import com.xilespa.module.auth.repository.AppUserRepository;
 import com.xilespa.module.auth.repository.RefreshTokenRepository;
+import com.xilespa.module.auth.service.model.LoginResult;
+import com.xilespa.module.auth.service.model.RefreshResult;
 import com.xilespa.security.JwtProperties;
 import com.xilespa.security.JwtService;
+import com.xilespa.security.TokenHasher;
 import java.security.SecureRandom;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.Optional;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -26,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 /** Xử lý nghiệp vụ đăng nhập, quản lý phiên và làm mới token (FR-AUTH-01, FR-AUTH-02). */
 @Service
+@RequiredArgsConstructor
 public class AuthService {
 
     private static final Logger log = LoggerFactory.getLogger(AuthService.class);
@@ -47,27 +50,8 @@ public class AuthService {
     private final UserMapper userMapper;
     private final Clock clock;
 
-    public AuthService(
-            AppUserRepository userRepository,
-            RefreshTokenRepository refreshTokenRepository,
-            AuthSecurityAuditService authSecurityAuditService,
-            PasswordEncoder passwordEncoder,
-            JwtService jwtService,
-            JwtProperties jwtProperties,
-            UserMapper userMapper,
-            Clock clock) {
-        this.userRepository = userRepository;
-        this.refreshTokenRepository = refreshTokenRepository;
-        this.authSecurityAuditService = authSecurityAuditService;
-        this.passwordEncoder = passwordEncoder;
-        this.jwtService = jwtService;
-        this.jwtProperties = jwtProperties;
-        this.userMapper = userMapper;
-        this.clock = clock;
-    }
-
     @Transactional
-    public LoginResponse login(LoginRequest request) {
+    public LoginResult login(LoginRequest request) {
         String email = request.email().trim().toLowerCase();
         Instant now = clock.instant();
 
@@ -109,24 +93,24 @@ public class AuthService {
                         user.getRole().name());
 
         String rawRefreshToken = generateSecureRandomToken();
-        String tokenHash = JwtService.hashToken(rawRefreshToken);
+        String tokenHash = TokenHasher.hash(rawRefreshToken);
         Instant refreshExpiresAt = now.plus(jwtProperties.refreshTokenDuration());
 
-        RefreshToken refreshToken = new RefreshToken(user, tokenHash, refreshExpiresAt);
+        RefreshToken refreshToken = new RefreshToken(user, tokenHash, refreshExpiresAt, now);
         refreshTokenRepository.save(refreshToken);
 
-        return new LoginResponse(userMapper.toResponse(user), accessToken, rawRefreshToken);
+        return new LoginResult(userMapper.toResponse(user), accessToken, rawRefreshToken);
     }
 
     @Transactional
-    public RefreshResponse refresh(String rawRefreshToken) {
+    public RefreshResult refresh(String rawRefreshToken) {
         if (rawRefreshToken == null || rawRefreshToken.isBlank()) {
             throw new BusinessException(
                     ErrorCode.UNAUTHORIZED, "Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
         }
 
         Instant now = clock.instant();
-        String tokenHash = JwtService.hashToken(rawRefreshToken);
+        String tokenHash = TokenHasher.hash(rawRefreshToken);
         RefreshToken token =
                 refreshTokenRepository
                         .findByTokenHash(tokenHash)
@@ -164,10 +148,10 @@ public class AuthService {
         refreshTokenRepository.save(token);
 
         String newRawRefreshToken = generateSecureRandomToken();
-        String newTokenHash = JwtService.hashToken(newRawRefreshToken);
+        String newTokenHash = TokenHasher.hash(newRawRefreshToken);
         Instant newRefreshExpiresAt = now.plus(jwtProperties.refreshTokenDuration());
 
-        RefreshToken newToken = new RefreshToken(user, newTokenHash, newRefreshExpiresAt);
+        RefreshToken newToken = new RefreshToken(user, newTokenHash, newRefreshExpiresAt, now);
         refreshTokenRepository.save(newToken);
 
         String newAccessToken =
@@ -177,7 +161,7 @@ public class AuthService {
                         user.getDisplayName(),
                         user.getRole().name());
 
-        return new RefreshResponse(newAccessToken, newRawRefreshToken);
+        return new RefreshResult(newAccessToken, newRawRefreshToken);
     }
 
     @Transactional
@@ -187,7 +171,7 @@ public class AuthService {
         }
 
         try {
-            String tokenHash = JwtService.hashToken(rawRefreshToken);
+            String tokenHash = TokenHasher.hash(rawRefreshToken);
             refreshTokenRepository
                     .findByTokenHash(tokenHash)
                     .ifPresent(token -> token.revoke(clock.instant()));
