@@ -372,6 +372,37 @@
           ]
         },
         {
+          "name": "Danh sách dịch vụ (không lọc)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/catalog/services",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "catalog",
+                "services"
+              ]
+            },
+            "description": "Gọi không kèm tham số nào (như khi mở màn hình lần đầu). Lỗi thật đã gặp: thiếu q làm API trả 500."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Có ít nhất 1 dịch vụ\", () => pm.expect(pm.response.json().totalElements).to.be.at.least(1));"
+                ]
+              }
+            }
+          ]
+        },
+        {
           "name": "Tìm dịch vụ theo tên",
           "request": {
             "method": "GET",
