@@ -11,17 +11,17 @@ Cột **Ai quyết định** cho biết cần hỏi ai. Câu hỏi đã có quy�
 | OQ-04 | Doanh thu của gói liệu trình tính lúc bán hay lúc dùng | **Tính đủ lúc bán gói.** Buổi dùng từ gói có giá tính doanh thu = 0 | 01/10/2026 | BR-20, FR-PKG, FR-VIS-12 |
 | OQ-05 | Cách sửa ngày đã chốt | Nhóm tự chọn: **chỉ dùng bút toán điều chỉnh, không có mở lại sổ**; bút toán ghi vào ngày đang mở gần nhất, lưu kèm ngày gốc. Xem ADR-0003 | 01/10/2026 | BR-06, BR-08, FR-CLS-04, FR-CLS-07, ADR-0003 |
 | OQ-13 | "Chi giảm giá" có tính vào chi không | **Có**, giữ theo cách chủ tiệm quen: giảm giá nằm trong Tổng chi. Loại chi nhập tay mặc định: *mua hàng*, *CTV*, *khác* (danh mục thêm được) | 01/10/2026 | BR-05, FR-EXP |
+| OQ-02 | Ranh giới ngày, giờ mở đóng cửa | **Giờ chốt ngày 04:00**: giao dịch nhập trước 04:00 mặc định thuộc ngày hôm trước; người dùng vẫn đổi được ngày khi ngày đó chưa chốt. Giờ chốt là tham số cấu hình (`xile.business-day.cutoff`, sau này lên màn hình cấu hình FR-SYS-04). Giờ mở cửa 9:00–21:00 chỉ để tham khảo, không chặn nhập ngoài giờ | 11/10/2026 | BR-02 |
+| OQ-06 | Tiền tour khi KTV làm combo | **Tạm thời:** mỗi combo có một mức tour mặc định (`combo.tour_fee`, mặc định 0), tự điền vào dòng bán và sửa tay được; chủ tiệm làm thì tour = 0. Tour được chụp lại theo dòng (BR-03) nên đổi cách tính về sau chỉ ảnh hưởng giao dịch mới. Liệu trình da xem lại ở R2 | 11/10/2026 | BR-13, FR-CMB-06 |
+| OQ-07 | Một giao dịch trả bằng hai hình thức | **Có.** Một giao dịch có một hoặc nhiều dòng thanh toán (bảng `visit_payment`: hình thức, số tiền); tổng phải bằng số khách phải trả. Có thống kê và bộ lọc theo hình thức (FR-VIS-08, FR-DSH-06). Làm ở card S3-06 (migration V3) | 11/10/2026 | FR-VIS-04, ERD mục 10 |
+| OQ-08 | Khách vãng lai, SĐT dùng chung | Khách vãng lai không có SĐT: **không tạo hồ sơ**, giao dịch để trống khách. **SĐT giữ duy nhất**; nhập SĐT đã có thì gợi ý mở hồ sơ cũ. Nếu sau này có trường hợp dùng chung thì cho phép trùng kèm cảnh báo (một migration bỏ ràng buộc unique) | 11/10/2026 | BR-10 |
+| OQ-10 | Tên miền và dịch vụ email cho quên mật khẩu | Tên miền **xilespa** (đuôi chọn khi mua, lúc deploy). Email: máy dev **không gửi thật**, chỉ ghi link ra log; production gửi qua Gmail SMTP bằng App Password, địa chỉ và mật khẩu đọc từ biến môi trường (`MAIL_FROM`, `MAIL_USERNAME`, `MAIL_PASSWORD`), không ghi email thật vào repo. Có tên miền thì cân nhắc chuyển dịch vụ gửi mail chuyên dụng | 11/10/2026 | FR-AUTH-03 |
 
 ## Còn mở
 
 | ID | Câu hỏi | Liên quan | Ai quyết định | Chặn sprint | Trạng thái |
 |---|---|---|---|---|---|
-| OQ-02 | Ranh giới ngày: nếu tiệm có khách sau nửa đêm thì tính vào ngày nào? Giờ mở và đóng cửa thông thường? | BR-02 | Chủ tiệm | Trung bình | Open |
-| OQ-06 | Tiền tour cho combo và liệu trình da: chủ tiệm tự làm thì tour = 0. Khi KTV làm combo thì tính tour theo combo hay theo từng dịch vụ thành phần? | BR-13, FR-CMB-06 | Chủ tiệm | Thấp (trước R2/R3) | Open |
-| OQ-07 | Một giao dịch có thể trả bằng hai hình thức (một phần CK, một phần TM) không? | FR-VIS-04 | Chủ tiệm | Trung bình | Open |
-| OQ-08 | Khách vãng lai không để lại SĐT: ghi giao dịch không cần hồ sơ khách, hay tạo hồ sơ tạm? Có trường hợp hai khách dùng chung một SĐT không? | BR-10, FR-CUS-01 | Chủ tiệm | Trung bình | Open |
 | OQ-09 | Cấu trúc Google Sheets: một spreadsheet mỗi tháng với tab nào? Tài khoản Google nào sở hữu? Có đưa tên, SĐT khách vào Sheets không hay chỉ số liệu tổng hợp? | FR-SYN-01, NFR-PRV-04 | Chủ tiệm và nhóm | Cao, trước R2 | Open |
-| OQ-10 | Tên miền và dịch vụ gửi email cho tính năng quên mật khẩu (Resend, Brevo, Gmail SMTP...). | FR-AUTH-03, A-05 | Nhóm | Cao, trước Sprint làm xác thực | Open |
 | OQ-11 | Ngưỡng phân nhóm khách (VIP từ 3.000.000 đ, thân thiết từ 3 lần) và các mốc cảnh báo có đúng ý chủ tiệm không? Tên các nhóm còn lại? | BR-17, FR-CUS-05 | Chủ tiệm | Thấp | Open |
 | OQ-12 | Dữ liệu lịch sử cần nhập vào hệ thống mới: bao nhiêu tháng? Có file nào ngoài hai file đã gửi? | FR-IMP-01, FR-IMP-02 | Chủ tiệm | Trung bình | Open |
 | OQ-14 | Dashboard có hiển thị số liệu ngày chưa chốt không, hay mặc định chỉ tính ngày đã chốt? | BR-16, FR-DSH-09 | Chủ tiệm | Trung bình | Open |
