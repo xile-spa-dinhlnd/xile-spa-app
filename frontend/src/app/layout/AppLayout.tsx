@@ -1,4 +1,10 @@
-import { DashboardOutlined, LogoutOutlined, MenuOutlined, UserOutlined } from '@ant-design/icons'
+import {
+  AppstoreOutlined,
+  DashboardOutlined,
+  LogoutOutlined,
+  MenuOutlined,
+  UserOutlined,
+} from '@ant-design/icons'
 import {
   Avatar,
   Button,
@@ -21,6 +27,7 @@ const { Header, Sider, Content } = Layout
 /** Mục menu. Mỗi tính năng mới thêm một mục ở đây cùng với route của nó. */
 const menuItems: MenuProps['items'] = [
   { key: '/', icon: <DashboardOutlined />, label: 'Tổng quan' },
+  { key: '/services', icon: <AppstoreOutlined />, label: 'Dịch vụ' },
 ]
 
 function getRoleLabel(role?: UserRole): { label: string; color: string } {

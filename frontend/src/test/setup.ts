@@ -20,3 +20,13 @@ if (!window.matchMedia) {
     }),
   })
 }
+
+// jsdom không có ResizeObserver; Ant Design (Select, Table) cần nó.
+if (!('ResizeObserver' in globalThis)) {
+  class ResizeObserverStub {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  }
+  Object.defineProperty(globalThis, 'ResizeObserver', { writable: true, value: ResizeObserverStub })
+}
