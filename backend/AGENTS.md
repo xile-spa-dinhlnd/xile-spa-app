@@ -26,8 +26,8 @@ backend/
    │  │  ├─ mapper/                   # MapStructConfig dùng chung cho mọi mapper
    │  │  ├─ exception/                # ApiError, GlobalExceptionHandler, BusinessException,
    │  │  │                            #   ánh xạ XL001/XL002/XL004 (S0-07)
-   │  │  ├─ audit/                    # AuditService ghi audit_log (S1-04)
-   │  │  ├─ response/                 # PageResponse
+   │  │  ├─ audit/                    # GHI nhật ký: AuditService.record, AuditLog, AuditLogRepository, AuditAction
+   │  │  ├─ response/                 # PageResponse: định dạng chung cho API danh sách có phân trang
    │  │  └─ util/                     # MoneyUtils, DateUtils (không tính nghiệp vụ)
    │  └─ module/                      # mỗi thư mục con là một module nghiệp vụ
    │     ├─ auth/                     # FR-AUTH: đăng nhập, phiên, tài khoản
@@ -40,6 +40,7 @@ backend/
    │     ├─ staff/                    # FR-STF: nhân viên
    │     ├─ payroll/                  # FR-PAY: tiền tour, lương (R3)
    │     ├─ importer/                 # FR-IMP: nhập Excel
+   │     ├─ system/                   # FR-SYS: API xem nhật ký thay đổi (đọc từ common/audit), cấu hình hệ thống
    │     └─ sync/                     # FR-SYN: đồng bộ Google Sheets (R2)
    ├─ main/resources/
    │  ├─ application.yml              # cấu hình chung, không có bí mật
@@ -120,6 +121,16 @@ Luồng gọi và quy tắc:
 - `@Transactional` đặt ở service, không ở controller hay repository. Ghi nhận cần giữ lại kể cả khi request
   kết thúc bằng lỗi (đếm đăng nhập sai, thu hồi phiên...) chạy trong service riêng với
   `Propagation.REQUIRES_NEW` (ví dụ `AuthSecurityAuditService`).
+- **Ghi nhật ký thay đổi (BR-18):** mọi service đổi dữ liệu tài chính hoặc danh mục gọi
+  `AuditService.record(action, entityType, entityId, before, after)` (`common/audit`), **trong cùng
+  transaction** với thay đổi gốc (hàm dùng `Propagation.MANDATORY`, gọi ngoài transaction sẽ báo lỗi).
+  - `entityType` là tên bảng (`service`, `combo`, `visit`...); `action` lấy từ `AuditAction` (thêm giá trị khi cần).
+  - `before`, `after` truyền DTO, record hoặc `Map`, **không truyền entity JPA**. Trường nhạy cảm (mật khẩu,
+    token) tự được che; vẫn không cố ý đưa chúng vào.
+  - Người thực hiện lấy từ phiên đăng nhập; tác vụ hệ thống (không có người đăng nhập) để trống.
+  - Xem nhật ký: `GET /api/audit-logs` ở `module/system` (đọc qua `AuditLogQueryService`).
+  - Nhật ký chỉ thêm: không có API sửa hay xóa. Test không dọn được bảng này, nên test dùng `entityType`
+    riêng (ví dụ ngẫu nhiên) thay vì đếm toàn bảng.
 - URL: `/api/{module}/{tài-nguyên}`, danh từ số nhiều, kebab-case (`/api/catalog/services`,
   `/api/visits`). Hành động nghiệp vụ dùng `POST` lên tài nguyên con:
   `POST /api/catalog/services/{id}/deactivate`, `POST /api/closings/{date}`.

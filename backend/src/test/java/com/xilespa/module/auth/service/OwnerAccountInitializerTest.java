@@ -2,11 +2,15 @@ package com.xilespa.module.auth.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import com.xilespa.common.audit.AuditAction;
+import com.xilespa.common.audit.AuditService;
 import com.xilespa.module.auth.config.OwnerInitializerProperties;
 import com.xilespa.module.auth.entity.AppUser;
 import com.xilespa.module.auth.enums.UserRole;
@@ -31,6 +35,8 @@ class OwnerAccountInitializerTest {
 
     @Mock private PasswordEncoder passwordEncoder;
 
+    @Mock private AuditService auditService;
+
     @Test
     @DisplayName("Bỏ qua khi cấu hình enabled = false")
     void run_whenDisabled_shouldDoNothing() {
@@ -38,7 +44,8 @@ class OwnerAccountInitializerTest {
         OwnerInitializerProperties properties =
                 new OwnerInitializerProperties(false, "owner@xilespa.vn", "secret123", "Chủ tiệm");
         OwnerAccountInitializer initializer =
-                new OwnerAccountInitializer(userRepository, passwordEncoder, properties, clock);
+                new OwnerAccountInitializer(
+                        userRepository, passwordEncoder, properties, clock, auditService);
 
         // Act
         initializer.run(new DefaultApplicationArguments());
@@ -53,7 +60,8 @@ class OwnerAccountInitializerTest {
         // Arrange
         OwnerInitializerProperties properties = new OwnerInitializerProperties(true, "", "", "");
         OwnerAccountInitializer initializer =
-                new OwnerAccountInitializer(userRepository, passwordEncoder, properties, clock);
+                new OwnerAccountInitializer(
+                        userRepository, passwordEncoder, properties, clock, auditService);
 
         // Act
         initializer.run(new DefaultApplicationArguments());
@@ -70,7 +78,8 @@ class OwnerAccountInitializerTest {
                 new OwnerInitializerProperties(true, "owner@xilespa.vn", "secret123", "Chủ tiệm");
         when(userRepository.existsByRole(UserRole.OWNER)).thenReturn(true);
         OwnerAccountInitializer initializer =
-                new OwnerAccountInitializer(userRepository, passwordEncoder, properties, clock);
+                new OwnerAccountInitializer(
+                        userRepository, passwordEncoder, properties, clock, auditService);
 
         // Act
         initializer.run(new DefaultApplicationArguments());
@@ -89,7 +98,8 @@ class OwnerAccountInitializerTest {
         when(userRepository.existsByRole(UserRole.OWNER)).thenReturn(false);
         when(userRepository.existsByEmailIgnoreCase("owner@xilespa.vn")).thenReturn(true);
         OwnerAccountInitializer initializer =
-                new OwnerAccountInitializer(userRepository, passwordEncoder, properties, clock);
+                new OwnerAccountInitializer(
+                        userRepository, passwordEncoder, properties, clock, auditService);
 
         // Act
         initializer.run(new DefaultApplicationArguments());
@@ -110,7 +120,8 @@ class OwnerAccountInitializerTest {
         when(userRepository.existsByEmailIgnoreCase("owner@xilespa.vn")).thenReturn(false);
         when(passwordEncoder.encode("my_password_123")).thenReturn("hashed_password_xyz");
         OwnerAccountInitializer initializer =
-                new OwnerAccountInitializer(userRepository, passwordEncoder, properties, clock);
+                new OwnerAccountInitializer(
+                        userRepository, passwordEncoder, properties, clock, auditService);
 
         // Act
         initializer.run(new DefaultApplicationArguments());
@@ -126,5 +137,18 @@ class OwnerAccountInitializerTest {
         assertThat(saved.getRole()).isEqualTo(UserRole.OWNER);
         assertThat(saved.isEnabled()).isTrue();
         assertThat(saved.getFailedLoginCount()).isZero();
+
+        // Ghi nhật ký tạo tài khoản, không kèm mật khẩu hay hash (BR-18, NFR-SEC-02)
+        ArgumentCaptor<Object> afterCaptor = ArgumentCaptor.forClass(Object.class);
+        verify(auditService)
+                .record(
+                        eq(AuditAction.CREATE),
+                        eq("app_user"),
+                        any(),
+                        isNull(),
+                        afterCaptor.capture());
+        assertThat(afterCaptor.getValue().toString())
+                .contains("owner@xilespa.vn")
+                .doesNotContain("hashed_password_xyz", "my_password_123");
     }
 }

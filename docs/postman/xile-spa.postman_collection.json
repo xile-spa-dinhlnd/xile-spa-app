@@ -1,0 +1,585 @@
+{
+  "info": {
+    "_postman_id": "298a7047-c7e5-413a-82a5-c6bea2d7eb9a",
+    "name": "Xile Spa API",
+    "description": "Collection để thử API Xile Spa trên máy dev. Import kèm environment `xile-spa-dev.postman_environment.json`, chọn environment \"Xile Spa - dev\".\n\nChạy cả collection bằng Run collection: các request xếp theo thứ tự đăng nhập → dùng → đăng xuất. Cookie phiên (access_token, refresh_token) do Postman tự giữ; dùng Postman bản desktop và luôn gọi qua localhost.\n\nQuy tắc: thêm hoặc sửa endpoint thì cập nhật file này trong cùng PR (AGENTS.md mục 5).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "0. Hệ thống",
+      "item": [
+        {
+          "name": "Health check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/actuator/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ]
+            },
+            "description": "Kiểm tra backend đang chạy (FR-SYS-03). Công khai, không cần đăng nhập."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"status = UP\", () => pm.expect(pm.response.json().status).to.eql(\"UP\"));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "1. Xác thực (S1-01, S1-02)",
+      "item": [
+        {
+          "name": "Đăng nhập",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "FR-AUTH-01. Đặt cookie httpOnly access_token và refresh_token. Tài khoản chủ tiệm dev được tạo tự động khi backend khởi động (S1-02).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{ownerEmail}}\",\n  \"password\": \"{{ownerPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 200\", () => pm.response.to.have.status(200));",
+                  "const u = pm.response.json();",
+                  "pm.test(\"Trả thông tin người dùng\", () => { pm.expect(u.email).to.eql(pm.environment.get(\"ownerEmail\")); pm.expect(u.role).to.eql(\"OWNER\"); });",
+                  "pm.test(\"Không trả token trong body\", () => pm.expect(pm.response.text()).to.not.include(\"Token\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Thông tin người đang đăng nhập",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "me"
+              ]
+            },
+            "description": "Cần đăng nhập (cookie access_token)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Có email\", () => pm.expect(pm.response.json().email).to.be.a(\"string\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Làm mới phiên",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/refresh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "refresh"
+              ]
+            },
+            "description": "FR-AUTH-02. Không body; đọc cookie refresh_token, trả cặp cookie mới (xoay vòng)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Nhật ký thay đổi (S1-04)",
+      "item": [
+        {
+          "name": "Danh sách nhật ký",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/audit-logs?page=0&size=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "audit-logs"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "FR-SYS-01. Mới nhất trước, phân trang (page bắt đầu từ 0, size mặc định 20, tối đa 100)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 200\", () => pm.response.to.have.status(200));",
+                  "const b = pm.response.json();",
+                  "pm.test(\"Đúng định dạng phân trang\", () => { pm.expect(b.content).to.be.an(\"array\"); pm.expect(b).to.have.property(\"totalElements\"); });",
+                  "pm.test(\"Không lộ mật khẩu\", () => pm.expect(pm.response.text().toLowerCase()).to.not.include(\"passwordhash\\\":\\\"$2\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Lọc theo đối tượng",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/audit-logs?entityType=app_user&entityId=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "audit-logs"
+              ],
+              "query": [
+                {
+                  "key": "entityType",
+                  "value": "app_user"
+                },
+                {
+                  "key": "entityId",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Lọc theo entityType (tên bảng) và entityId. Ví dụ: nhật ký tạo tài khoản chủ tiệm."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 200\", () => pm.response.to.have.status(200));",
+                  "pm.response.json().content.forEach(r => pm.test(\"Đúng entityType\", () => pm.expect(r.entityType).to.eql(\"app_user\")));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Giới hạn size tối đa 100",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/audit-logs?size=5000",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "audit-logs"
+              ],
+              "query": [
+                {
+                  "key": "size",
+                  "value": "5000"
+                }
+              ]
+            },
+            "description": "size lớn hơn 100 bị giới hạn về 100."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"size = 100\", () => pm.expect(pm.response.json().size).to.eql(100));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Trường hợp lỗi (thử phá)",
+      "item": [
+        {
+          "name": "Đăng nhập sai mật khẩu",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Phải trả 401 với thông báo chung, không tiết lộ email có tồn tại. Sau request này, failed_login_count của tài khoản tăng 1.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{ownerEmail}}\",\n  \"password\": \"mat-khau-sai\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 401\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"Thông báo chung\", () => pm.expect(pm.response.json().message).to.eql(\"Email hoặc mật khẩu không đúng.\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Đăng nhập email không tồn tại",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Cùng thông báo và thời gian phản hồi xấp xỉ trường hợp sai mật khẩu (chống dò email).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"khong-ton-tai@xilespa.vn\",\n  \"password\": \"bat-ky\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 401\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"Thông báo chung\", () => pm.expect(pm.response.json().message).to.eql(\"Email hoặc mật khẩu không đúng.\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Thiếu dữ liệu đăng nhập",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Kiểm tra dữ liệu: báo lỗi tiếng Việt theo từng ô.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"\",\n  \"password\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Có lỗi theo từng ô\", () => pm.expect(pm.response.json().fieldErrors.length).to.be.above(0));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Gọi API khi chưa đăng nhập",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "me"
+              ]
+            },
+            "description": "Request này tắt cookie nên coi như chưa đăng nhập."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 401\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"code UNAUTHORIZED\", () => pm.expect(pm.response.json().code).to.eql(\"UNAUTHORIZED\"));"
+                ]
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableCookies": true
+          }
+        },
+        {
+          "name": "Xem nhật ký khi chưa đăng nhập",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/audit-logs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "audit-logs"
+              ]
+            },
+            "description": "Request này tắt cookie."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 401\", () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableCookies": true
+          }
+        },
+        {
+          "name": "Làm mới phiên khi không có cookie",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/refresh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "refresh"
+              ]
+            },
+            "description": "Request này tắt cookie."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 401\", () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableCookies": true
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Đăng xuất",
+      "item": [
+        {
+          "name": "Đăng xuất",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "FR-AUTH-02. Thu hồi refresh token, xóa cookie."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 204\", () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Gọi /me sau khi đăng xuất",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "me"
+              ]
+            },
+            "description": "Cookie đã bị xóa nên phải 401."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 401\", () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

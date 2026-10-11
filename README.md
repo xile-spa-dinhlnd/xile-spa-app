@@ -112,6 +112,7 @@ cd frontend && npm run format && npm run lint && npm run typecheck && npm test
 ## Tài liệu
 
 - [Lộ trình phiên bản (roadmap)](docs/roadmap.md)
+- [Postman collection để thử API](docs/postman/README.md)
 - [SRS: mục lục và cách đọc](docs/srs/README.md)
 - [Thiết kế CSDL (ERD)](docs/design/erd.md)
 - [ADR-0001: Lựa chọn công nghệ](docs/adr/0001-tech-stack.md)
