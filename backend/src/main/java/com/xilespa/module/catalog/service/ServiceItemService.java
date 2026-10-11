@@ -49,14 +49,15 @@ public class ServiceItemService {
     @Transactional(readOnly = true)
     public PageResponse<ServiceItemResponse> search(
             String q, Long groupId, Boolean active, int page, int size) {
-        String keyword = (q == null || q.isBlank()) ? null : q.trim();
+        String namePattern = likePattern(q);
         PageRequest pageable =
                 PageRequest.of(
                         Math.max(page, 0),
                         Math.clamp(size, 1, MAX_PAGE_SIZE),
                         Sort.by("group.sortOrder", "name", "id"));
         return PageResponse.from(
-                serviceRepository.search(keyword, groupId, active, pageable), mapper::toResponse);
+                serviceRepository.search(namePattern, groupId, active, pageable),
+                mapper::toResponse);
     }
 
     @Transactional(readOnly = true)
@@ -176,6 +177,20 @@ public class ServiceItemService {
             }
             throw e;
         }
+    }
+
+    /** Mẫu LIKE viết thường, thoát ký tự đặc biệt % _ \\ của người dùng; rỗng thì lấy tất cả. */
+    static String likePattern(String q) {
+        if (q == null || q.isBlank()) {
+            return "%";
+        }
+        String escaped =
+                q.trim()
+                        .toLowerCase(java.util.Locale.ROOT)
+                        .replace("\\", "\\\\")
+                        .replace("%", "\\%")
+                        .replace("_", "\\_");
+        return "%" + escaped + "%";
     }
 
     private static long tourFeeOf(ServiceItemRequest request) {

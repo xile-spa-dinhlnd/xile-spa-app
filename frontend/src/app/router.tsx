@@ -1,5 +1,6 @@
 import type { RouteObject } from 'react-router'
 import { authRoutes, ProtectedRoute } from '@/features/auth'
+import { catalogRoutes } from '@/features/catalog'
 import { dashboardRoutes } from '@/features/dashboard'
 import { AppLayout } from './layout/AppLayout'
 import { NotFoundPage } from './NotFoundPage'
@@ -15,7 +16,7 @@ export const routes: RouteObject[] = [
     children: [
       {
         element: <AppLayout />,
-        children: [...dashboardRoutes, { path: '*', element: <NotFoundPage /> }],
+        children: [...dashboardRoutes, ...catalogRoutes, { path: '*', element: <NotFoundPage /> }],
       },
     ],
   },

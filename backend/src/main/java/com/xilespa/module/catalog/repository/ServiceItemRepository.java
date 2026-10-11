@@ -11,18 +11,21 @@ import org.springframework.data.repository.query.Param;
 public interface ServiceItemRepository extends JpaRepository<ServiceItem, Long> {
 
     /**
-     * Tìm theo tên (không phân biệt hoa thường), lọc nhóm và trạng thái; tham số null là bỏ lọc.
+     * Tìm theo tên, lọc nhóm và trạng thái; {@code groupId}, {@code active} null là bỏ lọc.
+     *
+     * @param namePattern mẫu LIKE đã viết thường, ví dụ {@code %gội%}; {@code %} là lấy tất cả.
+     *     Không truyền null: PostgreSQL không đoán được kiểu tham số chuỗi null (lỗi lower(bytea)).
      */
     @EntityGraph(attributePaths = "group")
     @Query(
             """
             SELECT s FROM ServiceItem s
-            WHERE (:q IS NULL OR LOWER(s.name) LIKE LOWER(CONCAT('%', :q, '%')))
+            WHERE LOWER(s.name) LIKE :namePattern ESCAPE '\\'
               AND (:groupId IS NULL OR s.group.id = :groupId)
               AND (:active IS NULL OR s.active = :active)
             """)
     Page<ServiceItem> search(
-            @Param("q") String q,
+            @Param("namePattern") String namePattern,
             @Param("groupId") Long groupId,
             @Param("active") Boolean active,
             Pageable pageable);

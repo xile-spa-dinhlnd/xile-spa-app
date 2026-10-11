@@ -250,6 +250,64 @@ class ServiceItemControllerIT {
     }
 
     @Test
+    void listWithoutSearchTermWorks() throws Exception {
+        // Lỗi thật đã gặp: không có q thì PostgreSQL báo lower(bytea) và API trả 500.
+        create(prefix + "Bất kỳ", 1000);
+
+        mockMvc.perform(get("/api/catalog/services").with(loggedIn))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").isNumber());
+        mockMvc.perform(get("/api/catalog/services").with(loggedIn).param("active", "true"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void filtersWithoutSearchTermUseTheSameParamsAsTheUi() throws Exception {
+        // Đúng các tổ hợp giao diện gửi: lọc nhóm hoặc trạng thái mà không có q, có page và size.
+        long active = create(prefix + "Đang bán", 1000);
+        long inactive = create(prefix + "Đã ngừng", 1000);
+        mockMvc.perform(post("/api/catalog/services/" + inactive + "/deactivate").with(loggedIn));
+
+        mockMvc.perform(
+                        get("/api/catalog/services")
+                                .with(loggedIn)
+                                .param("groupId", String.valueOf(groupId))
+                                .param("active", "true")
+                                .param("page", "0")
+                                .param("size", "100"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[?(@.id == " + active + ")]").exists())
+                .andExpect(jsonPath("$.content[?(@.id == " + inactive + ")]").doesNotExist());
+        mockMvc.perform(
+                        get("/api/catalog/services")
+                                .with(loggedIn)
+                                .param("active", "false")
+                                .param("page", "0")
+                                .param("size", "100"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[?(@.id == " + inactive + ")]").exists())
+                .andExpect(jsonPath("$.content[?(@.id == " + active + ")]").doesNotExist());
+        // "Tất cả": không gửi active, thấy cả hai
+        mockMvc.perform(
+                        get("/api/catalog/services")
+                                .with(loggedIn)
+                                .param("q", prefix)
+                                .param("page", "0")
+                                .param("size", "20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(2));
+    }
+
+    @Test
+    void wildcardCharactersInSearchAreLiteral() throws Exception {
+        create(prefix + "Gội 30 phút", 1000);
+
+        mockMvc.perform(get("/api/catalog/services").with(loggedIn).param("q", prefix + "%"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(0));
+    }
+
+    @Test
     void getUnknownServiceIs404() throws Exception {
         mockMvc.perform(get("/api/catalog/services/999999").with(loggedIn))
                 .andExpect(status().isNotFound())
