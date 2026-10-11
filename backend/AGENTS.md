@@ -134,6 +134,9 @@ Luồng gọi và quy tắc:
 
 - Schema chỉ đổi bằng Flyway (`src/main/resources/db/migration/`). **Không sửa `V1`, `V2`**; thêm `V3__...`.
 - `spring.jpa.hibernate.ddl-auto` luôn là `validate` hoặc `none`, không bao giờ `update`/`create`.
+- Múi giờ: JVM chạy với múi giờ mặc định UTC (`XileSpaApplication.main`, task test). Múi giờ nghiệp vụ
+  `Asia/Ho_Chi_Minh` chỉ lấy từ `Clock` (`config/TimeConfig`); không dùng `ZoneId.systemDefault()`,
+  `LocalDate.now()` hay `Instant.now()` không qua `Clock`.
 - Tiền: `long` (Java) / `bigint` (SQL). Không `BigDecimal` cho số tiền đồng, không `double`.
 - Các ràng buộc và trigger ở DB là rào chắn cuối. Không viết code vòng qua chúng.
 
