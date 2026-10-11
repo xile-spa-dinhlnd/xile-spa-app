@@ -31,7 +31,10 @@ class OwnerAccountInitializerIT {
     @AfterEach
     void tearDown() {
         // Dọn dẹp để không để lại dữ liệu trong container dùng chung giữa các test
-        userRepository.deleteAll();
+        // Chỉ xóa user của test này (test khác có dữ liệu tham chiếu tới user của chúng)
+        userRepository
+                .findByEmailIgnoreCase("it_owner@xilespa.vn")
+                .ifPresent(userRepository::delete);
     }
 
     @Test
