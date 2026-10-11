@@ -31,6 +31,7 @@ Nhóm hai người: **Đình** và **Huy**, chia việc theo tính năng, Scrum 
 | Card đang làm, phạm vi sprint                           | `docs/backlog/sprint-0-1.md`                                                                                                  |
 | Phiên bản nào chứa gì, mốc tới v1.0.0                   | `docs/roadmap.md`                                                                                                             |
 | Nhánh, commit, Pull Request, nhịp sprint                | `CONTRIBUTING.md`                                                                                                             |
+| Thử API bằng Postman                                    | `docs/postman/` (collection và environment dev)                                                                               |
 
 Quy tắc riêng của từng phần: `backend/AGENTS.md`, `frontend/AGENTS.md`.
 
@@ -72,14 +73,18 @@ ADR-0001 trước và nói rõ trong PR**, đừng tự thêm dependency.
 
 ## 5. Quy trình làm một card
 
-1. Đọc card trong `docs/backlog/sprint-0-1.md` và các mã FR / BR mà card trỏ tới.
+1. Đọc card trong backlog của sprint (`docs/backlog/`) và các mã FR / BR mà card trỏ tới. **Chuyển trạng thái
+   card sang "Đang làm"** trong file backlog (và trên Trello).
 2. **Nêu kế hoạch trước khi viết code**: sẽ sửa file nào, thêm bảng hay API nào, test gì. Chờ người duyệt.
 3. Viết code theo quy tắc của `backend/AGENTS.md` hoặc `frontend/AGENTS.md`.
 4. Viết test cho logic nghiệp vụ. Chạy build và test tại máy trước khi commit.
 5. Tự đọc lại diff, nêu rõ phần nào còn chưa chắc.
 6. Cập nhật tài liệu trong **cùng PR** nếu hành vi đổi (SRS, ERD, README), và các file AGENTS nếu đổi
    kiến trúc hay quy ước (quy tắc 11).
-7. Nhánh, commit, PR và review theo `CONTRIBUTING.md` (nhánh `feature/S1-01-...`, Conventional Commits,
+7. **Thêm hoặc sửa endpoint thì cập nhật Postman collection** `docs/postman/xile-spa.postman_collection.json`
+   trong cùng PR: mỗi endpoint một request, có ví dụ body và kiểm tra mã trạng thái mong đợi.
+8. **Card xong thì chuyển trạng thái sang "Xong"** trong file backlog ngay trong PR của card đó.
+9. Nhánh, commit, PR và review theo `CONTRIBUTING.md` (nhánh `feature/S1-01-...`, Conventional Commits,
    squash merge). Cấu trúc thư mục theo `backend/AGENTS.md` / `frontend/AGENTS.md`, không tự đặt chỗ mới.
 
 ## 6. Khi AI lặp lại cùng một lỗi

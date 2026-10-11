@@ -1,10 +1,13 @@
 package com.xilespa.module.auth.service;
 
+import com.xilespa.common.audit.AuditAction;
+import com.xilespa.common.audit.AuditService;
 import com.xilespa.module.auth.config.OwnerInitializerProperties;
 import com.xilespa.module.auth.entity.AppUser;
 import com.xilespa.module.auth.enums.UserRole;
 import com.xilespa.module.auth.repository.AppUserRepository;
 import java.time.Clock;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,6 +32,7 @@ public class OwnerAccountInitializer implements ApplicationRunner {
     private final PasswordEncoder passwordEncoder;
     private final OwnerInitializerProperties properties;
     private final Clock clock;
+    private final AuditService auditService;
 
     @Override
     @Transactional
@@ -60,6 +64,16 @@ public class OwnerAccountInitializer implements ApplicationRunner {
                         clock.instant());
 
         userRepository.save(owner);
+        // Nhật ký: người thực hiện để trống vì do hệ thống tạo (BR-18). Không ghi mật khẩu.
+        auditService.record(
+                AuditAction.CREATE,
+                "app_user",
+                owner.getId(),
+                null,
+                Map.of(
+                        "email", owner.getEmail(),
+                        "displayName", owner.getDisplayName(),
+                        "role", owner.getRole().name()));
         log.info(
                 "Khởi tạo tài khoản chủ tiệm thành công: email='{}', displayName='{}'",
                 email,
