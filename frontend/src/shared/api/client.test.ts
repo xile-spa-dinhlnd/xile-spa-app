@@ -91,6 +91,66 @@ describe('apiRequest', () => {
 
     await expect(apiRequest('/api/x', { method: 'DELETE' })).resolves.toBeUndefined()
   })
+
+  it('gặp 401 trên API nghiệp vụ thì tự động làm mới phiên và thử lại thành công', async () => {
+    const fetchMock = vi
+      .fn()
+      // Lần 1: API ban đầu bị 401
+      .mockResolvedValueOnce(json({ code: 'UNAUTHORIZED', message: 'Token hết hạn' }, 401))
+      // Lần 2: /api/auth/refresh thành công
+      .mockResolvedValueOnce(json({ success: true }, 200))
+      // Lần 3: Thử lại API ban đầu thành công
+      .mockResolvedValueOnce(json({ id: 10, name: 'Gội đầu' }, 200))
+
+    vi.stubGlobal('fetch', fetchMock)
+
+    const result = await apiRequest<{ id: number; name: string }>('/api/catalog/services')
+
+    expect(result).toEqual({ id: 10, name: 'Gội đầu' })
+    expect(fetchMock).toHaveBeenCalledTimes(3)
+    expect(fetchMock.mock.calls[1][0]).toBe('/api/auth/refresh')
+    expect(fetchMock.mock.calls[2][0]).toBe('/api/catalog/services')
+  })
+
+  it('gặp 401 và làm mới phiên thất bại thì gọi callback hết phiên và ném lỗi 401', async () => {
+    const onExpired = vi.fn()
+    const { onSessionExpired } = await import('./client')
+    const unsubscribe = onSessionExpired(onExpired)
+
+    const fetchMock = vi
+      .fn()
+      // Lần 1: API ban đầu bị 401
+      .mockResolvedValueOnce(json({ code: 'UNAUTHORIZED', message: 'Token hết hạn' }, 401))
+      // Lần 2: /api/auth/refresh cũng bị 401
+      .mockResolvedValueOnce(json({ code: 'UNAUTHORIZED', message: 'Refresh token hết hạn' }, 401))
+
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(apiRequest('/api/catalog/services')).rejects.toMatchObject({
+      status: 401,
+    })
+
+    expect(onExpired).toHaveBeenCalledTimes(1)
+    unsubscribe()
+  })
+
+  it('không tự động làm mới phiên khi gọi /api/auth/login bị 401', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(json({ code: 'INVALID_CREDENTIALS', message: 'Sai mật khẩu' }, 401))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(
+      apiRequest('/api/auth/login', {
+        method: 'POST',
+        body: { email: 'test@xile.vn', password: '123' },
+      }),
+    ).rejects.toMatchObject({
+      status: 401,
+    })
+
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
 })
 
 describe('buildUrl', () => {
