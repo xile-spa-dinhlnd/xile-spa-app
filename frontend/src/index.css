@@ -4,3 +4,10 @@ body,
   margin: 0;
   min-height: 100%;
 }
+
+/* Viền rõ khi di chuyển bằng bàn phím (Tab) trên menu bên trái, kể cả mục đang chọn. */
+.ant-menu-item:focus-visible,
+.ant-menu:focus-visible .ant-menu-item-active {
+  outline: 2px solid #1b4d43;
+  outline-offset: 2px;
+}

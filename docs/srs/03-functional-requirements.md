@@ -35,6 +35,7 @@ Mọi yêu cầu có trạng thái ban đầu là `Draft`. Quy tắc nghiệp v�
   - Liên kết đặt lại hết hạn sau 30 phút (giá trị cấu hình được) và chỉ dùng được một lần.
   - Sau khi đặt lại thành công, toàn bộ phiên cũ bị thu hồi.
   - Mật khẩu mới phải đạt chính sách ở NFR-SEC-03.
+  - Gửi email (OQ-10): máy dev không gửi thật mà ghi liên kết ra log; production gửi qua SMTP, thông tin đọc từ biến môi trường, không ghi vào repo.
 
 ---
 
@@ -139,7 +140,7 @@ Mọi yêu cầu có trạng thái ban đầu là `Draft`. Quy tắc nghiệp v�
 | FR-VIS-01 | Tạo giao dịch: ngày (mặc định hôm nay), khách (không bắt buộc), nhiều dòng bán | M | MVP |
 | FR-VIS-02 | Dòng bán chọn dịch vụ hoặc combo. Giá niêm yết tự điền và được chụp lại tại thời điểm bán | M | MVP |
 | FR-VIS-03 | Giảm giá theo phần trăm cho từng dòng. Hệ thống tự tính tiền giảm (giá × %) | M | MVP |
-| FR-VIS-04 | Chọn hình thức thanh toán: chuyển khoản hoặc tiền mặt | M | MVP |
+| FR-VIS-04 | Chọn hình thức thanh toán: chuyển khoản, tiền mặt, hoặc chia hai hình thức trong một giao dịch (tổng phải bằng số khách phải trả, OQ-07) | M | MVP |
 | FR-VIS-05 | Chọn người thực hiện (KTV hoặc chủ tiệm) cho từng dòng bán | M | MVP |
 | FR-VIS-06 | Lưu tiền tour tại thời điểm bán, tự điền từ dịch vụ và chỉnh tay được | M | MVP |
 | FR-VIS-07 | Sửa hoặc hủy giao dịch khi ngày chưa chốt. Hủy là đánh dấu, không xóa cứng | M | MVP |

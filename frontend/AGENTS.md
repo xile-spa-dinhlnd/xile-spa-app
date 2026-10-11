@@ -76,12 +76,23 @@ Quy tắc:
 ## Dữ liệu và trạng thái
 
 - Dữ liệu từ máy chủ dùng **TanStack Query**; không chép vào state cục bộ rồi tự đồng bộ.
-- Form dùng React Hook Form + Zod. Báo lỗi tại từng ô, thông báo tiếng Việt dễ hiểu.
+- Form dùng **React Hook Form + Zod** (schema trong `schemas.ts` của tính năng, khớp kiểm tra của backend),
+  bọc component Ant Design bằng `Controller`. Báo lỗi tại từng ô bằng `Form.Item` (`validateStatus`, `help`),
+  thông báo tiếng Việt. Dùng `useWatch` thay cho `watch` (để React Compiler không cảnh báo).
+- Lỗi từ backend gắn vào ô tương ứng bằng `setError`: mã lỗi nghiệp vụ (ví dụ `SERVICE_NAME_DUPLICATE` → ô
+  tên) và `fieldErrors` của lỗi `VALIDATION_FAILED`; lỗi khác hiện bằng `message.error`. Mẫu:
+  `features/catalog/components/ServiceFormDrawer.tsx`.
+- Danh sách phân trang dùng kiểu `PageResponse<T>` (`shared/api/page.ts`), trang bắt đầu từ 0; ô tìm kiếm dùng
+  `useDebounce`. Máy tính hiển thị bảng (`Table`), điện thoại hiển thị danh sách thẻ (`Card`), chọn theo
+  `Grid.useBreakpoint()`.
+- Trang danh sách có lọc: khi đang lọc thì hiện nút **"Xóa bộ lọc"**, danh sách trống thì nói rõ "không có kết
+  quả khớp bộ lọc" (không để trang trắng); lỗi tải dữ liệu hiện `Alert` có nút "Thử lại", không im lặng.
 
 ## Tiền và ngày
 
 - **Không tự tính tiền ở giao diện** (tiền giảm, tổng doanh thu, thực nhận...). Backend là nơi tính; giao diện chỉ hiển thị.
-- Giao diện chỉ **định dạng** số tiền nguyên đồng thành `1.234.000 đ`; ô nhập chỉ nhận chữ số.
+- Giao diện chỉ **định dạng** số tiền nguyên đồng thành `1.234.000 đ` (`formatMoney`); ô nhập tiền luôn dùng
+  `shared/components/MoneyInput` (chỉ nhận chữ số, trả số nguyên ≥ 0 hoặc null).
 - Ngày theo giờ `Asia/Ho_Chi_Minh`, hiển thị dd/MM/yyyy.
 
 ## Bảo mật

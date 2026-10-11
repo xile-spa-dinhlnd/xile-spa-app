@@ -15,6 +15,11 @@ public enum ErrorCode {
     METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "Thao tác không được hỗ trợ."),
     CONFLICT(HttpStatus.CONFLICT, "Dữ liệu đã thay đổi hoặc bị trùng, vui lòng thử lại."),
 
+    // Danh mục dịch vụ (module catalog)
+    SERVICE_NAME_DUPLICATE(HttpStatus.CONFLICT, "Tên dịch vụ đã tồn tại."),
+    SERVICE_GROUP_NOT_FOUND(
+            HttpStatus.BAD_REQUEST, "Nhóm dịch vụ không tồn tại hoặc đã ngừng sử dụng."),
+
     // Lỗi do trigger của cơ sở dữ liệu ném ra (docs/design/erd.md mục 5.5), xem DatabaseErrors.
     DAY_CLOSED(
             HttpStatus.CONFLICT,

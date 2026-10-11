@@ -7,7 +7,7 @@ Các quy tắc này được rút ra từ hai file Excel tham khảo và từ c�
 | ID | Quy tắc |
 |---|---|
 | BR-01 | Mọi số tiền lưu bằng **số nguyên đồng** (VND không có phần lẻ). Không dùng số thực. Hiển thị theo định dạng Việt Nam, ví dụ `1.234.000 đ`. |
-| BR-02 | Múi giờ nghiệp vụ là `Asia/Ho_Chi_Minh`. "Ngày" của giao dịch là **ngày làm việc** do người dùng chọn (mặc định hôm nay theo giờ Việt Nam), lưu tách biệt với thời điểm tạo bản ghi. Ranh giới ngày là 00:00. **[Cần xác nhận, OQ-02]** |
+| BR-02 | Múi giờ nghiệp vụ là `Asia/Ho_Chi_Minh`. "Ngày" của giao dịch là **ngày làm việc** do người dùng chọn (mặc định hôm nay theo giờ Việt Nam), lưu tách biệt với thời điểm tạo bản ghi. Nếu nhập trước **giờ chốt ngày (mặc định 04:00, cấu hình được)** thì ngày mặc định là hôm trước, để khách làm sau nửa đêm vẫn tính vào ngày hôm đó. Không chặn nhập ngoài giờ mở cửa. *(Đã chốt, OQ-02)* |
 
 ## Giao dịch, giá và doanh thu
 
@@ -33,7 +33,7 @@ Các quy tắc này được rút ra từ hai file Excel tham khảo và từ c�
 
 | ID | Quy tắc |
 |---|---|
-| BR-10 | Khách được xác định bằng **số điện thoại** (chuẩn hóa về một định dạng, duy nhất). Giao dịch có thể ghi cho khách vãng lai không có hồ sơ. **[Cần xác nhận, OQ-08]** |
+| BR-10 | Khách được xác định bằng **số điện thoại** (chuẩn hóa về một định dạng, duy nhất). Khách vãng lai không có SĐT thì không tạo hồ sơ; giao dịch ghi với khách để trống. Nhập SĐT đã có thì gợi ý mở hồ sơ cũ thay vì tạo mới. *(Đã chốt, OQ-08)* |
 | BR-11 | Số ngày chưa quay lại = ngày hiện tại − ngày cuối đến (theo giờ Việt Nam). **Tính khi truy vấn, không lưu**. Nhóm cảnh báo theo mốc 14, 30, 45, 60 ngày. |
 | BR-17 | Phân nhóm khách đề xuất theo Excel: **VIP** nếu tổng chi tiêu ≥ 3.000.000 đ; **Khách thân thiết** nếu số lần đến ≥ 3; **Khách mới** nếu đến 1 lần. Ngưỡng cấu hình được ở R2. **[Cần xác nhận, OQ-11]** |
 | BR-12 | **Gói liệu trình:** tổng buổi = số buổi mua + buổi tặng; còn lại = tổng − đã dùng. Trạng thái: *Hết buổi* khi còn lại ≤ 0; *Hết hạn* khi quá ngày hết hạn; còn lại là *Đang dùng*. Cảnh báo "sắp hết" khi còn ≤ 2 buổi. |
@@ -43,7 +43,7 @@ Các quy tắc này được rút ra từ hai file Excel tham khảo và từ c�
 
 | ID | Quy tắc |
 |---|---|
-| BR-13 | **Tiền tour** là tiền công của người làm trên mỗi dòng bán. Mặc định lấy từ dịch vụ, được chụp lại theo dòng bán (BR-03) và chỉnh tay được. Khi người làm là chủ tiệm thì tour bằng 0. Tour của combo và liệu trình **[Cần xác nhận, OQ-06]**. |
+| BR-13 | **Tiền tour** là tiền công của người làm trên mỗi dòng bán. Mặc định lấy từ dịch vụ, được chụp lại theo dòng bán (BR-03) và chỉnh tay được. Khi người làm là chủ tiệm thì tour bằng 0. Tour của combo **tạm thời** lấy theo mức tour mặc định của combo (mặc định 0), chụp lại theo dòng và chỉnh tay được; cách tính có thể đổi về sau mà không ảnh hưởng giao dịch cũ. *(Đã chốt tạm, OQ-06)* |
 | BR-14 | **Tách phát sinh khỏi chi trả.** Tiền tour phát sinh được cộng dồn từ các dòng bán. Các khoản đã trả (trả trong ngày, tạm ứng, trả cuối tháng) ghi riêng. `Còn nợ = phát sinh − đã trả`. Nhờ vậy cả hai cách trả lương đều theo dõi được. |
 
 ## Kiểm soát

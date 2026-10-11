@@ -29,7 +29,9 @@ Nhóm hai người: **Đình** và **Huy**, chia việc theo tính năng, Scrum 
 | Thuật ngữ, tên trường                                   | `docs/srs/06-data-dictionary.md`                                                                                              |
 | Chưa rõ nghiệp vụ, thấy mâu thuẫn                       | `docs/srs/07-open-questions.md` (mã OQ) — **hỏi lại, đừng tự quyết**                                                          |
 | Card đang làm, phạm vi sprint                           | `docs/backlog/sprint-0-1.md`                                                                                                  |
+| Phiên bản nào chứa gì, mốc tới v1.0.0                   | `docs/roadmap.md`                                                                                                             |
 | Nhánh, commit, Pull Request, nhịp sprint                | `CONTRIBUTING.md`                                                                                                             |
+| Thử API bằng Postman                                    | `docs/postman/` (collection và environment dev)                                                                               |
 
 Quy tắc riêng của từng phần: `backend/AGENTS.md`, `frontend/AGENTS.md`.
 
@@ -42,12 +44,13 @@ JUnit 5 + Testcontainers · Vitest · Docker Compose · GitHub Actions.
 Chi tiết và lý do: `docs/adr/0001-tech-stack.md`. **Muốn thêm thư viện hoặc đổi cách làm thì đối chiếu
 ADR-0001 trước và nói rõ trong PR**, đừng tự thêm dependency.
 
-## 4. Mười quy tắc bắt buộc
+## 4. Quy tắc bắt buộc
 
 1. **Tiền là số nguyên đồng.** Không `float`, không `double` cho tiền (BR-01). Định dạng `1.234.000 đ`
    chỉ ở tầng hiển thị.
-2. **Không sửa, không xóa migration đã có** (`V1__`, `V2__`, ...). Mọi thay đổi cấu trúc là một file
-   `V{n}__mô_tả.sql` mới. Không bao giờ sửa schema bằng tay ngoài Flyway.
+2. **Mọi thay đổi schema phải có migration Flyway mới** (`V{n}__mô_tả.sql`). Không sửa, không xóa migration
+   đã có (`V1__`, `V2__`, ...). **Không dựa vào Hibernate để tạo hoặc cập nhật schema** (`ddl-auto` chỉ là
+   `validate` hoặc `none`), không sửa schema bằng tay ngoài Flyway.
 3. **Không xóa cứng** dữ liệu nghiệp vụ. Dịch vụ, combo đã dùng thì chỉ ngừng bán (BR-19); giao dịch thì
    xóa mềm trạng thái `VOID` (BR-09).
 4. **Ngày đã chốt là bất biến.** Không viết code sửa dữ liệu ngày `CLOSED`, không làm chức năng "mở lại
@@ -64,16 +67,24 @@ ADR-0001 trước và nói rõ trong PR**, đừng tự thêm dependency.
    chưa có câu trả lời thì dừng và hỏi, ghi giả định vào PR thay vì đoán.
 10. **Một card một PR, PR nhỏ.** Không sửa file nằm ngoài phạm vi card (nhất là SRS, ERD, migration cũ)
     mà không nói trước.
+11. **Giữ các file AGENTS luôn đúng với code.** Khi đổi kiến trúc, cấu trúc thư mục, quy ước đặt tên, thư viện
+    hay cách làm chung thì cập nhật `AGENTS.md`, `backend/AGENTS.md` hoặc `frontend/AGENTS.md` **trong cùng
+    PR** (kèm ADR nếu là quyết định công nghệ), để cả nhóm và AI theo kịp.
 
 ## 5. Quy trình làm một card
 
-1. Đọc card trong `docs/backlog/sprint-0-1.md` và các mã FR / BR mà card trỏ tới.
+1. Đọc card trong backlog của sprint (`docs/backlog/`) và các mã FR / BR mà card trỏ tới. **Chuyển trạng thái
+   card sang "Đang làm"** trong file backlog (và trên Trello).
 2. **Nêu kế hoạch trước khi viết code**: sẽ sửa file nào, thêm bảng hay API nào, test gì. Chờ người duyệt.
 3. Viết code theo quy tắc của `backend/AGENTS.md` hoặc `frontend/AGENTS.md`.
 4. Viết test cho logic nghiệp vụ. Chạy build và test tại máy trước khi commit.
 5. Tự đọc lại diff, nêu rõ phần nào còn chưa chắc.
-6. Cập nhật tài liệu trong **cùng PR** nếu hành vi đổi (SRS, ERD, README).
-7. Nhánh, commit, PR và review theo `CONTRIBUTING.md` (nhánh `feature/S1-01-...`, Conventional Commits,
+6. Cập nhật tài liệu trong **cùng PR** nếu hành vi đổi (SRS, ERD, README), và các file AGENTS nếu đổi
+   kiến trúc hay quy ước (quy tắc 11).
+7. **Thêm hoặc sửa endpoint thì cập nhật Postman collection** `docs/postman/xile-spa.postman_collection.json`
+   trong cùng PR: mỗi endpoint một request, có ví dụ body và kiểm tra mã trạng thái mong đợi.
+8. **Card xong thì chuyển trạng thái sang "Xong"** trong file backlog ngay trong PR của card đó.
+9. Nhánh, commit, PR và review theo `CONTRIBUTING.md` (nhánh `feature/S1-01-...`, Conventional Commits,
    squash merge). Cấu trúc thư mục theo `backend/AGENTS.md` / `frontend/AGENTS.md`, không tự đặt chỗ mới.
 
 ## 6. Khi AI lặp lại cùng một lỗi
