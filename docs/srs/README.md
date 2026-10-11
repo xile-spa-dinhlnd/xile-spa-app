@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Phiên bản | 0.5 (bản nháp Sprint 0) |
+| Phiên bản | 0.6 (bản nháp Sprint 1) |
 | Trạng thái | Draft, chờ nhóm và chủ tiệm rà soát |
 | Cách viết | Tham khảo khung ISO/IEC/IEEE 29148, rút gọn cho dự án nhỏ |
 
@@ -15,6 +15,7 @@
 | 0.3 | 01/10/2026 | Sửa cách tính sổ theo đề xuất của chủ tiệm: bỏ cột "thu sau giảm", Tổng doanh thu là số trước giảm, giảm giá nằm trong Tổng chi, Thực nhận = Tổng doanh thu − Tổng chi (BR-05). Bỏ tên "Còn lại". Sửa số liệu tháng 9 (448.440 đ) và ghi nhận dòng 46 gõ tay 69.000 đ |
 | 0.4 | 01/10/2026 | Thêm thiết kế ERD (`docs/design/erd.md`) và migration V1, V2. Từ điển dữ liệu: tiền giảm tính ra, ngày đã chốt là có hàng `daily_closing`. OQ-16 có đề xuất, thêm OQ-17 |
 | 0.5 | 06/10/2026 | Thêm mục 3.15 Hỗ trợ nội dung bằng AI (FR-AI-01 đến 05, ưu tiên C, đợt R3), NFR-PRV-05 và OQ-18 đến OQ-20 |
+| 0.6 | 11/10/2026 | Chốt OQ-02 (giờ chốt ngày 04:00), OQ-06 (tour combo tạm theo combo), OQ-07 (thanh toán nhiều hình thức, bảng `visit_payment` ở V3), OQ-08 (khách vãng lai không hồ sơ, SĐT duy nhất), OQ-10 (tên miền xilespa, email dev ghi log, prod SMTP qua biến môi trường). Cập nhật BR-02, BR-10, BR-13, FR-VIS-04, FR-AUTH-03 |
 
 ## Mục lục
 

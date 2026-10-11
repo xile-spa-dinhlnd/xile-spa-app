@@ -498,9 +498,9 @@ Hệ thống mới tính theo công thức ở mục 6 nên không mắc hai l�
 
 | Mã | Nội dung | Ảnh hưởng tới schema |
 |---|---|---|
-| OQ-06 | Tiền tour của combo và liệu trình tính thế nào | Hiện `tour_fee_snapshot` nằm trên từng dòng nên đủ cho cả hai cách; chưa cần đổi |
-| OQ-07 | Một lượt đến trả bằng nhiều hình thức (vừa TM vừa CK) | Hiện `payment_method` nằm trên `visit` (một hình thức). Nếu cần tách, thêm bảng `visit_payment` ở bản sau |
-| OQ-08 | Khách không có số điện thoại | `visit.customer_id` cho phép rỗng (khách vãng lai không có hồ sơ). `customer.phone` bắt buộc (chuẩn E.164, duy nhất) trừ hồ sơ đã ẩn danh (`anonymized_at`) |
+| OQ-06 *(đã chốt tạm 11/10)* | Tiền tour của combo: mức mặc định theo `combo.tour_fee`, chụp vào `tour_fee_snapshot` | Không đổi schema |
+| OQ-07 *(đã chốt 11/10)* | Một lượt đến trả bằng nhiều hình thức (vừa TM vừa CK) | **Sẽ đổi ở migration V3 (card S3-06):** thêm bảng `visit_payment (id, visit_id, method CASH/TRANSFER, amount > 0)`, mỗi lượt có ít nhất một dòng, tổng bằng số phải trả (kiểm tra ở service); bỏ `visit.payment_method`; sửa view và trigger tổng kết ngày (`cash_collected`, `transfer_collected` cộng theo `visit_payment`). Không sửa V1 |
+| OQ-08 *(đã chốt 11/10)* | Khách không có số điện thoại | `visit.customer_id` cho phép rỗng (khách vãng lai không có hồ sơ). `customer.phone` bắt buộc (chuẩn E.164, duy nhất) trừ hồ sơ đã ẩn danh (`anonymized_at`) |
 | OQ-16 | Hủy lượt đã chốt ảnh hưởng thống kê khách | Đề xuất: `adjustment.voids_visit` + `effective_visit` (mục 5.4) |
 | OQ-17 (mới) | Tiền tour trả nhân viên có tính vào **Tổng chi** của ngày không | Chủ tiệm quyết định; nếu có, thêm loại chi phí hoặc cột vào `daily_closing` ở R3 |
 

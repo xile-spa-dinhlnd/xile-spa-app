@@ -41,20 +41,23 @@ kiểm thử lược đồ và ánh xạ lỗi XL với Postgres thật, Git Flo
 
 ### v0.3.0 — Sprint 2: Tài khoản, nhân viên, danh mục
 
+- **Card:** S2-01 đến S2-09, chi tiết ở [backlog Sprint 2 và 3](backlog/sprint-2-3.md).
 - **Phạm vi:** FR-AUTH-03, 04, 05 (quên, đổi mật khẩu, chống dò) · FR-STF-01 · FR-SVC-05 · FR-CMB-01 đến 05 ·
-  FR-IMP-01 (nhập bảng giá từ Excel).
+  FR-IMP-01 (nhập bảng giá từ Excel) · chuyển JWT sang JwtEncoder/JwtDecoder (nợ kỹ thuật từ S1-01). FR-IMP-01 và
+  phần JWT là "làm nếu dư thời gian".
 - **Xong khi:** chủ tiệm tự đặt lại được mật khẩu qua email; bảng giá, combo và nhân viên đã đủ để nhập giao dịch.
-- **Cần chốt trước:** OQ-10 (dịch vụ email, tên miền). Nếu chưa chốt kịp thì dời FR-AUTH-03 sang mốc sau.
+- **Câu hỏi mở:** OQ-10 đã chốt 11/10 (tên miền xilespa; email dev ghi log, production qua SMTP).
 
 ### v0.4.0 — Sprint 3: Khách hàng và giao dịch (phần 1)
 
+- **Card:** S3-01 đến S3-06, chi tiết ở [backlog Sprint 2 và 3](backlog/sprint-2-3.md).
 - **Phạm vi:** FR-CUS-01 đến 03 · FR-VIS-01 đến 06, FR-VIS-09 (tạo giao dịch nhiều dòng, giảm giá, thanh toán,
   người làm, tiền tour, kiểm tra dữ liệu).
 - **Xong khi:** nhập được một ngày bán hàng mẫu tháng 9 và ra đúng số trong bảng đối soát (OQ-03).
-- **Cần chốt trước:** OQ-02 (ranh giới ngày), OQ-06 (tour cho combo), OQ-07 (thanh toán hai hình thức), OQ-08
-  (khách vãng lai).
+- **Câu hỏi mở:** OQ-02, 06, 07, 08 đã chốt 11/10 (giờ chốt ngày 04:00; tour combo tạm theo combo; cho phép
+  thanh toán nhiều hình thức, thêm card S3-06; khách vãng lai không có hồ sơ, SĐT duy nhất).
 
-### v0.5.0 — Sprint 4: Giao dịch (phần 2), chi phí, chốt sổ
+### v0.5.0 — Sprint 4: Giao dịch (phần 2), chi phí, chốt sổ và bút toán
 
 - **Phạm vi:** FR-VIS-07, 08, 10, 11 · FR-EXP-01 đến 03 · FR-CLS-01 đến 06 (xem trước, chốt sổ, khóa dữ liệu, bút
   toán điều chỉnh, cảnh báo ngày chưa chốt, lịch sử chốt).
@@ -104,3 +107,4 @@ OQ-15, OQ-17 (lương), OQ-18 đến OQ-20 (AI). Phần AI cần VPS mạnh hơn
 | Ngày | Thay đổi |
 | ---- | -------- |
 | 06/10/2026 | Bản đầu tiên, sau khi phát hành v0.1.0 |
+| 11/10/2026 | Duyệt kế hoạch Sprint 2 và 3 (`backlog/sprint-2-3.md`); chốt OQ-02, 06, 07, 08, 10; thêm card S3-06 |
