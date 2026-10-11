@@ -278,7 +278,376 @@
       ]
     },
     {
-      "name": "3. Trường hợp lỗi (thử phá)",
+      "name": "3. Dịch vụ (S1-05)",
+      "description": "Bảng giá dịch vụ (FR-SVC-01 đến 04). Mỗi lần chạy tạo một dịch vụ mới có tên kèm runId để không trùng giữa các lần chạy. Không có xóa: chỉ ngừng bán (BR-19).",
+      "item": [
+        {
+          "name": "Danh sách nhóm dịch vụ",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/catalog/service-groups",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "catalog",
+                "service-groups"
+              ]
+            },
+            "description": "Nhóm đang dùng, xếp theo thứ tự. Lưu id nhóm đầu và nhóm thứ hai vào biến để các request sau dùng."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 200\", () => pm.response.to.have.status(200));",
+                  "const g = pm.response.json();",
+                  "pm.test(\"Có ít nhất 2 nhóm\", () => pm.expect(g.length).to.be.at.least(2));",
+                  "pm.collectionVariables.set(\"groupId\", g[0].id);",
+                  "pm.collectionVariables.set(\"otherGroupId\", g[1].id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Tạo dịch vụ",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/catalog/services",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "catalog",
+                "services"
+              ]
+            },
+            "description": "FR-SVC-02. Trả 201 và header Location. Tiền là số nguyên đồng.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Gội thử {{runId}}\",\n  \"groupId\": {{groupId}},\n  \"durationMinutes\": 30,\n  \"listPrice\": 69000,\n  \"tourFee\": 10000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"runId\", Date.now());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 201\", () => pm.response.to.have.status(201));",
+                  "const s = pm.response.json();",
+                  "pm.collectionVariables.set(\"serviceId\", s.id);",
+                  "pm.test(\"Đúng dữ liệu\", () => { pm.expect(s.listPrice).to.eql(69000); pm.expect(s.tourFee).to.eql(10000); pm.expect(s.active).to.eql(true); pm.expect(s.groupName).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Tìm dịch vụ theo tên",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/catalog/services?q=gội THỬ {{runId}}&page=0&size=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "catalog",
+                "services"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "gội THỬ {{runId}}"
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "FR-SVC-01. Tìm không phân biệt hoa thường, phân trang."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Tìm thấy đúng 1\", () => pm.expect(pm.response.json().totalElements).to.eql(1));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Xem một dịch vụ",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/catalog/services/{{serviceId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "catalog",
+                "services",
+                "{{serviceId}}"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Đúng id\", () => pm.expect(pm.response.json().id).to.eql(Number(pm.collectionVariables.get(\"serviceId\"))));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sửa dịch vụ và đổi giá",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/catalog/services/{{serviceId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "catalog",
+                "services",
+                "{{serviceId}}"
+              ]
+            },
+            "description": "FR-SVC-03. Gửi đủ các trường (thay thế toàn bộ). Đổi giá thì ghi lịch sử giá; giao dịch cũ không bị ảnh hưởng.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Gội thử {{runId}}\",\n  \"groupId\": {{otherGroupId}},\n  \"durationMinutes\": 45,\n  \"listPrice\": 79000,\n  \"tourFee\": 15000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 200\", () => pm.response.to.have.status(200));",
+                  "const s = pm.response.json();",
+                  "pm.test(\"Giá mới và nhóm mới\", () => { pm.expect(s.listPrice).to.eql(79000); pm.expect(s.groupId).to.eql(Number(pm.collectionVariables.get(\"otherGroupId\"))); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Nhật ký của dịch vụ",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/audit-logs?entityType=service&entityId={{serviceId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "audit-logs"
+              ],
+              "query": [
+                {
+                  "key": "entityType",
+                  "value": "service"
+                },
+                {
+                  "key": "entityId",
+                  "value": "{{serviceId}}"
+                }
+              ]
+            },
+            "description": "Mỗi thay đổi đều ghi nhật ký (BR-18): mới nhất trước."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 200\", () => pm.response.to.have.status(200));",
+                  "const c = pm.response.json().content;",
+                  "pm.test(\"UPDATE rồi CREATE\", () => pm.expect(c.map(r => r.action)).to.eql([\"UPDATE\", \"CREATE\"]));",
+                  "pm.test(\"Ghi giá cũ và mới\", () => { pm.expect(c[0].before.listPrice).to.eql(69000); pm.expect(c[0].after.listPrice).to.eql(79000); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ngừng bán",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/catalog/services/{{serviceId}}/deactivate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "catalog",
+                "services",
+                "{{serviceId}}",
+                "deactivate"
+              ]
+            },
+            "description": "FR-SVC-04. Gọi lại khi đã ngừng bán thì không đổi gì."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"active = false\", () => pm.expect(pm.response.json().active).to.eql(false));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Lọc dịch vụ đang ngừng bán",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/catalog/services?q=Gội thử {{runId}}&active=false",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "catalog",
+                "services"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Gội thử {{runId}}"
+                },
+                {
+                  "key": "active",
+                  "value": "false"
+                }
+              ]
+            },
+            "description": "Lọc theo trạng thái (active=false) kết hợp tìm tên."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Có dịch vụ vừa ngừng bán\", () => pm.expect(pm.response.json().totalElements).to.eql(1));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Bán lại",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/catalog/services/{{serviceId}}/activate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "catalog",
+                "services",
+                "{{serviceId}}",
+                "activate"
+              ]
+            },
+            "description": "FR-SVC-04."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"active = true\", () => pm.expect(pm.response.json().active).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4. Trường hợp lỗi (thử phá)",
       "item": [
         {
           "name": "Đăng nhập sai mật khẩu",
@@ -513,11 +882,198 @@
           "protocolProfileBehavior": {
             "disableCookies": true
           }
+        },
+        {
+          "name": "Tạo dịch vụ trùng tên",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/catalog/services",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "catalog",
+                "services"
+              ]
+            },
+            "description": "Trùng tên không phân biệt hoa thường và khoảng trắng thừa (FR-SVC-02).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"  gội   THỬ {{runId}} \",\n  \"groupId\": {{groupId}},\n  \"listPrice\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 409\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"SERVICE_NAME_DUPLICATE\", () => pm.expect(pm.response.json().code).to.eql(\"SERVICE_NAME_DUPLICATE\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Tạo dịch vụ thiếu dữ liệu, giá âm",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/catalog/services",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "catalog",
+                "services"
+              ]
+            },
+            "description": "Lỗi tiếng Việt theo từng ô.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"\",\n  \"listPrice\": -1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 400\", () => pm.response.to.have.status(400));",
+                  "const f = pm.response.json().fieldErrors.map(e => e.field);",
+                  "pm.test(\"Báo lỗi name, groupId, listPrice\", () => pm.expect(f).to.include.members([\"name\", \"groupId\", \"listPrice\"]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Dịch vụ không tồn tại",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/catalog/services/999999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "catalog",
+                "services",
+                "999999"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Thông báo\", () => pm.expect(pm.response.json().message).to.eql(\"Không tìm thấy dịch vụ.\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Xóa dịch vụ (không hỗ trợ)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/catalog/services/{{serviceId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "catalog",
+                "services",
+                "{{serviceId}}"
+              ]
+            },
+            "description": "Không xóa cứng dịch vụ (BR-19): phải trả 405."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 405\", () => pm.response.to.have.status(405));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Xem dịch vụ khi chưa đăng nhập",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/catalog/services",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "catalog",
+                "services"
+              ]
+            },
+            "description": "Request này tắt cookie."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 401\", () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableCookies": true
+          }
         }
       ]
     },
     {
-      "name": "4. Đăng xuất",
+      "name": "5. Đăng xuất",
       "item": [
         {
           "name": "Đăng xuất",
@@ -580,6 +1136,24 @@
           ]
         }
       ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "runId",
+      "value": ""
+    },
+    {
+      "key": "groupId",
+      "value": ""
+    },
+    {
+      "key": "otherGroupId",
+      "value": ""
+    },
+    {
+      "key": "serviceId",
+      "value": ""
     }
   ]
 }

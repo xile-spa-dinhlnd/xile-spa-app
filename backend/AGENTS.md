@@ -59,29 +59,29 @@ Một module bên trong (ví dụ `module/catalog`), **mọi module đều theo 
 ```
 catalog/
 ├─ controller/
-│  ├─ ServiceController.java          # REST: nhận/trả DTO, @Valid, không có logic
-│  └─ ComboController.java
+│  ├─ ServiceItemController.java      # REST: nhận/trả DTO, @Valid, không có logic
+│  └─ ServiceGroupController.java
 ├─ service/
-│  ├─ ServiceService.java             # nghiệp vụ + @Transactional; module khác chỉ gọi vào đây
-│  ├─ ComboService.java
+│  ├─ ServiceItemService.java         # nghiệp vụ + @Transactional + ghi audit; module khác chỉ gọi vào đây
 │  └─ model/                          # kiểu dữ liệu nội bộ của service (record), không trả ra API
 ├─ repository/
-│  └─ ServiceRepository.java          # Spring Data JPA
+│  ├─ ServiceItemRepository.java      # Spring Data JPA
+│  ├─ ServiceGroupRepository.java
+│  └─ ServicePriceHistoryRepository.java
 ├─ entity/
-│  ├─ Service.java                    # entity JPA, ánh xạ đúng bảng trong migration
+│  ├─ ServiceItem.java                # entity JPA của bảng service (không đặt tên "Service", xem dưới)
+│  ├─ ServiceGroup.java
 │  └─ ServicePriceHistory.java
-├─ enums/
-│  └─ ServiceStatus.java              # enum dùng cho cột của entity, mỗi enum một file
+├─ enums/                             # enum dùng cho cột của entity, mỗi enum một file
 ├─ dto/
 │  ├─ request/
-│  │  ├─ CreateServiceRequest.java    # record + annotation kiểm tra (@NotBlank, @PositiveOrZero...)
-│  │  └─ UpdateServiceRequest.java
+│  │  └─ ServiceItemRequest.java      # record + annotation kiểm tra (@NotBlank, @PositiveOrZero...)
 │  └─ response/
-│     └─ ServiceResponse.java         # record
+│     ├─ ServiceItemResponse.java     # record
+│     └─ ServiceGroupResponse.java
 ├─ mapper/
-│  └─ ServiceMapper.java              # entity ↔ DTO bằng MapStruct (interface @Mapper)
-└─ exception/
-   └─ ServiceNotFoundException.java   # kế thừa BusinessException ở common
+│  └─ CatalogMapper.java              # entity → DTO bằng MapStruct (interface @Mapper)
+└─ exception/                         # exception riêng của module (kế thừa BusinessException), nếu cần
 ```
 
 Thư mục nào chưa có file thì chưa tạo. Module nhỏ (như `dashboard`) có thể không có `entity/`, `repository/`
@@ -106,6 +106,11 @@ Luồng gọi và quy tắc:
   3. Không map từ Request vào các trường nhạy cảm của entity (id, trạng thái, giá đã chốt, `created_by`...):
      đánh dấu `@Mapping(target = "...", ignore = true)` rồi gán trong service.
   4. Mapping quá phức tạp thì được viết tay (`default` method hoặc lớp riêng) trong cùng `mapper/`.
+- Không đặt tên entity trùng annotation của Spring (`Service`, `Component`, `Repository`...): ví dụ bảng
+  `service` ánh xạ entity `ServiceItem`.
+- POST và PUT nhận cùng các trường thì dùng chung một request DTO (`ServiceItemRequest`); PUT là thay thế
+  toàn bộ. Khác trường thì tách `Create...Request` / `Update...Request`.
+- Người đang đăng nhập: `security/CurrentUser.id()` (rỗng nếu là tác vụ hệ thống).
 - Enum dùng cho cột của entity đặt ở `module/<tên>/enums/`, mỗi enum một file; lưu bằng
   `@Enumerated(EnumType.STRING)`.
 - Kết quả nội bộ của service mà không được trả thẳng ra API (ví dụ chứa token) đặt ở `service/model/`,
@@ -138,6 +143,9 @@ Luồng gọi và quy tắc:
   `common`.
 - Module mới: tạo thư mục trong `module/` theo đúng khuôn trên, cập nhật cây thư mục ở file này và tên
   feature tương ứng ở `frontend/AGENTS.md`.
+- Test tích hợp dùng chung một PostgreSQL trong cả lượt chạy: **không `deleteAll()` các bảng dùng chung**
+  (app_user, service...), vì bảng chỉ thêm (audit_log, lịch sử giá) có thể tham chiếu tới chúng. Mỗi test tạo
+  dữ liệu có tên hoặc tiền tố riêng (ví dụ ngẫu nhiên) và chỉ dọn dữ liệu của chính nó.
 - Test đặt cùng package với lớp được test: `ServiceServiceTest` (đơn vị, Mockito), `ServiceControllerIT`
   (tích hợp, Testcontainers + MockMvc).
 

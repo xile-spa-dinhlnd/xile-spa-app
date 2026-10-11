@@ -36,8 +36,7 @@ class AuthControllerIT {
 
     @BeforeEach
     void setUp() {
-        refreshTokenRepository.deleteAll();
-        userRepository.deleteAll();
+        cleanUp();
 
         testUser =
                 new AppUser(
@@ -51,8 +50,7 @@ class AuthControllerIT {
 
     @AfterEach
     void tearDown() {
-        refreshTokenRepository.deleteAll();
-        userRepository.deleteAll();
+        cleanUp();
     }
 
     @Test
@@ -264,5 +262,16 @@ class AuthControllerIT {
                 .andExpect(status().isNoContent())
                 .andExpect(cookie().maxAge(CookieHelper.ACCESS_TOKEN_COOKIE, 0))
                 .andExpect(cookie().maxAge(CookieHelper.REFRESH_TOKEN_COOKIE, 0));
+    }
+
+    /**
+     * Chỉ xóa dữ liệu của chính test này. Không xóa toàn bộ app_user vì test khác (nhật ký, lịch sử
+     * giá) có dòng tham chiếu tới user của nó.
+     */
+    private void cleanUp() {
+        refreshTokenRepository.deleteAll();
+        userRepository
+                .findByEmailIgnoreCase("auth_it@xilespa.vn")
+                .ifPresent(userRepository::delete);
     }
 }

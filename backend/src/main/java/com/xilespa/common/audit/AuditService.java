@@ -1,14 +1,12 @@
 package com.xilespa.common.audit;
 
-import com.xilespa.security.UserPrincipal;
+import com.xilespa.security.CurrentUser;
 import java.time.Clock;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -59,21 +57,13 @@ public class AuditService {
         AuditLog entry =
                 new AuditLog(
                         clock.instant(),
-                        currentActorId(),
+                        CurrentUser.id().orElse(null),
                         action,
                         entityType,
                         entityId == null ? null : String.valueOf(entityId),
                         toMaskedJson(before),
                         toMaskedJson(after));
         auditLogRepository.save(entry);
-    }
-
-    private Long currentActorId() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null && auth.getPrincipal() instanceof UserPrincipal principal) {
-            return principal.id();
-        }
-        return null;
     }
 
     private String toMaskedJson(Object value) {
