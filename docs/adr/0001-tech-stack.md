@@ -52,3 +52,8 @@ Hệ thống quản trị cho một tiệm nhỏ, một người dùng chính (c
   reflection), build báo lỗi khi quên map một trường. Mapper chỉ chép dữ liệu, không chứa logic nghiệp vụ
   (quy tắc trong `backend/AGENTS.md`). Đã cân nhắc: viết tay (dài, dễ sót trường), ModelMapper (reflection, lỗi
   chỉ lộ lúc chạy).
+- **11/10/2026 (S1-01):** Thêm **Lombok**, dùng có giới hạn: `@Getter` và `@NoArgsConstructor(PROTECTED)` cho
+  entity, `@RequiredArgsConstructor` cho service và controller. Cấm `@Data`, `@Setter`, `@Builder`,
+  `@AllArgsConstructor` (chặn trong `lombok.config`) để entity chỉ đổi trạng thái qua method nghiệp vụ. Thêm
+  `lombok-mapstruct-binding` và đặt Lombok trước MapStruct trong annotation processor. Lý do: bớt code getter
+  và constructor viết tay, phổ biến trong dự án Spring ở Việt Nam.
