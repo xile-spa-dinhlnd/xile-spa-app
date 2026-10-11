@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "com.xilespa"
-version = "0.2.0-SNAPSHOT"
+version = "0.2.0"
 
 java {
     toolchain {
