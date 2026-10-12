@@ -88,6 +88,7 @@ export function LoginPage() {
 
         <LoginForm
           onSubmit={handleSubmit}
+          onForgotPassword={() => navigate('/forgot-password')}
           isLoading={loginMutation.isPending}
           errorMessage={errorMessage}
         />

@@ -80,15 +80,44 @@ public class AppUser {
 
     // --- Domain Methods (Hành vi nghiệp vụ) ---
 
-    /** Ghi nhận một lần đăng nhập thất bại (chống dò mật khẩu, FR-AUTH-05). */
-    public void recordFailedLogin(Instant now) {
+    /** Kiểm tra xem tài khoản có đang bị khóa tạm thời tại thời điểm xét hay không (FR-AUTH-05). */
+    public boolean isLocked(Instant now) {
+        return this.lockedUntil != null && this.lockedUntil.isAfter(now);
+    }
+
+    /**
+     * Ghi nhận một lần đăng nhập thất bại và tạm khóa tài khoản nếu vượt quá ngưỡng (FR-AUTH-05).
+     *
+     * @param maxFailedAttempts Số lần sai tối đa được phép.
+     * @param lockDuration Thời gian tạm khóa.
+     * @param now Thời điểm xảy ra.
+     */
+    public void recordFailedLogin(
+            int maxFailedAttempts, java.time.Duration lockDuration, Instant now) {
+        if (this.lockedUntil != null && !this.lockedUntil.isAfter(now)) {
+            this.failedLoginCount = 0;
+            this.lockedUntil = null;
+        }
+
         this.failedLoginCount++;
+        if (this.failedLoginCount >= maxFailedAttempts) {
+            this.lockedUntil = now.plus(lockDuration);
+        }
         this.updatedAt = now;
     }
 
-    /** Ghi nhận đăng nhập thành công: xóa bộ đếm lỗi và cập nhật thời điểm đăng nhập gần nhất. */
+    /** Ghi nhận một lần đăng nhập thất bại với tham số thời điểm mặc định. */
+    public void recordFailedLogin(Instant now) {
+        recordFailedLogin(5, java.time.Duration.ofMinutes(15), now);
+    }
+
+    /**
+     * Ghi nhận đăng nhập thành công: xóa bộ đếm lỗi, giải phóng trạng thái khóa và cập nhật thời
+     * điểm đăng nhập gần nhất.
+     */
     public void recordSuccessfulLogin(Instant now) {
         this.failedLoginCount = 0;
+        this.lockedUntil = null;
         this.lastLoginAt = now;
         this.updatedAt = now;
     }

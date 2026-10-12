@@ -22,5 +22,10 @@ xile:
       access-token-duration: 15m
       refresh-token-duration: 7d
       cookie-secure: false
+    auth:
+      max-failed-attempts: 5
+      lock-duration: 15m
+      password-reset-duration: 30m
+      reset-password-base-url: http://localhost:5173/reset-password
 
 

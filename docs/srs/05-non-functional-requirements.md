@@ -10,7 +10,7 @@ Các con số dưới đây là **mục tiêu khởi đầu**, được chọn c
 | NFR-SEC-02 | Mật khẩu băm bằng thuật toán chuyên dụng (argon2id hoặc bcrypt), không lưu và không ghi log mật khẩu gốc. | M |
 | NFR-SEC-03 | Chính sách mật khẩu: tối thiểu 10 ký tự, chặn mật khẩu quá phổ biến. | M |
 | NFR-SEC-04 | Token đặt trong cookie `httpOnly`, `Secure`, `SameSite`. Access token sống ngắn, refresh token xoay vòng và thu hồi được. | M |
-| NFR-SEC-05 | Giới hạn tốc độ (rate limit) cho đăng nhập và quên mật khẩu. | S |
+| NFR-SEC-05 | Giới hạn tốc độ (rate limit) cho đăng nhập và quên mật khẩu để ngăn DoS làm cạn kiệt CPU do chi phí tính toán băm BCrypt/Argon2 (triển khai ở Caddy reverse proxy hoặc Spring filter trước khi chạm tới BCrypt). | S |
 | NFR-SEC-06 | Chống các lỗi phổ biến theo OWASP Top 10 (SQL injection, XSS, CSRF, kiểm soát truy cập). Kiểm tra dữ liệu đầu vào ở phía máy chủ. | M |
 | NFR-SEC-07 | Bí mật (khóa Google, mật khẩu cơ sở dữ liệu, khóa JWT) lưu ngoài mã nguồn, trong biến môi trường hoặc secret của hệ thống triển khai. Không commit lên Git. | M |
 | NFR-SEC-08 | Máy chủ: tường lửa chỉ mở cổng cần thiết, đăng nhập SSH bằng khóa, tắt mật khẩu, cài fail2ban. | S |

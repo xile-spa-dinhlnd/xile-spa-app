@@ -20,10 +20,11 @@ public class AuthSecurityAuditService {
 
     private final AppUserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final com.xilespa.module.auth.config.AuthSecurityProperties authSecurityProperties;
 
     /**
      * Ghi nhận một lần đăng nhập thất bại vào CSDL trong transaction độc lập (FR-AUTH-05). Đảm bảo
-     * bộ đếm không bị rollback khi ném BusinessException 401.
+     * bộ đếm và trạng thái tạm khóa không bị rollback khi ném BusinessException 401.
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void recordFailedLogin(Long userId, Instant now) {
@@ -31,7 +32,10 @@ public class AuthSecurityAuditService {
                 .findById(userId)
                 .ifPresent(
                         user -> {
-                            user.recordFailedLogin(now);
+                            user.recordFailedLogin(
+                                    authSecurityProperties.maxFailedAttempts(),
+                                    authSecurityProperties.lockDuration(),
+                                    now);
                             userRepository.save(user);
                         });
     }

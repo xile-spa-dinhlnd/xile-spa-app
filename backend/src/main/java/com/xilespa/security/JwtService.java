@@ -1,41 +1,54 @@
 package com.xilespa.security;
 
+import com.nimbusds.jose.jwk.source.ImmutableSecret;
+import com.nimbusds.jose.jwk.source.JWKSource;
+import com.nimbusds.jose.proc.SecurityContext;
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
-import java.util.Base64;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.Optional;
-import javax.crypto.Mac;
+import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
+import org.springframework.security.oauth2.jwt.JwsHeader;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtClaimsSet;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
+import org.springframework.security.oauth2.jwt.JwtException;
+import org.springframework.security.oauth2.jwt.JwtTimestampValidator;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.stereotype.Service;
-import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 /**
- * Xử lý tạo và xác thực Access Token (JWT HMAC-SHA256). Băm refresh token: {@link TokenHasher}. Sử
- * dụng JDK JCA chuẩn và Jackson 3, không cần dependency bổ sung (ADR-0001, NFR-SEC-04).
+ * Xử lý tạo và xác thực Access Token (JWT HMAC-SHA256). Sử dụng {@link NimbusJwtEncoder} và {@link
+ * NimbusJwtDecoder} của Spring Security OAuth2 JOSE (S2-04, ADR-0001). Băm refresh token: {@link
+ * TokenHasher}.
  */
 @Service
 public class JwtService {
 
     private static final Logger log = LoggerFactory.getLogger(JwtService.class);
     private static final String HMAC_ALGORITHM = "HmacSHA256";
-    private static final Base64.Encoder B64_URL_ENCODER = Base64.getUrlEncoder().withoutPadding();
-    private static final Base64.Decoder B64_URL_DECODER = Base64.getUrlDecoder();
 
     private final Clock clock;
-    private final ObjectMapper objectMapper;
     private final JwtProperties properties;
-    private final SecretKeySpec secretKeySpec;
+    private final JwtEncoder jwtEncoder;
+    private final JwtDecoder jwtDecoder;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public JwtService(Clock clock, JwtProperties properties) {
+        this(clock, null, properties);
+    }
 
     public JwtService(Clock clock, ObjectMapper objectMapper, JwtProperties properties) {
         this.clock = clock;
-        this.objectMapper = objectMapper;
         this.properties = properties;
 
         String secret = properties.secret();
@@ -47,8 +60,18 @@ public class JwtService {
             throw new IllegalStateException(
                     "JWT secret key phải có độ dài ít nhất 32 bytes (256 bits) cho thuật toán HMAC-SHA256 (NFR-SEC-04).");
         }
-        this.secretKeySpec =
+
+        SecretKey secretKey =
                 new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), HMAC_ALGORITHM);
+        JWKSource<SecurityContext> jwkSource = new ImmutableSecret<>(secretKey);
+        this.jwtEncoder = new NimbusJwtEncoder(jwkSource);
+
+        NimbusJwtDecoder decoder =
+                NimbusJwtDecoder.withSecretKey(secretKey).macAlgorithm(MacAlgorithm.HS256).build();
+        JwtTimestampValidator timestampValidator = new JwtTimestampValidator(Duration.ZERO);
+        timestampValidator.setClock(clock);
+        decoder.setJwtValidator(timestampValidator);
+        this.jwtDecoder = decoder;
     }
 
     /** Sinh JWT Access Token (HMAC-SHA256) với thời hạn cấu hình. */
@@ -57,28 +80,19 @@ public class JwtService {
         Instant expiresAt = now.plus(properties.accessTokenDuration());
 
         try {
-            Map<String, Object> header = Map.of("alg", "HS256", "typ", "JWT");
-            String headerJson = objectMapper.writeValueAsString(header);
-            String headerEncoded =
-                    B64_URL_ENCODER.encodeToString(headerJson.getBytes(StandardCharsets.UTF_8));
+            JwsHeader jwsHeader = JwsHeader.with(MacAlgorithm.HS256).type("JWT").build();
 
-            Map<String, Object> payload = new LinkedHashMap<>();
-            payload.put("sub", String.valueOf(userId));
-            payload.put("email", email);
-            payload.put("name", displayName);
-            payload.put("role", role);
-            payload.put("iat", now.getEpochSecond());
-            payload.put("exp", expiresAt.getEpochSecond());
+            JwtClaimsSet claims =
+                    JwtClaimsSet.builder()
+                            .subject(String.valueOf(userId))
+                            .claim("email", email)
+                            .claim("name", displayName)
+                            .claim("role", role)
+                            .issuedAt(now)
+                            .expiresAt(expiresAt)
+                            .build();
 
-            String payloadJson = objectMapper.writeValueAsString(payload);
-            String payloadEncoded =
-                    B64_URL_ENCODER.encodeToString(payloadJson.getBytes(StandardCharsets.UTF_8));
-
-            String signingInput = headerEncoded + "." + payloadEncoded;
-            byte[] signatureBytes = sign(signingInput);
-            String signatureEncoded = B64_URL_ENCODER.encodeToString(signatureBytes);
-
-            return signingInput + "." + signatureEncoded;
+            return jwtEncoder.encode(JwtEncoderParameters.from(jwsHeader, claims)).getTokenValue();
         } catch (Exception e) {
             throw new IllegalStateException("Lỗi khi sinh access token JWT", e);
         }
@@ -93,45 +107,19 @@ public class JwtService {
             return Optional.empty();
         }
 
-        String[] parts = token.split("\\.");
-        if (parts.length != 3) {
-            return Optional.empty();
-        }
-
         try {
-            String signingInput = parts[0] + "." + parts[1];
-            byte[] expectedSignature = sign(signingInput);
-            byte[] actualSignature = B64_URL_DECODER.decode(parts[2]);
+            Jwt jwt = jwtDecoder.decode(token);
 
-            // So sánh độ dài không đổi (constant-time) chống tấn công timing attack
-            if (!MessageDigest.isEqual(expectedSignature, actualSignature)) {
-                return Optional.empty();
-            }
-
-            byte[] payloadBytes = B64_URL_DECODER.decode(parts[1]);
-            JsonNode payloadNode = objectMapper.readTree(payloadBytes);
-
-            long expSeconds = payloadNode.path("exp").asLong(0);
-            Instant expiresAt = Instant.ofEpochSecond(expSeconds);
-            if (expiresAt.isBefore(clock.instant())) {
-                return Optional.empty();
-            }
-
-            long userId = Long.parseLong(payloadNode.path("sub").asString());
-            String email = payloadNode.path("email").asString();
-            String displayName = payloadNode.path("name").asString();
-            String role = payloadNode.path("role").asString();
+            long userId = Long.parseLong(jwt.getSubject());
+            String email = jwt.getClaimAsString("email");
+            String displayName = jwt.getClaimAsString("name");
+            String role = jwt.getClaimAsString("role");
+            Instant expiresAt = jwt.getExpiresAt();
 
             return Optional.of(new JwtClaims(userId, email, displayName, role, expiresAt));
-        } catch (Exception e) {
+        } catch (JwtException | IllegalArgumentException e) {
             log.debug("Token không hợp lệ hoặc giải mã thất bại: {}", e.getMessage());
             return Optional.empty();
         }
-    }
-
-    private byte[] sign(String data) throws Exception {
-        Mac mac = Mac.getInstance(HMAC_ALGORITHM);
-        mac.init(secretKeySpec);
-        return mac.doFinal(data.getBytes(StandardCharsets.UTF_8));
     }
 }

@@ -43,5 +43,10 @@ xile:
       access-token-duration: ${JWT_ACCESS_DURATION:15m}
       refresh-token-duration: ${JWT_REFRESH_DURATION:7d}
       cookie-secure: ${JWT_COOKIE_SECURE:false}
+    auth:
+      max-failed-attempts: ${AUTH_MAX_FAILED_ATTEMPTS:5}
+      lock-duration: ${AUTH_LOCK_DURATION:15m}
+      password-reset-duration: ${AUTH_PASSWORD_RESET_DURATION:30m}
+      reset-password-base-url: ${AUTH_RESET_PASSWORD_BASE_URL:http://localhost:5173/reset-password}
 
 

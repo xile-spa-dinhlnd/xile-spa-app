@@ -1,6 +1,7 @@
 import {
   AppstoreOutlined,
   DashboardOutlined,
+  KeyOutlined,
   LogoutOutlined,
   MenuOutlined,
   UserOutlined,
@@ -20,7 +21,7 @@ import {
 } from 'antd'
 import { useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router'
-import { useCurrentUser, useLogout, type UserRole } from '@/features/auth'
+import { ChangePasswordModal, useCurrentUser, useLogout, type UserRole } from '@/features/auth'
 
 const { Header, Sider, Content } = Layout
 
@@ -52,6 +53,7 @@ export function AppLayout() {
   const screens = Grid.useBreakpoint()
   const isDesktop = screens.lg ?? true
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [changePasswordOpen, setChangePasswordOpen] = useState(false)
   const navigate = useNavigate()
   const { pathname } = useLocation()
 
@@ -165,6 +167,14 @@ export function AppLayout() {
                 <Typography.Text strong>{user.displayName}</Typography.Text>
                 {isDesktop && <Tag color={roleInfo.color}>{roleInfo.label}</Tag>}
               </Space>
+              <Button
+                type="text"
+                icon={<KeyOutlined />}
+                onClick={() => setChangePasswordOpen(true)}
+                style={{ height: 40 }}
+              >
+                {isDesktop ? 'Đổi mật khẩu' : ''}
+              </Button>
               {logoutButton}
             </Space>
           )}
@@ -217,9 +227,31 @@ export function AppLayout() {
             )}
             {menu}
           </div>
-          <div style={{ padding: 16, borderTop: '1px solid #f0f0f0' }}>{logoutButton}</div>
+          <div
+            style={{
+              padding: 16,
+              borderTop: '1px solid #f0f0f0',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 8,
+            }}
+          >
+            <Button
+              type="text"
+              icon={<KeyOutlined />}
+              onClick={() => {
+                setDrawerOpen(false)
+                setChangePasswordOpen(true)
+              }}
+              style={{ height: 40, justifyContent: 'flex-start' }}
+            >
+              Đổi mật khẩu
+            </Button>
+            {logoutButton}
+          </div>
         </Drawer>
       )}
+      <ChangePasswordModal open={changePasswordOpen} onClose={() => setChangePasswordOpen(false)} />
     </Layout>
   )
 }

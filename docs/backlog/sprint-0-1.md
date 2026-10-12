@@ -106,7 +106,7 @@ Thứ tự gợi ý, mỗi bước nhỏ, làm cặp để cả hai cùng học:
 | D-02 | Docker hóa cả hệ thống trên máy           | 3    | Dockerfile backend/frontend; `docker compose up` dựng Postgres + backend + frontend; README giải thích từng file bằng lời của mình |
 | D-03 | VPS: SSH key và bảo mật cơ bản            | 2    | Tạo user, tắt đăng nhập bằng mật khẩu, tường lửa                                                         |
 | D-04 | VPS: chạy hệ thống bằng Docker Compose    | 2    | Chạy lại `docker compose` của D-02 trên VPS, giới hạn RAM (NFR-PERF-03)                                  |
-| D-05 | Caddy và tên miền, HTTPS                  | 2    | Cần OQ-10 (tên miền)                                                                                     |
+| D-05 | Caddy và tên miền, HTTPS                  | 2    | Cần OQ-10 (tên miền). Cấu hình rate limit ở Caddy cho `/api/auth/*` (ví dụ 5 req/phút/IP) để chống DoS cạn kiệt CPU do chi phí băm BCrypt (NFR-SEC-05) |
 | D-06 | Sao lưu PostgreSQL hằng đêm, thử khôi phục | 3   | FR-SYS-02, NFR-REL-01: mã hóa, lưu ngoài VPS, giữ 14 bản. **Xong trước khi nhập dữ liệu thật**           |
 | D-07 | Tự động deploy (CD)                       | 3    | NFR-OPS-01. Làm sau cùng, khi đã deploy tay vài lần và hiểu từng bước                                    |
 

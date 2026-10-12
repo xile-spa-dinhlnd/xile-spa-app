@@ -151,6 +151,138 @@
               }
             }
           ]
+        },
+        {
+          "name": "Đổi mật khẩu",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/change-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "change-password"
+              ]
+            },
+            "description": "FR-AUTH-04, NFR-SEC-03. Đổi mật khẩu khi đã đăng nhập (cần cookie access_token). Mật khẩu mới tối thiểu 10 ký tự, chặn mật khẩu phổ biến; đổi xong thu hồi các phiên khác.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"oldPassword\": \"{{ownerPassword}}\",\n  \"newPassword\": \"NewPassword123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Quên mật khẩu",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/forgot-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "forgot-password"
+              ]
+            },
+            "description": "FR-AUTH-03, OQ-10. Gửi yêu cầu đặt lại mật khẩu qua email. Chống user enumeration: luôn trả về 200 dù email có tồn tại hay không. Môi trường dev sẽ in liên kết kèm token ra màn hình console.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{ownerEmail}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Đặt lại mật khẩu",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/reset-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "reset-password"
+              ]
+            },
+            "description": "FR-AUTH-03, NFR-SEC-03. Đặt lại mật khẩu bằng token xác thực (lấy từ console dev hoặc email). Mật khẩu mới tối thiểu 10 ký tự; đặt lại thành công sẽ mở khóa tài khoản và thu hồi toàn bộ phiên cũ.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"dien_token_tu_console_hoac_email_vao_day\",\n  \"newPassword\": \"NewSecureResetPass123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 200 hoặc 400\", () => pm.expect([200, 400]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
         }
       ]
     },

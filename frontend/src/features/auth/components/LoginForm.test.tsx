@@ -63,4 +63,17 @@ describe('LoginForm', () => {
     expect(screen.getByRole('alert')).toBeInTheDocument()
     expect(screen.getByText('Email hoặc mật khẩu không đúng.')).toBeInTheDocument()
   })
+
+  it('hiển thị link Quên mật khẩu và kích hoạt onForgotPassword khi nhấp', async () => {
+    const user = userEvent.setup()
+    const onForgotPassword = vi.fn()
+
+    render(<LoginForm onSubmit={vi.fn()} onForgotPassword={onForgotPassword} />)
+
+    const forgotLink = screen.getByText('Quên mật khẩu?')
+    expect(forgotLink).toBeInTheDocument()
+
+    await user.click(forgotLink)
+    expect(onForgotPassword).toHaveBeenCalledTimes(1)
+  })
 })

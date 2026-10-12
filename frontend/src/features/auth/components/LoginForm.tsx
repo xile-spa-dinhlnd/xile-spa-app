@@ -4,6 +4,7 @@ import type { LoginRequest } from '../types'
 
 interface LoginFormProps {
   onSubmit: (values: LoginRequest) => void
+  onForgotPassword?: () => void
   isLoading?: boolean
   errorMessage?: string | null
 }
@@ -13,7 +14,12 @@ interface LoginFormProps {
  * Tuân thủ NFR-USA-01: Chiều cao ô nhập và nút bấm chuẩn cảm ứng (touch target >= 44px).
  * Tuân thủ NFR-USA-02: Báo lỗi tiếng Việt thân thiện, rõ ràng.
  */
-export function LoginForm({ onSubmit, isLoading = false, errorMessage }: LoginFormProps) {
+export function LoginForm({
+  onSubmit,
+  onForgotPassword,
+  isLoading = false,
+  errorMessage,
+}: LoginFormProps) {
   const [form] = Form.useForm<LoginRequest>()
 
   return (
@@ -66,7 +72,27 @@ export function LoginForm({ onSubmit, isLoading = false, errorMessage }: LoginFo
         />
       </Form.Item>
 
-      <Form.Item style={{ marginTop: 28, marginBottom: 8 }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          marginTop: -8,
+          marginBottom: 16,
+        }}
+      >
+        <a
+          href="/forgot-password"
+          onClick={(e) => {
+            e.preventDefault()
+            onForgotPassword?.()
+          }}
+          style={{ fontSize: 13, color: '#31543d' }}
+        >
+          Quên mật khẩu?
+        </a>
+      </div>
+
+      <Form.Item style={{ marginTop: 16, marginBottom: 8 }}>
         <Button
           type="primary"
           htmlType="submit"

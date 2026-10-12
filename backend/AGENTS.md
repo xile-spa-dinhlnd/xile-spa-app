@@ -205,6 +205,9 @@ có ghi log). Trigger là rào chắn cuối: service vẫn nên tự kiểm tra
 - Mọi endpoint ngoài đăng nhập/quên mật khẩu đều yêu cầu xác thực; chưa đăng nhập trả 401.
 - Thông báo sai đăng nhập không tiết lộ email có tồn tại hay không, kể cả qua thời gian phản hồi: khi
   không tìm thấy email vẫn chạy bcrypt với một hash giả.
+- **Chống DoS do BCrypt (NFR-SEC-05):** Do việc chạy hash giả (và hash thật) tốn CPU (~300ms/lần), nguy cơ
+  DoS cạn kiệt tài nguyên VPS cần được ngăn chặn bằng Rate Limiting (giới hạn số request/phút theo IP) ở reverse
+  proxy (Caddy, card D-05) hoặc Spring filter trước khi chạm tới BCrypt.
 - **CSRF:** không dùng CSRF token (`SecurityConfig` tắt `csrf`). Chống CSRF bằng cookie `SameSite=Strict`, vì
   frontend và API cùng một site (khi dev qua proxy của Vite, khi chạy thật cùng tên miền). Nếu sau này
   frontend và API khác tên miền gốc thì phải xem lại quyết định này.
