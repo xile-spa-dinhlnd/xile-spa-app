@@ -96,9 +96,17 @@ public class AppUser {
      */
     public boolean recordFailedLogin(
             int maxFailedAttempts, java.time.Duration maxLockDuration, Instant now) {
+        // Nếu đã hết hạn tạm khóa thì giải phóng lockedUntil nhưng giữ nguyên bộ đếm
+        // failedLoginCount
         if (this.lockedUntil != null && !this.lockedUntil.isAfter(now)) {
-            this.failedLoginCount = 0;
             this.lockedUntil = null;
+        }
+
+        // Tự động reset bộ đếm nếu lần thất bại gần nhất đã cách đây hơn 24 giờ
+        if (this.failedLoginCount > 0
+                && this.updatedAt != null
+                && now.isAfter(this.updatedAt.plus(java.time.Duration.ofHours(24)))) {
+            this.failedLoginCount = 0;
         }
 
         this.failedLoginCount++;

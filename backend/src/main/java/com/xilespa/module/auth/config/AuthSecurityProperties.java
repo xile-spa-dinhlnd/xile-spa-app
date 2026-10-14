@@ -17,22 +17,4 @@ public record AuthSecurityProperties(
         int maxFailedAttempts,
         Duration lockDuration,
         Duration passwordResetDuration,
-        String resetPasswordBaseUrl) {
-
-    public AuthSecurityProperties {
-        if (maxFailedAttempts <= 0) {
-            maxFailedAttempts = 5;
-        }
-        if (lockDuration == null || lockDuration.isNegative() || lockDuration.isZero()) {
-            lockDuration = Duration.ofMinutes(15);
-        }
-        if (passwordResetDuration == null
-                || passwordResetDuration.isNegative()
-                || passwordResetDuration.isZero()) {
-            passwordResetDuration = Duration.ofMinutes(30);
-        }
-        if (resetPasswordBaseUrl == null || resetPasswordBaseUrl.isBlank()) {
-            resetPasswordBaseUrl = "http://localhost:5173/reset-password";
-        }
-    }
-}
+        String resetPasswordBaseUrl) {}

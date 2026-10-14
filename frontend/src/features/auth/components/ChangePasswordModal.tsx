@@ -45,7 +45,11 @@ export function ChangePasswordModal({ open, onClose }: ChangePasswordModalProps)
         },
         onError: (error) => {
           if (error instanceof ApiError) {
-            if (error.fieldErrors.length > 0) {
+            if (error.code === 'PASSWORD_INCORRECT') {
+              form.setFields([{ name: 'oldPassword', errors: [error.message] }])
+            } else if (error.code === 'PASSWORD_POLICY_VIOLATION') {
+              form.setFields([{ name: 'newPassword', errors: [error.message] }])
+            } else if (error.fieldErrors.length > 0) {
               form.setFields(toFormFieldErrors(error) as Parameters<typeof form.setFields>[0])
             } else {
               setServerError(error.message)
