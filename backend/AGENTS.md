@@ -214,6 +214,12 @@ có ghi log). Trigger là rào chắn cuối: service vẫn nên tự kiểm tra
 - **API thay đổi dữ liệu không bao giờ dùng `GET`**, chỉ dùng `POST`, `PUT`, `PATCH`, `DELETE`.
 - Bí mật đọc từ biến môi trường theo profile `dev`/`prod`; không commit.
 
+## Cấu hình
+
+- Chọn hành vi theo môi trường bằng thuộc tính trong `application-{profile}.yml` và `@ConditionalOnProperty`; không dùng `@Profile` phủ định (như `@Profile("!prod")`).
+- `@Profile` chỉ dùng cho bean dành riêng dev hoặc test (dữ liệu mẫu, OwnerAccountInitializer).
+- Giá trị mặc định đặt một chỗ trong `application.yml`; `application-prod.yml` chỉ đọc biến môi trường, không có mặc định.
+
 ## Test
 
 - Test tích hợp dùng **Testcontainers với PostgreSQL thật**, không dùng H2 (trigger và kiểu dữ liệu của Postgres khác H2).

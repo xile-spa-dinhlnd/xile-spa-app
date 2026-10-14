@@ -4,7 +4,26 @@ spring:
     url: ${DB_URL}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
+  mail:
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 
 logging:
   level:
     root: INFO
+
+xile:
+  mail:
+    sender: smtp
+    from: ${MAIL_FROM}
+  security:
+    auth:
+      reset-password-base-url: ${AUTH_RESET_PASSWORD_BASE_URL}

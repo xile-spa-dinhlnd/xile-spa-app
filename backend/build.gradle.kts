@@ -25,6 +25,7 @@ dependencies {
     implementation(libs.spring.boot.starter.security)
     implementation(libs.spring.security.oauth2.jose)
     implementation(libs.spring.boot.starter.validation)
+    implementation(libs.spring.boot.starter.mail)
     implementation(libs.spring.boot.starter.webmvc)
     implementation(libs.flyway.database.postgresql)
     implementation(libs.mapstruct)

@@ -16,10 +16,10 @@ export const authRoutes: RouteObject[] = [
         path: '/forgot-password',
         element: <ForgotPasswordPage />,
       },
-      {
-        path: '/reset-password',
-        element: <ResetPasswordPage />,
-      },
     ],
+  },
+  {
+    path: '/reset-password',
+    element: <ResetPasswordPage />,
   },
 ]

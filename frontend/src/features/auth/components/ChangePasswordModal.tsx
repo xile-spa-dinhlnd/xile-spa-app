@@ -105,8 +105,16 @@ export function ChangePasswordModal({ open, onClose }: ChangePasswordModalProps)
           rules={[
             { required: true, message: 'Vui lòng nhập mật khẩu mới.' },
             { min: 10, message: 'Mật khẩu mới phải có tối thiểu 10 ký tự.' },
+            {
+              validator(_, value) {
+                if (value && new TextEncoder().encode(value).length > 72) {
+                  return Promise.reject(new Error('Mật khẩu không được dài quá 72 bytes.'))
+                }
+                return Promise.resolve()
+              },
+            },
           ]}
-          extra="Tối thiểu 10 ký tự. Không dùng mật khẩu quá phổ biến hoặc trùng mật khẩu cũ."
+          extra="Tối thiểu 10 ký tự (tối đa 72 bytes). Không dùng mật khẩu quá phổ biến hoặc trùng mật khẩu cũ."
         >
           <Input.Password
             prefix={<LockOutlined style={{ color: '#8c8c8c' }} />}

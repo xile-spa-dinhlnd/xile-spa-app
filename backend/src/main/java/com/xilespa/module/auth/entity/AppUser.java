@@ -87,28 +87,43 @@ public class AppUser {
 
     /**
      * Ghi nhận một lần đăng nhập thất bại và tạm khóa tài khoản nếu vượt quá ngưỡng (FR-AUTH-05).
+     * Áp dụng khóa lũy tiến: 1 phút, 2 phút, 4 phút... tối đa theo cấu hình.
      *
      * @param maxFailedAttempts Số lần sai tối đa được phép.
-     * @param lockDuration Thời gian tạm khóa.
+     * @param maxLockDuration Thời gian tạm khóa tối đa.
      * @param now Thời điểm xảy ra.
+     * @return true nếu tài khoản vừa bị chuyển sang trạng thái tạm khóa.
      */
-    public void recordFailedLogin(
-            int maxFailedAttempts, java.time.Duration lockDuration, Instant now) {
+    public boolean recordFailedLogin(
+            int maxFailedAttempts, java.time.Duration maxLockDuration, Instant now) {
         if (this.lockedUntil != null && !this.lockedUntil.isAfter(now)) {
             this.failedLoginCount = 0;
             this.lockedUntil = null;
         }
 
         this.failedLoginCount++;
+        boolean justLocked = false;
         if (this.failedLoginCount >= maxFailedAttempts) {
-            this.lockedUntil = now.plus(lockDuration);
+            int attemptsOver = this.failedLoginCount - maxFailedAttempts;
+            long minutes = Math.min((long) Math.pow(2, attemptsOver), maxLockDuration.toMinutes());
+            if (minutes < 1) {
+                minutes = 1;
+            }
+            this.lockedUntil = now.plus(java.time.Duration.ofMinutes(minutes));
+            justLocked = true;
         }
         this.updatedAt = now;
+        return justLocked;
     }
 
-    /** Ghi nhận một lần đăng nhập thất bại với tham số thời điểm mặc định. */
-    public void recordFailedLogin(Instant now) {
-        recordFailedLogin(5, java.time.Duration.ofMinutes(15), now);
+    /**
+     * Mở khóa tài khoản và thiết lập lại bộ đếm đăng nhập sai mà không thay đổi thời điểm đăng nhập
+     * cuối.
+     */
+    public void unlock(Instant now) {
+        this.failedLoginCount = 0;
+        this.lockedUntil = null;
+        this.updatedAt = now;
     }
 
     /**

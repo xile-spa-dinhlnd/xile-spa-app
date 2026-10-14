@@ -115,7 +115,12 @@ class AuthControllerIT {
                                 .content(loginPayload))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("UNAUTHORIZED"))
-                .andExpect(jsonPath("$.message").value("Email hoặc mật khẩu không đúng."))
+                .andExpect(
+                        jsonPath("$.message")
+                                .value(
+                                        "Email hoặc mật khẩu không đúng, hoặc tài khoản đang tạm"
+                                                + " khóa. Thử lại sau ít phút hoặc dùng Quên mật"
+                                                + " khẩu."))
                 .andExpect(cookie().doesNotExist(CookieHelper.ACCESS_TOKEN_COOKIE));
 
         // Kiểm tra trực tiếp CSDL: failed_login_count phải được tăng lên 1 (không bị rollback bởi
@@ -150,7 +155,12 @@ class AuthControllerIT {
                                     .contentType(MediaType.APPLICATION_JSON)
                                     .content(wrongPayload))
                     .andExpect(status().isUnauthorized())
-                    .andExpect(jsonPath("$.message").value("Email hoặc mật khẩu không đúng."));
+                    .andExpect(
+                            jsonPath("$.message")
+                                    .value(
+                                            "Email hoặc mật khẩu không đúng, hoặc tài khoản đang"
+                                                    + " tạm khóa. Thử lại sau ít phút hoặc dùng Quên"
+                                                    + " mật khẩu."));
         }
 
         // Kiểm tra CSDL: tài khoản đã bị khóa
@@ -159,7 +169,8 @@ class AuthControllerIT {
         assertThat(lockedUser.getLockedUntil()).isNotNull();
         assertThat(lockedUser.getLockedUntil()).isAfter(java.time.Instant.now());
 
-        // Lần thứ 6: Dù gõ ĐÚNG mật khẩu cũng bị chặn vì tài khoản đang bị tạm khóa
+        // Lần thứ 6: Dù gõ ĐÚNG mật khẩu cũng bị chặn vì tài khoản đang bị tạm khóa (cùng thông
+        // báo)
         mockMvc.perform(
                         post("/api/auth/login")
                                 .contentType(MediaType.APPLICATION_JSON)
@@ -168,7 +179,10 @@ class AuthControllerIT {
                 .andExpect(jsonPath("$.code").value("UNAUTHORIZED"))
                 .andExpect(
                         jsonPath("$.message")
-                                .value("Tài khoản đang bị tạm khóa. Vui lòng thử lại sau."));
+                                .value(
+                                        "Email hoặc mật khẩu không đúng, hoặc tài khoản đang tạm"
+                                                + " khóa. Thử lại sau ít phút hoặc dùng Quên mật"
+                                                + " khẩu."));
 
         // Giả lập thời gian tạm khóa đã hết hạn (chỉnh lockedUntil về quá khứ)
         lockedUser.lockUntil(
@@ -396,7 +410,7 @@ class AuthControllerIT {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(changePayload))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("BAD_REQUEST"))
+                .andExpect(jsonPath("$.code").value("PASSWORD_INCORRECT"))
                 .andExpect(jsonPath("$.message").value("Mật khẩu hiện tại không chính xác."));
     }
 
@@ -568,10 +582,8 @@ class AuthControllerIT {
                                 .content(resetPayload))
                 .andExpect(status().isOk());
 
-        // 5. Kiểm tra CSDL: Token reset đã được đánh dấu là đã sử dụng
-        var reloadedResetToken =
-                passwordResetTokenRepository.findByTokenHash(resetTokenHash).orElseThrow();
-        assertThat(reloadedResetToken.isUsed()).isTrue();
+        // 5. Kiểm tra CSDL: Token reset đã được dọn sạch hoàn toàn sau khi đặt lại mật khẩu
+        assertThat(passwordResetTokenRepository.findByTokenHash(resetTokenHash)).isEmpty();
 
         // 6. Kiểm tra user đã được mở khóa hoàn toàn
         var reloadedUser = userRepository.findById(testUser.getId()).orElseThrow();
@@ -616,7 +628,8 @@ class AuthControllerIT {
                         post("/api/auth/reset-password")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(invalidPayload))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("RESET_TOKEN_INVALID"));
 
         // Token đã hết hạn
         String rawExpiredToken = "expired-token-abc";
@@ -642,11 +655,12 @@ class AuthControllerIT {
                         post("/api/auth/reset-password")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(expiredPayload))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("RESET_TOKEN_INVALID"));
     }
 
     @Test
-    @DisplayName("Đặt lại mật khẩu thất bại khi mật khẩu mới vi phạm chính sách độ dài")
+    @DisplayName("Đặt lại mật khẩu thất bại khi mật khẩu mới vi phạm Bean Validation độ dài (<10)")
     void resetPassword_whenPasswordViolatesPolicy_returns400() throws Exception {
         String shortPasswordPayload =
                 """
@@ -660,7 +674,39 @@ class AuthControllerIT {
                         post("/api/auth/reset-password")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(shortPasswordPayload))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"));
+    }
+
+    @Test
+    @DisplayName(
+            "Đặt lại mật khẩu thất bại khi mật khẩu mới vi phạm từ điển phổ biến (PASSWORD_POLICY_VIOLATION)")
+    void resetPassword_whenCommonPassword_returnsPolicyViolation() throws Exception {
+        String rawToken = "valid-token-for-policy-test";
+        String tokenHash = com.xilespa.security.TokenHasher.hash(rawToken);
+        var resetToken =
+                new PasswordResetToken(
+                        testUser,
+                        tokenHash,
+                        java.time.Instant.now().plus(java.time.Duration.ofMinutes(30)),
+                        java.time.Instant.now());
+        passwordResetTokenRepository.save(resetToken);
+
+        String commonPasswordPayload =
+                """
+                {
+                    "token": "%s",
+                    "newPassword": "password123"
+                }
+                """
+                        .formatted(rawToken);
+
+        mockMvc.perform(
+                        post("/api/auth/reset-password")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(commonPasswordPayload))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("PASSWORD_POLICY_VIOLATION"));
     }
 
     /**

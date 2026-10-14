@@ -7,14 +7,19 @@ import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Objects;
 import java.util.Optional;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
+import org.springframework.security.oauth2.core.OAuth2TokenValidator;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtClaimNames;
+import org.springframework.security.oauth2.jwt.JwtClaimValidator;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
@@ -24,7 +29,6 @@ import org.springframework.security.oauth2.jwt.JwtTimestampValidator;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.stereotype.Service;
-import tools.jackson.databind.ObjectMapper;
 
 /**
  * Xử lý tạo và xác thực Access Token (JWT HMAC-SHA256). Sử dụng {@link NimbusJwtEncoder} và {@link
@@ -36,18 +40,14 @@ public class JwtService {
 
     private static final Logger log = LoggerFactory.getLogger(JwtService.class);
     private static final String HMAC_ALGORITHM = "HmacSHA256";
+    private static final String ISSUER = "xile-spa";
 
     private final Clock clock;
     private final JwtProperties properties;
     private final JwtEncoder jwtEncoder;
     private final JwtDecoder jwtDecoder;
 
-    @org.springframework.beans.factory.annotation.Autowired
     public JwtService(Clock clock, JwtProperties properties) {
-        this(clock, null, properties);
-    }
-
-    public JwtService(Clock clock, ObjectMapper objectMapper, JwtProperties properties) {
         this.clock = clock;
         this.properties = properties;
 
@@ -70,7 +70,14 @@ public class JwtService {
                 NimbusJwtDecoder.withSecretKey(secretKey).macAlgorithm(MacAlgorithm.HS256).build();
         JwtTimestampValidator timestampValidator = new JwtTimestampValidator(Duration.ZERO);
         timestampValidator.setClock(clock);
-        decoder.setJwtValidator(timestampValidator);
+
+        OAuth2TokenValidator<Jwt> validator =
+                new DelegatingOAuth2TokenValidator<>(
+                        timestampValidator,
+                        new JwtClaimValidator<>(JwtClaimNames.EXP, Objects::nonNull),
+                        new JwtClaimValidator<>(
+                                JwtClaimNames.ISS, iss -> iss == null || ISSUER.equals(iss)));
+        decoder.setJwtValidator(validator);
         this.jwtDecoder = decoder;
     }
 
@@ -84,6 +91,7 @@ public class JwtService {
 
             JwtClaimsSet claims =
                     JwtClaimsSet.builder()
+                            .issuer(ISSUER)
                             .subject(String.valueOf(userId))
                             .claim("email", email)
                             .claim("name", displayName)

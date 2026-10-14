@@ -15,6 +15,13 @@ public enum ErrorCode {
     METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "Thao tác không được hỗ trợ."),
     CONFLICT(HttpStatus.CONFLICT, "Dữ liệu đã thay đổi hoặc bị trùng, vui lòng thử lại."),
 
+    // Xác thực và tài khoản (module auth)
+    PASSWORD_INCORRECT(HttpStatus.BAD_REQUEST, "Mật khẩu hiện tại không chính xác."),
+    PASSWORD_POLICY_VIOLATION(
+            HttpStatus.BAD_REQUEST, "Mật khẩu không thỏa mãn chính sách bảo mật."),
+    RESET_TOKEN_INVALID(
+            HttpStatus.BAD_REQUEST, "Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn."),
+
     // Danh mục dịch vụ (module catalog)
     SERVICE_NAME_DUPLICATE(HttpStatus.CONFLICT, "Tên dịch vụ đã tồn tại."),
     SERVICE_GROUP_NOT_FOUND(

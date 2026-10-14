@@ -162,10 +162,18 @@ export function ResetPasswordPage() {
             <Form.Item
               name="newPassword"
               label="Mật khẩu mới"
-              extra="Tối thiểu 10 ký tự"
+              extra="Tối thiểu 10 ký tự (tối đa 72 bytes)"
               rules={[
                 { required: true, message: 'Vui lòng nhập mật khẩu mới.' },
                 { min: 10, message: 'Mật khẩu mới phải có ít nhất 10 ký tự.' },
+                {
+                  validator(_, value) {
+                    if (value && new TextEncoder().encode(value).length > 72) {
+                      return Promise.reject(new Error('Mật khẩu không được dài quá 72 bytes.'))
+                    }
+                    return Promise.resolve()
+                  },
+                },
               ]}
             >
               <Input.Password

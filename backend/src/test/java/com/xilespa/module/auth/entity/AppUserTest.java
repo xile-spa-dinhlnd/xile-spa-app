@@ -26,19 +26,34 @@ class AppUserTest {
     }
 
     @Test
-    @DisplayName("Khóa tài khoản đúng thời hạn khi chạm ngưỡng sai tối đa")
-    void recordFailedLogin_whenReachesThreshold_shouldLockAccount() {
+    @DisplayName(
+            "Khóa tài khoản lũy tiến (1 phút cho lần đầu chạm ngưỡng) khi đạt số lần sai tối đa")
+    void recordFailedLogin_whenReachesThreshold_shouldLockAccountProgressively() {
         AppUser user = new AppUser("user@xilespa.vn", "hash", "User", UserRole.OWNER, now);
 
         for (int i = 0; i < 5; i++) {
             user.recordFailedLogin(5, Duration.ofMinutes(15), now);
         }
 
+        // Khóa lũy tiến lần đầu: 1 phút (thay vì khóa cứng 15 phút)
         assertThat(user.getFailedLoginCount()).isEqualTo(5);
-        assertThat(user.getLockedUntil()).isEqualTo(now.plus(Duration.ofMinutes(15)));
+        assertThat(user.getLockedUntil()).isEqualTo(now.plus(Duration.ofMinutes(1)));
         assertThat(user.isLocked(now)).isTrue();
-        assertThat(user.isLocked(now.plus(Duration.ofMinutes(14)))).isTrue();
-        assertThat(user.isLocked(now.plus(Duration.ofMinutes(16)))).isFalse();
+        assertThat(user.isLocked(now.plus(Duration.ofSeconds(30)))).isTrue();
+        assertThat(user.isLocked(now.plus(Duration.ofMinutes(2)))).isFalse();
+    }
+
+    @Test
+    @DisplayName("Mở khóa bằng unlock() không làm thay đổi lastLoginAt")
+    void unlock_shouldClearLockAndCountWithoutUpdatingLastLoginAt() {
+        AppUser user = new AppUser("user@xilespa.vn", "hash", "User", UserRole.OWNER, now);
+        user.lockUntil(now.plus(Duration.ofMinutes(15)), now);
+
+        user.unlock(now);
+
+        assertThat(user.getFailedLoginCount()).isZero();
+        assertThat(user.getLockedUntil()).isNull();
+        assertThat(user.getLastLoginAt()).isNull();
     }
 
     @Test

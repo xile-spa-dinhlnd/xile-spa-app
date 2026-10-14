@@ -134,7 +134,9 @@ class AuthServiceTest {
                             BusinessException be = (BusinessException) e;
                             assertThat(be.getErrorCode()).isEqualTo(ErrorCode.UNAUTHORIZED);
                             assertThat(be.getMessage())
-                                    .isEqualTo("Email hoặc mật khẩu không đúng.");
+                                    .contains(
+                                            "Email hoặc mật khẩu không đúng, hoặc tài khoản đang"
+                                                    + " tạm khóa.");
                         });
 
         // Xác nhận đã gọi BCrypt matches với dummy hash để giữ thời gian phản hồi cố định
@@ -163,7 +165,9 @@ class AuthServiceTest {
                             BusinessException be = (BusinessException) e;
                             assertThat(be.getErrorCode()).isEqualTo(ErrorCode.UNAUTHORIZED);
                             assertThat(be.getMessage())
-                                    .isEqualTo("Email hoặc mật khẩu không đúng.");
+                                    .contains(
+                                            "Email hoặc mật khẩu không đúng, hoặc tài khoản đang"
+                                                    + " tạm khóa.");
                         });
 
         verify(authSecurityAuditService).recordFailedLogin(10L, now);
@@ -214,7 +218,10 @@ class AuthServiceTest {
                         e -> {
                             BusinessException be = (BusinessException) e;
                             assertThat(be.getErrorCode()).isEqualTo(ErrorCode.UNAUTHORIZED);
-                            assertThat(be.getMessage()).contains("tạm khóa");
+                            assertThat(be.getMessage())
+                                    .contains(
+                                            "Email hoặc mật khẩu không đúng, hoặc tài khoản đang"
+                                                    + " tạm khóa.");
                         });
 
         // Xác nhận đã gọi dummy BCrypt để giữ thời gian phản hồi cố định
@@ -380,8 +387,9 @@ class AuthServiceTest {
     }
 
     @Test
-    @DisplayName("Đổi mật khẩu thất bại khi mật khẩu hiện tại không đúng")
-    void changePassword_whenOldPasswordIncorrect_throwsBadRequest() {
+    @DisplayName(
+            "Đổi mật khẩu thất bại khi mật khẩu hiện tại không đúng: ném lỗi PASSWORD_INCORRECT")
+    void changePassword_whenOldPasswordIncorrect_throwsPasswordIncorrect() {
         // Arrange
         AppUser user = new AppUser("owner@xilespa.vn", "old_hash", "Chủ tiệm", UserRole.OWNER, now);
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
@@ -394,7 +402,7 @@ class AuthServiceTest {
         // Act & Assert
         assertThatThrownBy(() -> authService.changePassword(1L, "raw-token", request))
                 .isInstanceOf(BusinessException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.BAD_REQUEST)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PASSWORD_INCORRECT)
                 .hasMessageContaining("Mật khẩu hiện tại không chính xác");
     }
 
@@ -455,6 +463,27 @@ class AuthServiceTest {
 
     @Test
     @DisplayName(
+            "Đổi mật khẩu thất bại khi mật khẩu cũ không chính xác: ném lỗi PASSWORD_INCORRECT")
+    void changePassword_whenWrongOldPassword_throwsPasswordIncorrect() {
+        // Arrange
+        AppUser user = new AppUser("owner@xilespa.vn", "old_hash", "Chủ tiệm", UserRole.OWNER, now);
+        ReflectionTestUtils.setField(user, "id", 1L);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("WrongPassword", "old_hash")).thenReturn(false);
+
+        var request =
+                new com.xilespa.module.auth.dto.request.ChangePasswordRequest(
+                        "WrongPassword", "NewSecurePassword123");
+
+        // Act & Assert
+        assertThatThrownBy(() -> authService.changePassword(1L, null, request))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PASSWORD_INCORRECT)
+                .hasMessageContaining("Mật khẩu hiện tại không chính xác.");
+    }
+
+    @Test
+    @DisplayName(
             "Quên mật khẩu: khi email không tồn tại thì không ném lỗi và không gửi email (chống dò email)")
     void forgotPassword_whenEmailNotFound_doesNotThrowAndDoesNotSendEmail() {
         // Arrange
@@ -471,12 +500,16 @@ class AuthServiceTest {
     }
 
     @Test
-    @DisplayName("Quên mật khẩu: khi email hợp lệ thì tạo token 30 phút và gọi email sender")
+    @DisplayName(
+            "Quên mật khẩu: khi email hợp lệ thì vô hiệu hóa token cũ, tạo token mới và gửi email")
     void forgotPassword_whenEmailValid_savesTokenAndSendsEmail() {
         // Arrange
         AppUser user = new AppUser("owner@xilespa.vn", "hash", "Chủ tiệm", UserRole.OWNER, now);
+        ReflectionTestUtils.setField(user, "id", 1L);
         when(userRepository.findByEmailIgnoreCase("owner@xilespa.vn"))
                 .thenReturn(Optional.of(user));
+        when(passwordResetTokenRepository.countByUser_IdAndCreatedAtAfter(eq(1L), any()))
+                .thenReturn(0L);
         var request =
                 new com.xilespa.module.auth.dto.request.ForgotPasswordRequest("owner@xilespa.vn");
 
@@ -484,6 +517,7 @@ class AuthServiceTest {
         authService.forgotPassword(request);
 
         // Assert
+        verify(passwordResetTokenRepository).invalidateAllActiveByUserId(1L, now);
         verify(passwordResetTokenRepository).save(any());
         verify(passwordResetEmailSender)
                 .sendResetEmail(
@@ -493,8 +527,30 @@ class AuthServiceTest {
     }
 
     @Test
-    @DisplayName("Đặt lại mật khẩu: khi token không tìm thấy thì ném lỗi BAD_REQUEST")
-    void resetPassword_whenTokenNotFound_throwsBadRequest() {
+    @DisplayName("Quên mật khẩu: khi vượt quá 3 lần/15 phút thì giới hạn và không gửi email")
+    void forgotPassword_whenRateLimitExceeded_doesNotSendEmail() {
+        // Arrange
+        AppUser user = new AppUser("owner@xilespa.vn", "hash", "Chủ tiệm", UserRole.OWNER, now);
+        ReflectionTestUtils.setField(user, "id", 1L);
+        when(userRepository.findByEmailIgnoreCase("owner@xilespa.vn"))
+                .thenReturn(Optional.of(user));
+        when(passwordResetTokenRepository.countByUser_IdAndCreatedAtAfter(eq(1L), any()))
+                .thenReturn(3L);
+        var request =
+                new com.xilespa.module.auth.dto.request.ForgotPasswordRequest("owner@xilespa.vn");
+
+        // Act
+        authService.forgotPassword(request);
+
+        // Assert: Không vô hiệu token cũ và không gửi email
+        verify(passwordResetTokenRepository, never()).invalidateAllActiveByUserId(any(), any());
+        verify(passwordResetTokenRepository, never()).save(any());
+        verify(passwordResetEmailSender, never()).sendResetEmail(any(), any());
+    }
+
+    @Test
+    @DisplayName("Đặt lại mật khẩu: khi token không tìm thấy thì ném lỗi RESET_TOKEN_INVALID")
+    void resetPassword_whenTokenNotFound_throwsResetTokenInvalid() {
         // Arrange
         when(passwordResetTokenRepository.findByTokenHash(any())).thenReturn(Optional.empty());
         var request =
@@ -504,13 +560,13 @@ class AuthServiceTest {
         // Act & Assert
         assertThatThrownBy(() -> authService.resetPassword(request))
                 .isInstanceOf(BusinessException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.BAD_REQUEST)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.RESET_TOKEN_INVALID)
                 .hasMessageContaining("Liên kết đặt lại mật khẩu không hợp lệ");
     }
 
     @Test
-    @DisplayName("Đặt lại mật khẩu: khi token đã dùng thì ném lỗi BAD_REQUEST")
-    void resetPassword_whenTokenAlreadyUsed_throwsBadRequest() {
+    @DisplayName("Đặt lại mật khẩu: khi token đã dùng thì ném lỗi RESET_TOKEN_INVALID")
+    void resetPassword_whenTokenAlreadyUsed_throwsResetTokenInvalid() {
         // Arrange
         AppUser user = new AppUser("owner@xilespa.vn", "hash", "Chủ tiệm", UserRole.OWNER, now);
         var token =
@@ -526,13 +582,13 @@ class AuthServiceTest {
         // Act & Assert
         assertThatThrownBy(() -> authService.resetPassword(request))
                 .isInstanceOf(BusinessException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.BAD_REQUEST)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.RESET_TOKEN_INVALID)
                 .hasMessageContaining("Liên kết đặt lại mật khẩu không hợp lệ");
     }
 
     @Test
     @DisplayName(
-            "Đặt lại mật khẩu thành công: đổi pass, mở khóa tài khoản, thu hồi toàn bộ phiên và ghi audit")
+            "Đặt lại mật khẩu thành công: đổi pass, mở khóa tài khoản (không cập nhật lastLoginAt), dọn token và thu hồi phiên")
     void resetPassword_whenValid_succeedsAndRevokesAllSessions() {
         // Arrange
         AppUser user = new AppUser("owner@xilespa.vn", "old_hash", "Chủ tiệm", UserRole.OWNER, now);
@@ -558,6 +614,8 @@ class AuthServiceTest {
         assertThat(token.isUsed()).isTrue();
         assertThat(user.getPasswordHash()).isEqualTo("new_encoded_hash");
         assertThat(user.isLocked(now)).isFalse(); // Tài khoản được giải phóng khóa
+        assertThat(user.getLastLoginAt()).isNull(); // lastLoginAt KHÔNG bị ghi nhận sai
+        verify(passwordResetTokenRepository).deleteAllByUser_Id(1L);
         verify(refreshTokenRepository).revokeAllActiveByUserId(1L);
         verify(auditService)
                 .record(

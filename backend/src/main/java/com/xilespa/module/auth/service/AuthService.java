@@ -78,7 +78,10 @@ public class AuthService {
             // Chống Timing Attack: Luôn gọi BCrypt matches với dummy hash để giữ thời gian phản hồi
             // đồng nhất
             passwordEncoder.matches(request.password(), DUMMY_PASSWORD_HASH);
-            throw new BusinessException(ErrorCode.UNAUTHORIZED, "Email hoặc mật khẩu không đúng.");
+            throw new BusinessException(
+                    ErrorCode.UNAUTHORIZED,
+                    "Email hoặc mật khẩu không đúng, hoặc tài khoản đang tạm khóa. Thử lại sau ít"
+                            + " phút hoặc dùng Quên mật khẩu.");
         }
 
         AppUser user = userOpt.get();
@@ -88,14 +91,19 @@ public class AuthService {
             // đồng nhất
             passwordEncoder.matches(request.password(), DUMMY_PASSWORD_HASH);
             throw new BusinessException(
-                    ErrorCode.UNAUTHORIZED, "Tài khoản đang bị tạm khóa. Vui lòng thử lại sau.");
+                    ErrorCode.UNAUTHORIZED,
+                    "Email hoặc mật khẩu không đúng, hoặc tài khoản đang tạm khóa. Thử lại sau ít"
+                            + " phút hoặc dùng Quên mật khẩu.");
         }
 
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
             // Ghi nhận số lần đăng nhập sai trong transaction độc lập (không bị rollback bởi
             // exception bên dưới)
             authSecurityAuditService.recordFailedLogin(user.getId(), now);
-            throw new BusinessException(ErrorCode.UNAUTHORIZED, "Email hoặc mật khẩu không đúng.");
+            throw new BusinessException(
+                    ErrorCode.UNAUTHORIZED,
+                    "Email hoặc mật khẩu không đúng, hoặc tài khoản đang tạm khóa. Thử lại sau ít"
+                            + " phút hoặc dùng Quên mật khẩu.");
         }
 
         if (!user.isEnabled()) {
@@ -238,7 +246,7 @@ public class AuthService {
 
         if (!passwordEncoder.matches(request.oldPassword(), user.getPasswordHash())) {
             throw new BusinessException(
-                    ErrorCode.BAD_REQUEST, "Mật khẩu hiện tại không chính xác.");
+                    ErrorCode.PASSWORD_INCORRECT, "Mật khẩu hiện tại không chính xác.");
         }
 
         passwordPolicyValidator.validate(request.newPassword(), user.getPasswordHash());
@@ -269,7 +277,8 @@ public class AuthService {
      * Yêu cầu gửi liên kết đặt lại mật khẩu qua email (FR-AUTH-03).
      *
      * <p>Chống dò email (Anti-Enumeration): Dù email có tồn tại hay không, phương thức đều kết thúc
-     * thành công mà không làm lộ trạng thái tài khoản.
+     * thành công mà không làm lộ trạng thái tài khoản. Giới hạn tối đa 3 lần/15 phút và vô hiệu hóa
+     * link cũ khi yêu cầu link mới.
      *
      * @param request Yêu cầu chứa email.
      */
@@ -279,12 +288,26 @@ public class AuthService {
         Optional<AppUser> userOpt = userRepository.findByEmailIgnoreCase(email);
 
         if (userOpt.isEmpty() || !userOpt.get().isEnabled()) {
-            log.info("Yêu cầu quên mật khẩu cho email không tồn tại hoặc bị vô hiệu: {}", email);
+            log.debug("Yêu cầu quên mật khẩu cho email không tồn tại hoặc bị vô hiệu: {}", email);
             return;
         }
 
         AppUser user = userOpt.get();
         Instant now = clock.instant();
+
+        // Giới hạn tần suất: Tối đa 3 lần yêu cầu trong vòng 15 phút (chống spam/lạm dụng)
+        long recentRequests =
+                passwordResetTokenRepository.countByUser_IdAndCreatedAtAfter(
+                        user.getId(), now.minus(java.time.Duration.ofMinutes(15)));
+        if (recentRequests >= 3) {
+            log.warn(
+                    "Tần suất yêu cầu quên mật khẩu vượt quá giới hạn (3 lần/15 phút) cho userId={}",
+                    user.getId());
+            return;
+        }
+
+        // Vô hiệu hóa toàn bộ link đặt lại mật khẩu còn hiệu lực trước đó của tài khoản
+        passwordResetTokenRepository.invalidateAllActiveByUserId(user.getId(), now);
 
         String rawToken = generateSecureRandomToken();
         String tokenHash = TokenHasher.hash(rawToken);
@@ -318,13 +341,13 @@ public class AuthService {
                         .orElseThrow(
                                 () ->
                                         new BusinessException(
-                                                ErrorCode.BAD_REQUEST,
+                                                ErrorCode.RESET_TOKEN_INVALID,
                                                 "Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết"
                                                         + " hạn."));
 
         if (!token.isValid(now)) {
             throw new BusinessException(
-                    ErrorCode.BAD_REQUEST,
+                    ErrorCode.RESET_TOKEN_INVALID,
                     "Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn.");
         }
 
@@ -335,11 +358,15 @@ public class AuthService {
         passwordResetTokenRepository.save(token);
 
         user.changePassword(passwordEncoder.encode(request.newPassword()), now);
-        // Giải phóng trạng thái khóa nếu tài khoản bị khóa trước đó
-        user.recordSuccessfulLogin(now);
+        // Giải phóng trạng thái khóa nếu tài khoản bị tạm khóa mà không cập nhật thời điểm đăng
+        // nhập
+        user.unlock(now);
         userRepository.save(user);
 
-        // Sau khi đặt lại thành công, toàn bộ phiên cũ bị thu hồi (FR-AUTH-03)
+        // Sau khi đặt lại thành công, dọn sạch toàn bộ token đặt lại mật khẩu cũ của tài khoản
+        passwordResetTokenRepository.deleteAllByUser_Id(user.getId());
+
+        // Thu hồi toàn bộ phiên đăng nhập cũ (FR-AUTH-03)
         refreshTokenRepository.revokeAllActiveByUserId(user.getId());
 
         // Ghi nhật ký audit (BR-18): Tuyệt đối không ghi mật khẩu hay chuỗi băm
