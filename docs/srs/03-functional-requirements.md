@@ -24,7 +24,7 @@ Mọi yêu cầu có trạng thái ban đầu là `Draft`. Quy tắc nghiệp v�
 - *Story:* Là chủ tiệm, tôi muốn đăng nhập bằng email và mật khẩu để vào hệ thống an toàn.
 - *AC:*
   - Đúng thông tin: vào trang chủ, nhận phiên đăng nhập.
-  - Sai thông tin: hiện thông báo chung "Email hoặc mật khẩu không đúng", không tiết lộ email có tồn tại hay không.
+  - Sai thông tin: hiện thông báo chung (xem FR-AUTH-05), không tiết lộ email có tồn tại hay không.
   - Mật khẩu không bao giờ được lưu hay ghi log ở dạng gốc.
   - Chưa đăng nhập thì mọi trang và API (trừ đăng nhập, quên mật khẩu) bị từ chối.
 
@@ -32,10 +32,21 @@ Mọi yêu cầu có trạng thái ban đầu là `Draft`. Quy tắc nghiệp v�
 - *Story:* Là chủ tiệm, tôi muốn tự đặt lại mật khẩu khi quên để không phụ thuộc người phát triển.
 - *AC:*
   - Nhập email: luôn trả về cùng một thông báo "Nếu email tồn tại, chúng tôi đã gửi hướng dẫn", dù email có tồn tại hay không.
-  - Liên kết đặt lại hết hạn sau 30 phút (giá trị cấu hình được) và chỉ dùng được một lần.
-  - Sau khi đặt lại thành công, toàn bộ phiên cũ bị thu hồi.
+  - Liên kết đặt lại hết hạn sau 30 phút (giá trị cấu hình được) và chỉ dùng được một lần. Yêu cầu liên kết mới thì các liên kết cũ chưa dùng hết hiệu lực.
+  - Giới hạn tần suất: tối đa 3 yêu cầu trong 15 phút cho mỗi tài khoản. Quá giới hạn thì vẫn trả cùng phản hồi thành công (200) nhưng không tạo liên kết và không gửi email.
+  - Sau khi đặt lại thành công, toàn bộ phiên cũ bị thu hồi, tài khoản được mở khóa và bộ đếm đăng nhập sai về 0 (FR-AUTH-05).
   - Mật khẩu mới phải đạt chính sách ở NFR-SEC-03.
   - Gửi email (OQ-10): máy dev không gửi thật mà ghi liên kết ra log; production gửi qua SMTP, thông tin đọc từ biến môi trường, không ghi vào repo.
+
+**FR-AUTH-05 Chống dò mật khẩu**
+- *Story:* Là chủ tiệm, tôi muốn tài khoản bị khóa tạm khi có người đoán mật khẩu liên tục, để kẻ xấu không dò ra mật khẩu.
+- *AC:*
+  - Sai mật khẩu 5 lần liên tiếp thì tài khoản bị khóa tạm.
+  - Thời gian khóa tăng dần theo mỗi lần sai tiếp sau khi hết khóa: 1, 2, 4, 8 phút, tối đa 15 phút. Hết thời gian khóa thì tự mở, không cần người can thiệp.
+  - Trong lúc bị khóa, đăng nhập bị từ chối kể cả khi nhập đúng mật khẩu.
+  - Bộ đếm lần sai chỉ về 0 khi đăng nhập đúng hoặc đặt lại mật khẩu (FR-AUTH-03); không tự về 0 theo thời gian.
+  - Một thông báo chung cho mọi trường hợp (email không tồn tại, sai mật khẩu, đang bị khóa): "Email hoặc mật khẩu không đúng, hoặc tài khoản đang tạm khóa. Thử lại sau ít phút hoặc dùng Quên mật khẩu." Thời gian phản hồi cũng không làm lộ email có tồn tại hay không.
+  - Mỗi lần tài khoản chuyển sang trạng thái khóa được ghi log và nhật ký thay đổi (`audit_log`), không ghi mật khẩu.
 
 ---
 
