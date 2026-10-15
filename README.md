@@ -86,6 +86,31 @@ npm run dev
 
 Mở http://localhost:5173. Trang **Tổng quan** báo "Máy chủ đang hoạt động bình thường" là frontend đã nối được backend (Vite chuyển `/api` và `/actuator` sang cổng 8080).
 
+### 6. Thử "Quên mật khẩu" ở máy dev
+
+Máy dev không gửi email thật (OQ-10). Ở trang đăng nhập bấm **Quên mật khẩu?**, nhập email tài khoản chủ tiệm, rồi
+mở log của backend (cửa sổ chạy `./gradlew bootRun` hoặc IntelliJ) và tìm khối `[DEV EMAIL SENDER (OQ-10)]`. Dòng
+"Liên kết đặt lại mật khẩu" chứa link dạng `http://localhost:5173/reset-password?token=...`; mở link đó để đặt
+mật khẩu mới. Link hết hạn sau 30 phút, dùng một lần; mỗi tài khoản tối đa 3 yêu cầu trong 15 phút.
+
+## Chạy ở môi trường prod (biến môi trường)
+
+Profile `prod` (`application-prod.yml`) không có giá trị mặc định: thiếu biến nào thì backend báo lỗi ngay lúc
+khởi động. Đặt các biến sau trên máy chủ, **không** ghi vào repo:
+
+| Biến | Ý nghĩa |
+|---|---|
+| `SPRING_PROFILES_ACTIVE=prod` | **Bắt buộc.** Quên đặt thì backend chạy profile `dev` (khóa JWT và tài khoản dev, không gửi email thật) |
+| `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` | Kết nối PostgreSQL |
+| `JWT_SECRET` | Khóa ký JWT, chuỗi ngẫu nhiên ít nhất 32 byte |
+| `JWT_COOKIE_SECURE=true` | Cookie chỉ gửi qua HTTPS |
+| `MAIL_HOST`, `MAIL_PORT` | Máy chủ SMTP, ví dụ Gmail `smtp.gmail.com`, `587` |
+| `MAIL_USERNAME`, `MAIL_PASSWORD` | Tài khoản SMTP; với Gmail dùng App Password, không dùng mật khẩu đăng nhập |
+| `MAIL_FROM` | Địa chỉ người gửi email đặt lại mật khẩu |
+| `AUTH_RESET_PASSWORD_BASE_URL` | Đường dẫn trang đặt lại mật khẩu của frontend, ví dụ `https://<tên-miền>/reset-password` |
+
+Giá trị mẫu xem `.env.example`.
+
 ## Kiểm tra trước khi commit
 
 Backend (cần Docker Desktop đang mở, test dùng PostgreSQL thật qua Testcontainers):
