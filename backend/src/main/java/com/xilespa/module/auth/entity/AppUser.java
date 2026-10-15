@@ -87,7 +87,8 @@ public class AppUser {
 
     /**
      * Ghi nhận một lần đăng nhập thất bại và tạm khóa tài khoản nếu vượt quá ngưỡng (FR-AUTH-05).
-     * Áp dụng khóa lũy tiến: 1 phút, 2 phút, 4 phút... tối đa theo cấu hình.
+     * Áp dụng khóa lũy tiến: 1 phút, 2 phút, 4 phút... tối đa theo cấu hình. Bộ đếm chỉ về 0 khi
+     * đăng nhập đúng ({@link #recordSuccessfulLogin}) hoặc đặt lại mật khẩu ({@link #unlock}).
      *
      * @param maxFailedAttempts Số lần sai tối đa được phép.
      * @param maxLockDuration Thời gian tạm khóa tối đa.
@@ -100,13 +101,6 @@ public class AppUser {
         // failedLoginCount
         if (this.lockedUntil != null && !this.lockedUntil.isAfter(now)) {
             this.lockedUntil = null;
-        }
-
-        // Tự động reset bộ đếm nếu lần thất bại gần nhất đã cách đây hơn 24 giờ
-        if (this.failedLoginCount > 0
-                && this.updatedAt != null
-                && now.isAfter(this.updatedAt.plus(java.time.Duration.ofHours(24)))) {
-            this.failedLoginCount = 0;
         }
 
         this.failedLoginCount++;

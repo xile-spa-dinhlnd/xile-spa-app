@@ -142,8 +142,9 @@ class AppUserTest {
     }
 
     @Test
-    @DisplayName("Tự động reset bộ đếm sai nếu lần sai gần nhất cách hơn 24 giờ")
-    void recordFailedLogin_whenMoreThan24HoursPassed_shouldResetCount() {
+    @DisplayName(
+            "Bộ đếm sai không tự về 0 theo thời gian, chỉ về 0 khi đăng nhập đúng hoặc đặt lại")
+    void recordFailedLogin_afterLongGap_shouldKeepCount() {
         AppUser user = new AppUser("user@xilespa.vn", "hash", "User", UserRole.OWNER, now);
         Duration maxLock = Duration.ofMinutes(15);
 
@@ -151,14 +152,11 @@ class AppUserTest {
         user.recordFailedLogin(5, maxLock, now);
         user.recordFailedLogin(5, maxLock, now);
         user.recordFailedLogin(5, maxLock, now);
-        assertThat(user.getFailedLoginCount()).isEqualTo(3);
 
-        // Lần sai tiếp theo sau 25 giờ
-        Instant nextDay = now.plus(Duration.ofHours(25));
-        user.recordFailedLogin(5, maxLock, nextDay);
+        // Lần sai tiếp theo sau 25 giờ vẫn cộng dồn
+        user.recordFailedLogin(5, maxLock, now.plus(Duration.ofHours(25)));
 
-        // Bộ đếm được reset về 0 và tăng lên 1
-        assertThat(user.getFailedLoginCount()).isEqualTo(1);
+        assertThat(user.getFailedLoginCount()).isEqualTo(4);
         assertThat(user.getLockedUntil()).isNull();
     }
 }
