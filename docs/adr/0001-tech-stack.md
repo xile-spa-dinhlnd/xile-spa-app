@@ -57,3 +57,5 @@ Hệ thống quản trị cho một tiệm nhỏ, một người dùng chính (c
   `@AllArgsConstructor` (chặn trong `lombok.config`) để entity chỉ đổi trạng thái qua method nghiệp vụ. Thêm
   `lombok-mapstruct-binding` và đặt Lombok trước MapStruct trong annotation processor. Lý do: bớt code getter
   và constructor viết tay, phổ biến trong dự án Spring ở Việt Nam.
+- **12/10/2026 (S2-04):** Chuyển phần ký và kiểm tra JWT từ code tự viết sang **Spring Security OAuth2 JOSE (`spring-security-oauth2-jose`)** với `NimbusJwtEncoder` và `NimbusJwtDecoder`. Lý do: chuẩn hóa theo hệ sinh thái Spring Security, loại bỏ code thủ công HMAC/Base64/JSON, tận dụng bộ parser và validator chuẩn RFC 7519 đã được kiểm chứng bảo mật, hỗ trợ mở rộng thuật toán ký trong tương lai mà không đổi kiến trúc.
+- **14/10/2026 (S2-02):** Thêm **Spring Boot Starter Mail (`spring-boot-starter-mail`)** để gửi email đặt lại mật khẩu qua SMTP (OQ-10, FR-AUTH-03). Chọn bean qua thuộc tính `xile.mail.sender` (`log` | `smtp`) bằng `@ConditionalOnProperty`. Dev ghi link ra console, prod gửi SMTP qua biến môi trường.

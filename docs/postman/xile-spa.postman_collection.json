@@ -42,8 +42,104 @@
       ]
     },
     {
-      "name": "1. Xác thực (S1-01, S1-02)",
+      "name": "1. Xác thực & Bảo mật (S1-01, S1-02, S2-01 - S2-04)",
       "item": [
+        {
+          "name": "Đăng nhập - Sai mật khẩu (Chống timing attack)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "NFR-SEC-01, NFR-SEC-02. Trả 401 với thông báo đồng nhất để chống rò rỉ trạng thái tài khoản hoặc thời gian băm.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{ownerEmail}}\",\n  \"password\": \"WrongPassword123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 401\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"Mã lỗi UNAUTHORIZED\", () => pm.expect(pm.response.json().code).to.eql(\"UNAUTHORIZED\"));",
+                  "pm.test(\"Thông báo bảo mật đồng nhất\", () => {",
+                  "  pm.expect(pm.response.json().message).to.eql(\"Email hoặc mật khẩu không đúng, hoặc tài khoản đang tạm khóa. Thử lại sau ít phút hoặc dùng Quên mật khẩu.\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Đăng nhập - Email không tồn tại (Chống user enumeration)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "NFR-SEC-01. Email không tồn tại cũng thực hiện băm giả lập và trả đúng thông báo như khi sai mật khẩu.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"nonexistent_user@xilespa.vn\",\n  \"password\": \"WrongPassword123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 401\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"Mã lỗi UNAUTHORIZED\", () => pm.expect(pm.response.json().code).to.eql(\"UNAUTHORIZED\"));",
+                  "pm.test(\"Thông báo đồng nhất chống dò email\", () => {",
+                  "  pm.expect(pm.response.json().message).to.eql(\"Email hoặc mật khẩu không đúng, hoặc tài khoản đang tạm khóa. Thử lại sau ít phút hoặc dùng Quên mật khẩu.\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
         {
           "name": "Đăng nhập",
           "request": {
@@ -65,7 +161,7 @@
                 "login"
               ]
             },
-            "description": "FR-AUTH-01. Đặt cookie httpOnly access_token và refresh_token. Tài khoản chủ tiệm dev được tạo tự động khi backend khởi động (S1-02).",
+            "description": "FR-AUTH-01. Đặt cookie httpOnly access_token và refresh_token. Tài khoản chủ tiệm dev được tạo tự động khi backend khởi động (S1-02). Đăng nhập thành công xóa số lần sai trước đó.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"email\": \"{{ownerEmail}}\",\n  \"password\": \"{{ownerPassword}}\"\n}",
@@ -107,7 +203,7 @@
                 "me"
               ]
             },
-            "description": "Cần đăng nhập (cookie access_token)."
+            "description": "Cần đăng nhập (cookie access_token). Xác thực claim iss: xile-spa và hạn exp qua Nimbus JWT."
           },
           "event": [
             {
@@ -147,6 +243,324 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Mã trạng thái 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Đổi mật khẩu - Sai mật khẩu cũ (PASSWORD_INCORRECT)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/change-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "change-password"
+              ]
+            },
+            "description": "FR-AUTH-04. Khi cung cấp mật khẩu cũ không đúng, trả 400 kèm mã lỗi PASSWORD_INCORRECT.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"oldPassword\": \"SaiMatKhauCu123!\",\n  \"newPassword\": \"NewValidPassword123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Mã lỗi PASSWORD_INCORRECT\", () => pm.expect(pm.response.json().code).to.eql(\"PASSWORD_INCORRECT\"));",
+                  "pm.test(\"Thông báo mật khẩu hiện tại không chính xác\", () => pm.expect(pm.response.json().message).to.eql(\"Mật khẩu hiện tại không chính xác.\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Đổi mật khẩu - Từ điển phổ biến (PASSWORD_POLICY_VIOLATION)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/change-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "change-password"
+              ]
+            },
+            "description": "NFR-SEC-03. Chặn các mật khẩu nằm trong danh sách top 1000 từ điển phổ biến (như password123, 1234567890).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"oldPassword\": \"{{ownerPassword}}\",\n  \"newPassword\": \"password123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Mã lỗi PASSWORD_POLICY_VIOLATION\", () => pm.expect(pm.response.json().code).to.eql(\"PASSWORD_POLICY_VIOLATION\"));",
+                  "pm.test(\"Thông báo mật khẩu quá phổ biến\", () => pm.expect(pm.response.json().message).to.include(\"Mật khẩu quá phổ biến và dễ đoán\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Đổi mật khẩu - Vượt quá 72 byte BCrypt (PASSWORD_POLICY_VIOLATION)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/change-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "change-password"
+              ]
+            },
+            "description": "NFR-SEC-03. Thuật toán BCrypt chỉ nhận diện tối đa 72 byte UTF-8. Mật khẩu dài hơn bị chặn để tránh việc cắt cụt âm thầm.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"oldPassword\": \"{{ownerPassword}}\",\n  \"newPassword\": \"ThisPasswordIsIntentionallyLongerThanSeventyTwoBytesUTF8LimitForBCryptAlgorithmCheck123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Mã lỗi PASSWORD_POLICY_VIOLATION\", () => pm.expect(pm.response.json().code).to.eql(\"PASSWORD_POLICY_VIOLATION\"));",
+                  "pm.test(\"Thông báo giới hạn 72 byte\", () => pm.expect(pm.response.json().message).to.include(\"72 byte\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Đổi mật khẩu - Trùng mật khẩu hiện tại (PASSWORD_POLICY_VIOLATION)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/change-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "change-password"
+              ]
+            },
+            "description": "NFR-SEC-03. Không cho phép đổi mật khẩu mới trùng khớp hoàn toàn với mật khẩu đang dùng.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"oldPassword\": \"{{ownerPassword}}\",\n  \"newPassword\": \"{{ownerPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Mã lỗi PASSWORD_POLICY_VIOLATION\", () => pm.expect(pm.response.json().code).to.eql(\"PASSWORD_POLICY_VIOLATION\"));",
+                  "pm.test(\"Thông báo trùng mật khẩu hiện tại\", () => pm.expect(pm.response.json().message).to.eql(\"Mật khẩu mới không được trùng với mật khẩu hiện tại.\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Quên mật khẩu",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/forgot-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "forgot-password"
+              ]
+            },
+            "description": "FR-AUTH-03, OQ-10. Gửi yêu cầu đặt lại mật khẩu qua email. Chống user enumeration: luôn trả về 200 dù email có tồn tại hay không. Giới hạn 3 lần/15 phút và vô hiệu hóa link cũ. Môi trường dev (xile.mail.sender=logging) sẽ in liên kết kèm token ra console.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{ownerEmail}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Đặt lại mật khẩu - Token không hợp lệ hoặc đã dùng (RESET_TOKEN_INVALID)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/reset-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "reset-password"
+              ]
+            },
+            "description": "FR-AUTH-03. Token sai, đã hết hạn hoặc đã được sử dụng trước đó sẽ bị từ chối với mã lỗi RESET_TOKEN_INVALID.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"token_khong_hop_le_hoac_da_het_han_12345678\",\n  \"newPassword\": \"NewValidPassword123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Mã lỗi RESET_TOKEN_INVALID\", () => pm.expect(pm.response.json().code).to.eql(\"RESET_TOKEN_INVALID\"));",
+                  "pm.test(\"Thông báo token không hợp lệ hoặc hết hạn\", () => pm.expect(pm.response.json().message).to.eql(\"Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn.\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Đặt lại mật khẩu - Hướng dẫn điền token thật",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/reset-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "reset-password"
+              ]
+            },
+            "description": "FR-AUTH-03, NFR-SEC-03. Điền token lấy từ console backend (khi gọi Quên mật khẩu) vào trường 'token' bên dưới để thử đặt lại mật khẩu thành công. Khi thành công sẽ mở khóa tài khoản, thu hồi toàn bộ phiên và xóa sạch token cũ.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"dien_token_tu_console_hoac_email_vao_day\",\n  \"newPassword\": \"NewSecureResetPass123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 200 hoặc 400 (tùy thuộc token thật hay placeholder)\", () => pm.expect([200, 400]).to.include(pm.response.code));"
                 ]
               }
             }

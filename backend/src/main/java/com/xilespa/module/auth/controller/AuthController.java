@@ -1,5 +1,6 @@
 package com.xilespa.module.auth.controller;
 
+import com.xilespa.module.auth.dto.request.ChangePasswordRequest;
 import com.xilespa.module.auth.dto.request.LoginRequest;
 import com.xilespa.module.auth.dto.response.UserResponse;
 import com.xilespa.module.auth.service.AuthService;
@@ -20,7 +21,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/** Controller xử lý các endpoint xác thực /api/auth (FR-AUTH-01, FR-AUTH-02). */
+/** Controller xử lý các endpoint xác thực /api/auth (FR-AUTH-01, FR-AUTH-02, FR-AUTH-04). */
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
@@ -80,5 +81,32 @@ public class AuthController {
     public ResponseEntity<UserResponse> getCurrentUser(
             @AuthenticationPrincipal UserPrincipal principal) {
         return ResponseEntity.ok(authService.getCurrentUser(principal.id()));
+    }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<Void> changePassword(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @Valid @RequestBody ChangePasswordRequest request,
+            HttpServletRequest httpRequest) {
+
+        String currentRawRefreshToken =
+                CookieHelper.extractCookie(httpRequest, CookieHelper.REFRESH_TOKEN_COOKIE)
+                        .orElse(null);
+        authService.changePassword(principal.id(), currentRawRefreshToken, request);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Void> forgotPassword(
+            @Valid @RequestBody com.xilespa.module.auth.dto.request.ForgotPasswordRequest request) {
+        authService.forgotPassword(request);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<Void> resetPassword(
+            @Valid @RequestBody com.xilespa.module.auth.dto.request.ResetPasswordRequest request) {
+        authService.resetPassword(request);
+        return ResponseEntity.ok().build();
     }
 }

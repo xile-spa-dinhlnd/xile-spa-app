@@ -80,15 +80,67 @@ public class AppUser {
 
     // --- Domain Methods (Hành vi nghiệp vụ) ---
 
-    /** Ghi nhận một lần đăng nhập thất bại (chống dò mật khẩu, FR-AUTH-05). */
-    public void recordFailedLogin(Instant now) {
+    /** Kiểm tra xem tài khoản có đang bị khóa tạm thời tại thời điểm xét hay không (FR-AUTH-05). */
+    public boolean isLocked(Instant now) {
+        return this.lockedUntil != null && this.lockedUntil.isAfter(now);
+    }
+
+    /**
+     * Ghi nhận một lần đăng nhập thất bại và tạm khóa tài khoản nếu vượt quá ngưỡng (FR-AUTH-05).
+     * Áp dụng khóa lũy tiến: 1 phút, 2 phút, 4 phút... tối đa theo cấu hình.
+     *
+     * @param maxFailedAttempts Số lần sai tối đa được phép.
+     * @param maxLockDuration Thời gian tạm khóa tối đa.
+     * @param now Thời điểm xảy ra.
+     * @return true nếu tài khoản vừa bị chuyển sang trạng thái tạm khóa.
+     */
+    public boolean recordFailedLogin(
+            int maxFailedAttempts, java.time.Duration maxLockDuration, Instant now) {
+        // Nếu đã hết hạn tạm khóa thì giải phóng lockedUntil nhưng giữ nguyên bộ đếm
+        // failedLoginCount
+        if (this.lockedUntil != null && !this.lockedUntil.isAfter(now)) {
+            this.lockedUntil = null;
+        }
+
+        // Tự động reset bộ đếm nếu lần thất bại gần nhất đã cách đây hơn 24 giờ
+        if (this.failedLoginCount > 0
+                && this.updatedAt != null
+                && now.isAfter(this.updatedAt.plus(java.time.Duration.ofHours(24)))) {
+            this.failedLoginCount = 0;
+        }
+
         this.failedLoginCount++;
+        boolean justLocked = false;
+        if (this.failedLoginCount >= maxFailedAttempts) {
+            int attemptsOver = this.failedLoginCount - maxFailedAttempts;
+            long minutes = Math.min((long) Math.pow(2, attemptsOver), maxLockDuration.toMinutes());
+            if (minutes < 1) {
+                minutes = 1;
+            }
+            this.lockedUntil = now.plus(java.time.Duration.ofMinutes(minutes));
+            justLocked = true;
+        }
+        this.updatedAt = now;
+        return justLocked;
+    }
+
+    /**
+     * Mở khóa tài khoản và thiết lập lại bộ đếm đăng nhập sai mà không thay đổi thời điểm đăng nhập
+     * cuối.
+     */
+    public void unlock(Instant now) {
+        this.failedLoginCount = 0;
+        this.lockedUntil = null;
         this.updatedAt = now;
     }
 
-    /** Ghi nhận đăng nhập thành công: xóa bộ đếm lỗi và cập nhật thời điểm đăng nhập gần nhất. */
+    /**
+     * Ghi nhận đăng nhập thành công: xóa bộ đếm lỗi, giải phóng trạng thái khóa và cập nhật thời
+     * điểm đăng nhập gần nhất.
+     */
     public void recordSuccessfulLogin(Instant now) {
         this.failedLoginCount = 0;
+        this.lockedUntil = null;
         this.lastLoginAt = now;
         this.updatedAt = now;
     }

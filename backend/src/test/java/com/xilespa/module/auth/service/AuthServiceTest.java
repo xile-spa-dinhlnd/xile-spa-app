@@ -43,7 +43,15 @@ class AuthServiceTest {
 
     @Mock private AppUserRepository userRepository;
     @Mock private RefreshTokenRepository refreshTokenRepository;
+
+    @Mock
+    private com.xilespa.module.auth.repository.PasswordResetTokenRepository
+            passwordResetTokenRepository;
+
     @Mock private AuthSecurityAuditService authSecurityAuditService;
+    @Mock private com.xilespa.module.auth.service.PasswordResetEmailSender passwordResetEmailSender;
+    @Mock private com.xilespa.module.auth.validator.PasswordPolicyValidator passwordPolicyValidator;
+    @Mock private com.xilespa.common.audit.AuditService auditService;
     @Mock private PasswordEncoder passwordEncoder;
     @Mock private JwtService jwtService;
     @Mock private UserMapper userMapper;
@@ -52,6 +60,12 @@ class AuthServiceTest {
     private final Clock clock = Clock.fixed(now, ZoneOffset.UTC);
     private final JwtProperties properties =
             new JwtProperties("secret-key", Duration.ofMinutes(15), Duration.ofDays(7), false);
+    private final com.xilespa.module.auth.config.AuthSecurityProperties authSecurityProperties =
+            new com.xilespa.module.auth.config.AuthSecurityProperties(
+                    5,
+                    Duration.ofMinutes(15),
+                    Duration.ofMinutes(30),
+                    "http://localhost:5173/reset-password");
 
     private AuthService authService;
 
@@ -61,10 +75,15 @@ class AuthServiceTest {
                 new AuthService(
                         userRepository,
                         refreshTokenRepository,
+                        passwordResetTokenRepository,
                         authSecurityAuditService,
+                        passwordResetEmailSender,
+                        passwordPolicyValidator,
+                        auditService,
                         passwordEncoder,
                         jwtService,
                         properties,
+                        authSecurityProperties,
                         userMapper,
                         clock);
     }
@@ -115,7 +134,9 @@ class AuthServiceTest {
                             BusinessException be = (BusinessException) e;
                             assertThat(be.getErrorCode()).isEqualTo(ErrorCode.UNAUTHORIZED);
                             assertThat(be.getMessage())
-                                    .isEqualTo("Email hoặc mật khẩu không đúng.");
+                                    .contains(
+                                            "Email hoặc mật khẩu không đúng, hoặc tài khoản đang"
+                                                    + " tạm khóa.");
                         });
 
         // Xác nhận đã gọi BCrypt matches với dummy hash để giữ thời gian phản hồi cố định
@@ -144,7 +165,9 @@ class AuthServiceTest {
                             BusinessException be = (BusinessException) e;
                             assertThat(be.getErrorCode()).isEqualTo(ErrorCode.UNAUTHORIZED);
                             assertThat(be.getMessage())
-                                    .isEqualTo("Email hoặc mật khẩu không đúng.");
+                                    .contains(
+                                            "Email hoặc mật khẩu không đúng, hoặc tài khoản đang"
+                                                    + " tạm khóa.");
                         });
 
         verify(authSecurityAuditService).recordFailedLogin(10L, now);
@@ -173,6 +196,68 @@ class AuthServiceTest {
                             assertThat(be.getErrorCode()).isEqualTo(ErrorCode.UNAUTHORIZED);
                             assertThat(be.getMessage()).contains("vô hiệu hóa");
                         });
+    }
+
+    @Test
+    @DisplayName(
+            "Đăng nhập thất bại khi tài khoản đang bị tạm khóa (gọi băm giả chống Timing Attack)")
+    void login_whenAccountLocked_shouldCallDummyHashAndThrowUnauthorized() {
+        // Arrange
+        LoginRequest request = new LoginRequest("owner@xilespa.vn", "password123");
+        AppUser user =
+                new AppUser("owner@xilespa.vn", "encoded_hash", "Chủ tiệm", UserRole.OWNER, now);
+        user.lockUntil(now.plus(Duration.ofMinutes(15)), now);
+
+        when(userRepository.findByEmailIgnoreCase("owner@xilespa.vn"))
+                .thenReturn(Optional.of(user));
+
+        // Act & Assert
+        assertThatThrownBy(() -> authService.login(request))
+                .isInstanceOf(BusinessException.class)
+                .satisfies(
+                        e -> {
+                            BusinessException be = (BusinessException) e;
+                            assertThat(be.getErrorCode()).isEqualTo(ErrorCode.UNAUTHORIZED);
+                            assertThat(be.getMessage())
+                                    .contains(
+                                            "Email hoặc mật khẩu không đúng, hoặc tài khoản đang"
+                                                    + " tạm khóa.");
+                        });
+
+        // Xác nhận đã gọi dummy BCrypt để giữ thời gian phản hồi cố định
+        verify(passwordEncoder).matches(eq("password123"), any(String.class));
+        verify(authSecurityAuditService, never()).recordFailedLogin(any(), any());
+        verify(refreshTokenRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Đăng nhập thành công khi thời gian tạm khóa đã hết hạn")
+    void login_whenLockExpired_andValidCredentials_shouldSucceedAndResetLock() {
+        // Arrange
+        LoginRequest request = new LoginRequest("owner@xilespa.vn", "password123");
+        AppUser user =
+                new AppUser("owner@xilespa.vn", "encoded_hash", "Chủ tiệm", UserRole.OWNER, now);
+        ReflectionTestUtils.setField(user, "id", 1L);
+        // Khóa ở quá khứ (đã hết hạn)
+        user.lockUntil(now.minus(Duration.ofMinutes(1)), now);
+        ReflectionTestUtils.setField(user, "failedLoginCount", 5);
+
+        when(userRepository.findByEmailIgnoreCase("owner@xilespa.vn"))
+                .thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("password123", "encoded_hash")).thenReturn(true);
+        when(jwtService.generateAccessToken(1L, "owner@xilespa.vn", "Chủ tiệm", "OWNER"))
+                .thenReturn("access.jwt.token");
+        when(userMapper.toResponse(user))
+                .thenReturn(new UserResponse(1L, "owner@xilespa.vn", "Chủ tiệm", UserRole.OWNER));
+
+        // Act
+        LoginResult result = authService.login(request);
+
+        // Assert
+        assertThat(result.accessToken()).isEqualTo("access.jwt.token");
+        assertThat(user.getFailedLoginCount()).isZero();
+        assertThat(user.getLockedUntil()).isNull();
+        assertThat(user.getLastLoginAt()).isEqualTo(now);
     }
 
     @Test
@@ -284,5 +369,260 @@ class AuthServiceTest {
         // Assert
         assertThat(token.isRevoked()).isTrue();
         assertThat(token.getRevokedAt()).isEqualTo(now);
+    }
+
+    @Test
+    @DisplayName("Đổi mật khẩu thất bại khi người dùng không tồn tại")
+    void changePassword_whenUserNotFound_throwsNotFound() {
+        // Arrange
+        when(userRepository.findById(999L)).thenReturn(Optional.empty());
+        var request =
+                new com.xilespa.module.auth.dto.request.ChangePasswordRequest(
+                        "oldPass", "NewSecurePass123");
+
+        // Act & Assert
+        assertThatThrownBy(() -> authService.changePassword(999L, "raw-token", request))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NOT_FOUND);
+    }
+
+    @Test
+    @DisplayName(
+            "Đổi mật khẩu thất bại khi mật khẩu hiện tại không đúng: ném lỗi PASSWORD_INCORRECT")
+    void changePassword_whenOldPasswordIncorrect_throwsPasswordIncorrect() {
+        // Arrange
+        AppUser user = new AppUser("owner@xilespa.vn", "old_hash", "Chủ tiệm", UserRole.OWNER, now);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("wrongOldPass", "old_hash")).thenReturn(false);
+
+        var request =
+                new com.xilespa.module.auth.dto.request.ChangePasswordRequest(
+                        "wrongOldPass", "NewSecurePass123");
+
+        // Act & Assert
+        assertThatThrownBy(() -> authService.changePassword(1L, "raw-token", request))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PASSWORD_INCORRECT)
+                .hasMessageContaining("Mật khẩu hiện tại không chính xác");
+    }
+
+    @Test
+    @DisplayName(
+            "Đổi mật khẩu thành công: cập nhật hash, thu hồi các phiên khác và ghi nhật ký audit")
+    void changePassword_whenSuccess_updatesPasswordAndRevokesOtherTokens() {
+        // Arrange
+        AppUser user = new AppUser("owner@xilespa.vn", "old_hash", "Chủ tiệm", UserRole.OWNER, now);
+        ReflectionTestUtils.setField(user, "id", 1L);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("OldPassword123", "old_hash")).thenReturn(true);
+        when(passwordEncoder.encode("NewSecurePassword123")).thenReturn("new_encoded_hash");
+
+        String currentRawToken = "current-device-token";
+        String currentTokenHash = TokenHasher.hash(currentRawToken);
+        var request =
+                new com.xilespa.module.auth.dto.request.ChangePasswordRequest(
+                        "OldPassword123", "NewSecurePassword123");
+
+        // Act
+        authService.changePassword(1L, currentRawToken, request);
+
+        // Assert
+        verify(passwordPolicyValidator).validate("NewSecurePassword123", "old_hash");
+        verify(userRepository).save(user);
+        assertThat(user.getPasswordHash()).isEqualTo("new_encoded_hash");
+        verify(refreshTokenRepository).revokeAllActiveByUserIdExceptToken(1L, currentTokenHash);
+        verify(auditService)
+                .record(
+                        eq(com.xilespa.common.audit.AuditAction.UPDATE),
+                        eq("app_user"),
+                        eq(1L),
+                        any(),
+                        any());
+    }
+
+    @Test
+    @DisplayName("Đổi mật khẩu thành công khi không có currentRefreshToken: thu hồi toàn bộ phiên")
+    void changePassword_whenNoCurrentToken_revokesAllTokens() {
+        // Arrange
+        AppUser user = new AppUser("owner@xilespa.vn", "old_hash", "Chủ tiệm", UserRole.OWNER, now);
+        ReflectionTestUtils.setField(user, "id", 1L);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("OldPassword123", "old_hash")).thenReturn(true);
+        when(passwordEncoder.encode("NewSecurePassword123")).thenReturn("new_encoded_hash");
+
+        var request =
+                new com.xilespa.module.auth.dto.request.ChangePasswordRequest(
+                        "OldPassword123", "NewSecurePassword123");
+
+        // Act
+        authService.changePassword(1L, null, request);
+
+        // Assert
+        verify(refreshTokenRepository).revokeAllActiveByUserId(1L);
+    }
+
+    @Test
+    @DisplayName(
+            "Đổi mật khẩu thất bại khi mật khẩu cũ không chính xác: ném lỗi PASSWORD_INCORRECT")
+    void changePassword_whenWrongOldPassword_throwsPasswordIncorrect() {
+        // Arrange
+        AppUser user = new AppUser("owner@xilespa.vn", "old_hash", "Chủ tiệm", UserRole.OWNER, now);
+        ReflectionTestUtils.setField(user, "id", 1L);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("WrongPassword", "old_hash")).thenReturn(false);
+
+        var request =
+                new com.xilespa.module.auth.dto.request.ChangePasswordRequest(
+                        "WrongPassword", "NewSecurePassword123");
+
+        // Act & Assert
+        assertThatThrownBy(() -> authService.changePassword(1L, null, request))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PASSWORD_INCORRECT)
+                .hasMessageContaining("Mật khẩu hiện tại không chính xác.");
+    }
+
+    @Test
+    @DisplayName(
+            "Quên mật khẩu: khi email không tồn tại thì không ném lỗi và không gửi email (chống dò email)")
+    void forgotPassword_whenEmailNotFound_doesNotThrowAndDoesNotSendEmail() {
+        // Arrange
+        when(userRepository.findByEmailIgnoreCase("unknown@xilespa.vn"))
+                .thenReturn(Optional.empty());
+        var request =
+                new com.xilespa.module.auth.dto.request.ForgotPasswordRequest("unknown@xilespa.vn");
+
+        // Act & Assert
+        org.junit.jupiter.api.Assertions.assertDoesNotThrow(
+                () -> authService.forgotPassword(request));
+        verify(passwordResetEmailSender, never()).sendResetEmail(any(), any());
+        verify(passwordResetTokenRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName(
+            "Quên mật khẩu: khi email hợp lệ thì vô hiệu hóa token cũ, tạo token mới và gửi email")
+    void forgotPassword_whenEmailValid_savesTokenAndSendsEmail() {
+        // Arrange
+        AppUser user = new AppUser("owner@xilespa.vn", "hash", "Chủ tiệm", UserRole.OWNER, now);
+        ReflectionTestUtils.setField(user, "id", 1L);
+        when(userRepository.findByEmailIgnoreCase("owner@xilespa.vn"))
+                .thenReturn(Optional.of(user));
+        when(passwordResetTokenRepository.countByUser_IdAndCreatedAtAfter(eq(1L), any()))
+                .thenReturn(0L);
+        var request =
+                new com.xilespa.module.auth.dto.request.ForgotPasswordRequest("owner@xilespa.vn");
+
+        // Act
+        authService.forgotPassword(request);
+
+        // Assert
+        verify(passwordResetTokenRepository).invalidateAllActiveByUserId(1L, now);
+        verify(passwordResetTokenRepository).save(any());
+        verify(passwordResetEmailSender)
+                .sendResetEmail(
+                        eq("owner@xilespa.vn"),
+                        org.mockito.ArgumentMatchers.contains(
+                                "http://localhost:5173/reset-password?token="));
+    }
+
+    @Test
+    @DisplayName("Quên mật khẩu: khi vượt quá 3 lần/15 phút thì giới hạn và không gửi email")
+    void forgotPassword_whenRateLimitExceeded_doesNotSendEmail() {
+        // Arrange
+        AppUser user = new AppUser("owner@xilespa.vn", "hash", "Chủ tiệm", UserRole.OWNER, now);
+        ReflectionTestUtils.setField(user, "id", 1L);
+        when(userRepository.findByEmailIgnoreCase("owner@xilespa.vn"))
+                .thenReturn(Optional.of(user));
+        when(passwordResetTokenRepository.countByUser_IdAndCreatedAtAfter(eq(1L), any()))
+                .thenReturn(3L);
+        var request =
+                new com.xilespa.module.auth.dto.request.ForgotPasswordRequest("owner@xilespa.vn");
+
+        // Act
+        authService.forgotPassword(request);
+
+        // Assert: Không vô hiệu token cũ và không gửi email
+        verify(passwordResetTokenRepository, never()).invalidateAllActiveByUserId(any(), any());
+        verify(passwordResetTokenRepository, never()).save(any());
+        verify(passwordResetEmailSender, never()).sendResetEmail(any(), any());
+    }
+
+    @Test
+    @DisplayName("Đặt lại mật khẩu: khi token không tìm thấy thì ném lỗi RESET_TOKEN_INVALID")
+    void resetPassword_whenTokenNotFound_throwsResetTokenInvalid() {
+        // Arrange
+        when(passwordResetTokenRepository.findByTokenHash(any())).thenReturn(Optional.empty());
+        var request =
+                new com.xilespa.module.auth.dto.request.ResetPasswordRequest(
+                        "invalid-raw-token", "NewPassword123!");
+
+        // Act & Assert
+        assertThatThrownBy(() -> authService.resetPassword(request))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.RESET_TOKEN_INVALID)
+                .hasMessageContaining("Liên kết đặt lại mật khẩu không hợp lệ");
+    }
+
+    @Test
+    @DisplayName("Đặt lại mật khẩu: khi token đã dùng thì ném lỗi RESET_TOKEN_INVALID")
+    void resetPassword_whenTokenAlreadyUsed_throwsResetTokenInvalid() {
+        // Arrange
+        AppUser user = new AppUser("owner@xilespa.vn", "hash", "Chủ tiệm", UserRole.OWNER, now);
+        var token =
+                new com.xilespa.module.auth.entity.PasswordResetToken(
+                        user, "hash", now.plus(Duration.ofMinutes(30)), now);
+        token.markUsed(now.minus(Duration.ofMinutes(1)));
+
+        when(passwordResetTokenRepository.findByTokenHash(any())).thenReturn(Optional.of(token));
+        var request =
+                new com.xilespa.module.auth.dto.request.ResetPasswordRequest(
+                        "used-token", "NewPassword123!");
+
+        // Act & Assert
+        assertThatThrownBy(() -> authService.resetPassword(request))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.RESET_TOKEN_INVALID)
+                .hasMessageContaining("Liên kết đặt lại mật khẩu không hợp lệ");
+    }
+
+    @Test
+    @DisplayName(
+            "Đặt lại mật khẩu thành công: đổi pass, mở khóa tài khoản (không cập nhật lastLoginAt), dọn token và thu hồi phiên")
+    void resetPassword_whenValid_succeedsAndRevokesAllSessions() {
+        // Arrange
+        AppUser user = new AppUser("owner@xilespa.vn", "old_hash", "Chủ tiệm", UserRole.OWNER, now);
+        ReflectionTestUtils.setField(user, "id", 1L);
+        user.recordFailedLogin(5, Duration.ofMinutes(15), now); // Giả lập tài khoản đang bị khóa
+
+        var token =
+                new com.xilespa.module.auth.entity.PasswordResetToken(
+                        user, "token_hash", now.plus(Duration.ofMinutes(30)), now);
+
+        when(passwordResetTokenRepository.findByTokenHash(any())).thenReturn(Optional.of(token));
+        when(passwordEncoder.encode("BrandNewPassword123!")).thenReturn("new_encoded_hash");
+
+        var request =
+                new com.xilespa.module.auth.dto.request.ResetPasswordRequest(
+                        "valid-raw-token", "BrandNewPassword123!");
+
+        // Act
+        authService.resetPassword(request);
+
+        // Assert
+        verify(passwordPolicyValidator).validate("BrandNewPassword123!", "old_hash");
+        assertThat(token.isUsed()).isTrue();
+        assertThat(user.getPasswordHash()).isEqualTo("new_encoded_hash");
+        assertThat(user.isLocked(now)).isFalse(); // Tài khoản được giải phóng khóa
+        assertThat(user.getLastLoginAt()).isNull(); // lastLoginAt KHÔNG bị ghi nhận sai
+        verify(passwordResetTokenRepository).deleteAllByUser_Id(1L);
+        verify(refreshTokenRepository).revokeAllActiveByUserId(1L);
+        verify(auditService)
+                .record(
+                        eq(com.xilespa.common.audit.AuditAction.UPDATE),
+                        eq("app_user"),
+                        eq(1L),
+                        any(),
+                        any());
     }
 }
