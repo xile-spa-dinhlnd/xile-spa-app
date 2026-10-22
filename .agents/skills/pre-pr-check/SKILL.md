@@ -16,11 +16,29 @@ git diff --stat origin/develop...HEAD
 git diff --stat
 ```
 
-Kiểm tra nhánh: phải là nhánh card tách từ `develop`, tên đúng mẫu `feature|fix|docs|chore/<mã-card>-<mô-tả>`
-(CONTRIBUTING.md mục 2). Đang ở `develop` hoặc `main` thì ghi lên đầu báo cáo, đưa lệnh
-`git switch -c <loại>/<mã-card>-<mô-tả>` (thay đổi chưa commit đi theo sang nhánh mới) và không báo sẵn sàng.
+Kiểm tra nhánh: phải là nhánh tách từ `develop`, tên đúng mẫu `feature|fix|docs|chore/<mã-card>-<mô-tả>`, hoặc
+`docs|chore/<mô-tả>` cho việc quy trình không có card (CONTRIBUTING.md mục 2). Đang ở `develop` hoặc `main` thì
+ghi lên đầu báo cáo, đưa lệnh `git switch -c <loại>/<mã-card>-<mô-tả>` (thay đổi chưa commit đi theo sang nhánh
+mới) và không báo sẵn sàng.
 
 Liệt kê file đổi theo nhóm (backend, frontend, DB, tài liệu). Có file ngoài phạm vi card thì nêu ra.
+
+**Kích thước PR** (CONTRIBUTING.md mục 4, "Nhỏ"):
+
+```bash
+git diff --numstat $(git merge-base origin/develop HEAD) -- . ':(exclude)frontend/package-lock.json' ':(exclude)docs/postman/*.json' ':(exclude)docs/design/diagrams/*'
+git status --short   # file mới chưa add cũng tính
+```
+
+Tổng số dòng thêm và xóa quá khoảng 400, hoặc diff có việc của hơn một card, hoặc có việc không thuộc card
+(sửa quy trình, AGENTS không liên quan) thì ghi lên đầu báo cáo và đề xuất cách tách: nhóm file nào vào PR nào, tên
+nhánh từng PR. Không tự tách; người dùng quyết.
+
+**Test đi kèm code:** với mỗi file code chính có đổi (`entity`, `service`, `controller`, `validator` ở backend;
+`schemas.ts`, component, page, hook, `shared/lib` ở frontend), phải có file test của nó cũng đổi hoặc được thêm
+(`XxxTest`, `XxxControllerIT`, `Xxx.test.tsx`, `schemas.test.ts`). Liệt kê các file thiếu test thành bảng; còn
+thiếu thì không báo sẵn sàng, đề xuất chạy `/write-tests` cho đúng file đó. Chỉ đổi giao diện thuần (CSS, nhãn)
+thì ghi "không cần test mới" kèm lý do.
 
 ## 2. Chạy kiểm tra (phần nào có đổi thì chạy phần đó; đổi cả hai thì chạy cả hai)
 
@@ -41,7 +59,9 @@ mục 4 ("Review"). Thêm:
 - [ ] Endpoint mới hoặc sửa đã có trong Postman collection.
 - [ ] Không còn `console.log`, `System.out.println`, code bị comment bỏ, TODO không có mã card.
 - [ ] Không có bí mật, không sửa `.env`, không sửa migration cũ, không sửa file sinh tự động.
-- [ ] Test đủ các nhóm ca của `AGENTS.md` mục 10 cho mọi hành vi mới hoặc sửa.
+- [ ] Test đủ các nhóm ca của `AGENTS.md` mục 10 cho mọi hành vi mới hoặc sửa: đọc bảng đối chiếu hành vi và
+      test mà `/implement` để lại (bước 7), mở từng test được ghi để chắc nó có thật và kiểm tra đúng điều ghi.
+      Không có bảng thì tự lập. Không tick ô này chỉ vì test đang xanh.
 - [ ] File frontend đã sửa không còn `style={{}}` (trừ giá trị tính lúc chạy); CSS ở `.module.css` cạnh component.
 - [ ] Đổi quy ước hay cấu trúc thì đã cập nhật `AGENTS.md` tương ứng.
 - [ ] Thêm hoặc đổi luồng có rẽ nhánh nghiệp vụ thì `docs/design/flows/<module>.md` khớp với code.

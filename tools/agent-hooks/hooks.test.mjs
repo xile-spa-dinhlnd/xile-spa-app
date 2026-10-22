@@ -8,6 +8,7 @@ import { describe, test } from 'node:test'
 import { fileURLToPath } from 'node:url'
 import { check, splitSegments } from './guard.mjs'
 import { normalize } from './lib.mjs'
+import { filesMissingTests } from './stop.mjs'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const root = '/repo'
@@ -322,6 +323,70 @@ describe('chạy như hook thật', () => {
       'code đổi tiếp thì nhắc lại',
     )
     fs.rmSync(repo, { recursive: true, force: true })
+  })
+
+  test('Stop: nhắc /write-tests cho file code đổi mà chưa có test, có test rồi thì thôi', () => {
+    const repo = fs.mkdtempSync(path.join(os.tmpdir(), 'xile-stop-tests-'))
+    execFileSync('git', ['init', '-q'], { cwd: repo })
+    const pageDir = path.join(repo, 'frontend/src/features/combo/pages')
+    fs.mkdirSync(pageDir, { recursive: true })
+    const input = {
+      fullyIdle: true,
+      terminationReason: 'model_stop',
+      conversationId: `test-tests-${process.pid}-${Date.now()}`,
+      workspacePaths: [repo],
+    }
+
+    fs.writeFileSync(path.join(pageDir, 'ComboListPage.tsx'), 'export const x = 1\n')
+    const withoutTest = JSON.parse(run('stop.mjs', input, repo).stdout)
+    fs.writeFileSync(path.join(pageDir, 'ComboListPage.test.tsx'), 'it("x", () => {})\n')
+    const withTest = JSON.parse(run('stop.mjs', input, repo).stdout)
+
+    assert.equal(withoutTest.decision, 'continue')
+    assert.match(withoutTest.reason, /features\/combo\/pages\/ComboListPage\.tsx/)
+    assert.match(withoutTest.reason, /\/write-tests/)
+    assert.equal(withTest.decision, 'continue', 'trạng thái đổi nên nhắc lại một lần')
+    assert.doesNotMatch(withTest.reason, /\/write-tests/)
+    fs.rmSync(repo, { recursive: true, force: true })
+  })
+})
+
+describe('Stop: file code đổi mà chưa có test', () => {
+  test('liệt kê file code chính không có test đổi theo', () => {
+    const files = [
+      'backend/src/main/java/com/xilespa/module/combo/service/ComboService.java',
+      'backend/src/main/java/com/xilespa/module/combo/controller/ComboController.java',
+      'frontend/src/features/combo/schemas.ts',
+      'frontend/src/features/combo/components/ComboFormDrawer.tsx',
+    ]
+
+    assert.deepEqual(filesMissingTests(files), files)
+  })
+  test('có test cùng tên gốc thì coi là đủ, kể cả test tách file', () => {
+    const files = [
+      'backend/src/main/java/com/xilespa/module/combo/service/ComboService.java',
+      'backend/src/test/java/com/xilespa/module/combo/service/ComboServiceTest.java',
+      'backend/src/main/java/com/xilespa/module/combo/controller/ComboController.java',
+      'backend/src/test/java/com/xilespa/module/combo/controller/ComboControllerIT.java',
+      'frontend/src/features/combo/pages/ComboListPage.tsx',
+      'frontend/src/features/combo/pages/ComboListPage.filters.test.tsx',
+      'frontend/src/features/combo/schemas.ts',
+      'frontend/src/features/combo/schemas.test.ts',
+    ]
+
+    assert.deepEqual(filesMissingTests(files), [])
+  })
+  test('không đòi test cho DTO, mapper, repository, CSS, api.ts, types.ts', () => {
+    const files = [
+      'backend/src/main/java/com/xilespa/module/combo/dto/request/ComboRequest.java',
+      'backend/src/main/java/com/xilespa/module/combo/mapper/ComboMapper.java',
+      'backend/src/main/java/com/xilespa/module/combo/repository/ComboRepository.java',
+      'frontend/src/features/combo/pages/ComboListPage.module.css',
+      'frontend/src/features/combo/api.ts',
+      'frontend/src/features/combo/types.ts',
+    ]
+
+    assert.deepEqual(filesMissingTests(files), [])
   })
 })
 

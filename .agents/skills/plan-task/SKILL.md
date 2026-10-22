@@ -63,11 +63,25 @@ Yêu cầu: FR-..., BR-..., OQ-... (đã chốt / còn mở)
 
 ## 6. Test sẽ viết
 
-- Đơn vị (Mockito / Vitest): <tên test và trường hợp>
-- Tích hợp (@IntegrationTest): <trường hợp chính và trường hợp lỗi>
-- Thử tay bằng Postman / giao diện: <bước và kết quả mong đợi>
+Mỗi hành vi một dòng, theo sáu nhóm của `AGENTS.md` mục 10; `/implement` viết các test này bằng `/write-tests` và
+đối chiếu lại ở bước cuối.
 
-## 7. Rủi ro và câu hỏi
+| Hành vi | Tầng (entity / service / IT / Vitest) | Các ca chính (chuẩn, dữ liệu sai, biên, lỗi nghiệp vụ, quyền, không tác dụng phụ) |
+| ------- | ------------------------------------- | --------------------------------------------------------------------------------- |
+
+Thử tay bằng Postman / giao diện: <bước và kết quả mong đợi>
+
+## 7. Chia PR
+
+Ước lượng số dòng thay đổi (code và test, không tính lock file, Postman). Dưới khoảng 400 dòng: "Một PR". Lớn hơn:
+liệt kê từng PR theo CONTRIBUTING.md mục 2.
+
+| PR  | Nhánh                           | Gồm                                         | Ước lượng |
+| --- | ------------------------------- | ------------------------------------------- | --------- |
+| 1/2 | `feature/<mã-card>-<mô-tả>-api` | migration, backend, test, Postman           | ~350 dòng |
+| 2/2 | `feature/<mã-card>-<mô-tả>-ui`  | frontend, test, backlog "Xong", sơ đồ luồng | ~300 dòng |
+
+## 8. Rủi ro và câu hỏi
 
 <Điều chưa rõ trong SRS (ghi mã OQ), giả định tạm, phần dễ đụng file của người kia.>
 ```
