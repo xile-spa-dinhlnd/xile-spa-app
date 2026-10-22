@@ -11,6 +11,8 @@ ghi nhãn.
 
 ## Giai đoạn 1: điều tra (không sửa code)
 
+0. **Kiểm tra nhánh** (`git branch --show-current`). Đang ở `develop` hoặc `main` thì dừng, đưa người dùng lệnh
+   `git switch -c fix/<mã-card>-<mô-tả>` (CONTRIBUTING.md mục 2) và chờ họ tạo xong rồi mới viết test đỏ.
 1. **Mô tả lỗi** bằng ba dòng: các bước làm, kết quả mong đợi (trích FR/BR nếu có), kết quả thực tế. Thiếu bước
    tái hiện thì hỏi người dùng, đừng tự bịa.
 2. **Tái hiện bằng test đỏ.** Viết test nhỏ nhất cho thấy lỗi:
@@ -20,7 +22,8 @@ ghi nhãn.
      Chạy riêng test đó (lệnh ở `AGENTS.md` mục 3) và **dán đoạn output đỏ**. Test đỏ này là file mới duy nhất
      được tạo trong giai đoạn 1.
      Nếu không tái hiện được: dừng, báo những gì đã thử, hỏi thêm thông tin. Không sửa "phòng hờ".
-3. **Truy nguyên nhân.** Đi theo luồng gọi từ chỗ lỗi lộ ra tới chỗ sinh lỗi. Dùng `git log -p -- <file>` và
+3. **Truy nguyên nhân.** Có `docs/design/flows/<module>.md` thì đọc trước để biết luồng đúng; thấy sơ đồ lệch
+   với code thì ghi vào báo cáo. Đi theo luồng gọi từ chỗ lỗi lộ ra tới chỗ sinh lỗi. Dùng `git log -p -- <file>` và
    `git blame` để biết dòng đó đổi từ card nào, vì sao. Chỉ ra **file:dòng** gây lỗi và giải thích cơ chế.
 4. **Đánh giá phạm vi.** Lỗi này còn ảnh hưởng chỗ nào khác (tìm cùng mẫu code bằng grep)? Có làm sai dữ liệu đã
    lưu không? Nếu dữ liệu ngày đã chốt bị sai: chỉ sửa bằng bút toán điều chỉnh (ADR-0003), không viết code sửa thẳng.
@@ -85,4 +88,6 @@ flowchart TD
 
 1. Sửa đúng phạm vi đã duyệt. Thấy thêm lỗi khác thì ghi lại để báo, không sửa lẫn vào.
 2. Chạy test đỏ: phải xanh. Chạy toàn bộ test của phần bị ảnh hưởng (backend, frontend hoặc cả hai).
-3. Báo cáo: file đã sửa, test trước/sau, cách thử tay, câu commit gợi ý `fix(<phạm vi>): <mô tả>`.
+3. Cách sửa làm đổi luồng thì cập nhật `docs/design/flows/<module>.md` theo luồng mới (chỉ phần "Mới:", bỏ phần
+   "Cũ:" của sơ đồ so sánh).
+4. Báo cáo: file đã sửa, test trước/sau, cách thử tay, câu commit gợi ý `fix(<phạm vi>): <mô tả>`.

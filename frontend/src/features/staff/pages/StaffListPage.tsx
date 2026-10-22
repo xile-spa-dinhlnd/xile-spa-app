@@ -24,6 +24,7 @@ import { useDebounce } from '@/shared/hooks/useDebounce'
 import { useSetStaffActive, useStaffList } from '../api'
 import { StaffFormDrawer } from '../components/StaffFormDrawer'
 import { STAFF_ROLE_LABELS, type Staff, type StaffRole } from '../types'
+import styles from './StaffListPage.module.css'
 
 const PAGE_SIZE = 20
 type StatusFilter = 'all' | 'active' | 'inactive'
@@ -128,8 +129,8 @@ export function StaffListPage() {
   const data = staffList.data
   return (
     <>
-      <Flex justify="space-between" align="center" wrap gap={12} style={{ marginBottom: 16 }}>
-        <Typography.Title level={3} style={{ margin: 0 }}>
+      <Flex justify="space-between" align="center" wrap gap={12} className={styles.header}>
+        <Typography.Title level={3} className={styles.title}>
           Nhân viên
         </Typography.Title>
         <Button type="primary" size="large" icon={<PlusOutlined />} onClick={openCreate}>
@@ -137,7 +138,7 @@ export function StaffListPage() {
         </Button>
       </Flex>
 
-      <Flex wrap gap={8} style={{ marginBottom: 16 }}>
+      <Flex wrap gap={8} className={styles.filterBar}>
         <Input
           allowClear
           size="large"
@@ -149,7 +150,7 @@ export function StaffListPage() {
             setSearch(e.target.value)
             setPage(0)
           }}
-          style={{ flex: '1 1 220px' }}
+          className={styles.searchInput}
         />
         <Select
           allowClear
@@ -162,7 +163,7 @@ export function StaffListPage() {
             setPage(0)
           }}
           options={Object.entries(STAFF_ROLE_LABELS).map(([value, label]) => ({ value, label }))}
-          style={{ flex: '1 1 160px' }}
+          className={styles.roleSelect}
         />
         <Select
           size="large"
@@ -177,7 +178,7 @@ export function StaffListPage() {
             { value: 'inactive', label: 'Đã nghỉ' },
             { value: 'all', label: 'Tất cả' },
           ]}
-          style={{ flex: '1 1 140px' }}
+          className={styles.statusSelect}
         />
         {hasFilters && (
           <Button size="large" icon={<ClearOutlined />} onClick={clearFilters}>
@@ -190,7 +191,7 @@ export function StaffListPage() {
         <Alert
           type="error"
           showIcon
-          style={{ marginBottom: 16 }}
+          className={styles.errorAlert}
           title="Không tải được danh sách nhân viên"
           description={staffList.error.message}
           action={
@@ -221,12 +222,12 @@ export function StaffListPage() {
           {data && data.content.length === 0 && emptyText}
           <Flex vertical gap={12}>
             {data?.content.map((s) => (
-              <Card key={s.id} size="small">
+              <Card key={s.id} size="small" className={styles.staffCard}>
                 <Flex justify="space-between" align="start" gap={8}>
                   <Typography.Text strong>{s.fullName}</Typography.Text>
                   {statusTag(s.active)}
                 </Flex>
-                <Typography.Paragraph type="secondary" style={{ margin: '4px 0 12px' }}>
+                <Typography.Paragraph type="secondary" className={styles.cardRole}>
                   {STAFF_ROLE_LABELS[s.role]}
                 </Typography.Paragraph>
                 {actions(s)}
@@ -236,7 +237,7 @@ export function StaffListPage() {
           {(data?.totalPages ?? 0) > 1 && (
             <Pagination
               align="center"
-              style={{ marginTop: 12 }}
+              className={styles.pagination}
               current={(data?.page ?? 0) + 1}
               pageSize={PAGE_SIZE}
               total={data?.totalElements ?? 0}

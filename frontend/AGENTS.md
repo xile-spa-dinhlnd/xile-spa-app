@@ -151,6 +151,12 @@ src/
   Ant Design (ghi chú lý do).
 - **Màu, khoảng cách, bo góc lấy từ biến** trong `tokens.css` (`var(--xl-space-md)`) hoặc token Ant Design; không
   viết mã màu trực tiếp. Màu thương hiệu đổi ở một chỗ.
+- Class đặt lên component Ant Design có thể thua selector mạnh hơn của Ant Design (`h4.ant-typography`,
+  `div.ant-typography`, `.ant-drawer .ant-drawer-body`, `.ant-btn.ant-btn-icon-only`, `.ant-card:not(...)`): lồng
+  dưới một lớp cha trong cùng module (`.header .title`) hoặc dùng token trong `theme.ts`, ghi chú lý do. Test
+  jsdom không bắt được lỗi này, phải xem bằng mắt hoặc ảnh chụp.
+- Khoảng cách không có trên thang thì làm tròn về bậc gần nhất (20px → `--xl-space-xl`, 10px → `--xl-space-sm`
+  hoặc `--xl-space-md`); số âm dùng `calc(-1 * var(--xl-space-sm))`. Không thêm biến cho số lẻ.
 - Responsive: mobile trước, `@media (min-width: ...)` với breakpoint của Ant Design: 576, 768, 992, 1200 px (CSS
   không cho dùng `var()` trong `@media` nên ghi số, xem chú thích đầu `tokens.css`).
 - Component dùng chung trong `shared/components/` cũng có `.module.css` riêng; không import CSS của feature khác.

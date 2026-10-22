@@ -1,7 +1,7 @@
-import { Card, Typography } from 'antd'
 import { useLocation, useNavigate } from 'react-router'
 import { ApiError, CLIENT_ERROR_CODES } from '@/shared/api/errors'
 import { useLogin } from '../api'
+import { AuthCard } from '../components/AuthCard'
 import { LoginForm } from '../components/LoginForm'
 import type { LoginRequest } from '../types'
 
@@ -46,53 +46,13 @@ export function LoginPage() {
   }
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'linear-gradient(145deg, #f0f5f1 0%, #e6efe8 100%)',
-        padding: '24px 16px',
-      }}
-    >
-      <Card
-        variant="borderless"
-        style={{
-          width: '100%',
-          maxWidth: 420,
-          borderRadius: 16,
-          boxShadow: '0 8px 30px rgba(0, 0, 0, 0.06)',
-          padding: '12px 8px',
-        }}
-      >
-        <div style={{ textAlign: 'center', marginBottom: 20 }}>
-          <img
-            src="/logo.png"
-            alt="Xile Beauty & Spa"
-            style={{
-              maxHeight: 110,
-              maxWidth: '80%',
-              objectFit: 'contain',
-              marginBottom: 8,
-              display: 'inline-block',
-            }}
-          />
-          <Typography.Title level={4} style={{ margin: 0, color: '#1f2d24', fontWeight: 600 }}>
-            Xile Spa & Giãn cơ
-          </Typography.Title>
-          <Typography.Text type="secondary" style={{ fontSize: 13 }}>
-            Hệ thống quản trị tiệm
-          </Typography.Text>
-        </div>
-
-        <LoginForm
-          onSubmit={handleSubmit}
-          onForgotPassword={() => navigate('/forgot-password')}
-          isLoading={loginMutation.isPending}
-          errorMessage={errorMessage}
-        />
-      </Card>
-    </div>
+    <AuthCard title="Xile Spa & Giãn cơ" subtitle="Hệ thống quản trị tiệm">
+      <LoginForm
+        onSubmit={handleSubmit}
+        onForgotPassword={() => navigate('/forgot-password')}
+        isLoading={loginMutation.isPending}
+        errorMessage={errorMessage}
+      />
+    </AuthCard>
   )
 }

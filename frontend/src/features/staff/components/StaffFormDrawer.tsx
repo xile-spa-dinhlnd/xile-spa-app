@@ -6,6 +6,7 @@ import { ApiError } from '@/shared/api/errors'
 import { useCreateStaff, useUpdateStaff } from '../api'
 import { staffFormSchema, type StaffFormValues } from '../schemas'
 import { STAFF_ROLE_LABELS, type Staff } from '../types'
+import styles from './StaffFormDrawer.module.css'
 
 interface StaffFormDrawerProps {
   open: boolean
@@ -79,7 +80,7 @@ export function StaffFormDrawer({ open, staff, onClose }: StaffFormDrawerProps) 
       size={screens.md ? 480 : '100%'}
       destroyOnHidden
       footer={
-        <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
+        <Space className={styles.footerActions}>
           <Button onClick={onClose} size="large">
             Hủy
           </Button>

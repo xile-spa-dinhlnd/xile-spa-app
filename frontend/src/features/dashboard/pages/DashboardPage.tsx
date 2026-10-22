@@ -1,5 +1,6 @@
 import { Alert, Card, Skeleton, Typography } from 'antd'
 import { useServerHealth } from '../api'
+import styles from './DashboardPage.module.css'
 
 export function DashboardPage() {
   const health = useServerHealth()
@@ -7,7 +8,7 @@ export function DashboardPage() {
   return (
     <>
       <Typography.Title level={3}>Tổng quan</Typography.Title>
-      <Card title="Trạng thái hệ thống" style={{ maxWidth: 480 }}>
+      <Card title="Trạng thái hệ thống" className={styles.card}>
         {health.isPending ? (
           <Skeleton active paragraph={false} />
         ) : health.isError ? (

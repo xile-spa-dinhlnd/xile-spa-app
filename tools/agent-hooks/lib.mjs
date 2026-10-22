@@ -103,6 +103,16 @@ export function existsOnDevelop(root, repoPath, git = runGit) {
   return false
 }
 
+// Nhánh đang checkout; null khi không đọc được (không phải repo git) hoặc đang ở detached HEAD.
+export function currentBranch(root, git = runGit) {
+  return git(root, ['symbolic-ref', '--short', '-q', 'HEAD'])?.trim() || null
+}
+
+// File git bỏ qua (.gitignore, .git/info/exclude) không vào commit nên sửa trên nhánh nào cũng được.
+export function isIgnoredByGit(root, repoPath, git = runGit) {
+  return git(root, ['check-ignore', '-q', repoPath]) !== null
+}
+
 export function runGit(root, args) {
   try {
     return execFileSync('git', args, {

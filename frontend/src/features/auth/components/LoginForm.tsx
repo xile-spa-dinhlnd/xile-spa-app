@@ -1,6 +1,7 @@
 import { LockOutlined, MailOutlined } from '@ant-design/icons'
 import { Alert, Button, Form, Input } from 'antd'
 import type { LoginRequest } from '../types'
+import styles from './LoginForm.module.css'
 
 interface LoginFormProps {
   onSubmit: (values: LoginRequest) => void
@@ -37,7 +38,7 @@ export function LoginForm({
           type="error"
           showIcon
           title={errorMessage}
-          style={{ marginBottom: 20 }}
+          className={styles.errorAlert}
           role="alert"
         />
       )}
@@ -51,11 +52,11 @@ export function LoginForm({
         ]}
       >
         <Input
-          prefix={<MailOutlined style={{ color: '#8c8c8c' }} />}
+          prefix={<MailOutlined className={styles.inputIcon} />}
           placeholder="owner@xilespa.vn"
           autoComplete="email"
           inputMode="email"
-          style={{ height: 44 }}
+          className={styles.input}
         />
       </Form.Item>
 
@@ -65,44 +66,33 @@ export function LoginForm({
         rules={[{ required: true, message: 'Vui lòng nhập mật khẩu.' }]}
       >
         <Input.Password
-          prefix={<LockOutlined style={{ color: '#8c8c8c' }} />}
+          prefix={<LockOutlined className={styles.inputIcon} />}
           placeholder="Nhập mật khẩu"
           autoComplete="current-password"
-          style={{ height: 44 }}
+          className={styles.input}
         />
       </Form.Item>
 
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'flex-end',
-          marginTop: -8,
-          marginBottom: 16,
-        }}
-      >
+      <div className={styles.forgotPasswordWrapper}>
         <a
           href="/forgot-password"
           onClick={(e) => {
             e.preventDefault()
             onForgotPassword?.()
           }}
-          style={{ fontSize: 13, color: '#31543d' }}
+          className={styles.forgotPasswordLink}
         >
           Quên mật khẩu?
         </a>
       </div>
 
-      <Form.Item style={{ marginTop: 16, marginBottom: 8 }}>
+      <Form.Item className={styles.submitItem}>
         <Button
           type="primary"
           htmlType="submit"
           loading={isLoading}
           block
-          style={{
-            height: 46,
-            fontSize: 16,
-            fontWeight: 600,
-          }}
+          className={styles.submitButton}
         >
           Đăng nhập
         </Button>

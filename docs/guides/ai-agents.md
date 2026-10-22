@@ -82,6 +82,8 @@ flowchart TD
 Ghi nhớ:
 
 - AI không commit, không push, không đổi nhánh. Người làm card làm mọi lệnh git (CONTRIBUTING.md mục 8).
+- Còn đứng trên `develop` hay `main` thì `/plan-task`, `/fix-bug`, `/implement` dừng và đưa lệnh tạo nhánh; hook
+  cũng chặn sửa file trên hai nhánh này (AGENTS.md mục 5 bước 1).
 - Trong lúc Antigravity đang sửa file, không đổi nhánh.
 - Mỗi bước của `/implement` có một câu commit gợi ý: commit ngay khi bước đó xanh.
 
@@ -116,14 +118,14 @@ nhánh `hotfix/*` theo CONTRIBUTING.md mục 6.
 
 Gõ `/<tên>` trong khung chat, hoặc nói việc cần làm; agent tự chọn skill theo mô tả.
 
-| Skill            | Khi nào                        | Kết quả                                                                        |
-| ---------------- | ------------------------------ | ------------------------------------------------------------------------------ |
-| `/plan-task`     | Bắt đầu card, tính năng        | Kế hoạch: mục tiêu, ý tưởng, sơ đồ Mermaid, file sẽ sửa, test; dừng chờ duyệt  |
-| `/fix-bug`       | Có lỗi, test đỏ chưa rõ vì sao | Test đỏ, nguyên nhân `file:dòng`, sơ đồ luồng cũ/mới, cách sửa; dừng chờ duyệt |
-| `/implement`     | Kế hoạch đã duyệt              | Code theo thứ tự DB → backend → frontend → Postman → backlog, test từng bước   |
-| `/write-tests`   | Viết, bổ sung test             | Bảng ca test đủ sáu nhóm (AGENTS.md mục 10), test đã thử làm đỏ, kết quả chạy  |
-| `/new-migration` | Đổi schema                     | `V{n}__...sql` mới, entity, ERD, test schema                                   |
-| `/pre-pr-check`  | Xong card, trước khi push      | Kết quả format, lint, test; checklist; tiêu đề và mô tả PR để chép             |
+| Skill            | Khi nào                        | Kết quả                                                                                          |
+| ---------------- | ------------------------------ | ------------------------------------------------------------------------------------------------ |
+| `/plan-task`     | Bắt đầu card, tính năng        | Kế hoạch: mục tiêu, ý tưởng, sơ đồ Mermaid, file sẽ sửa, test; dừng chờ duyệt                    |
+| `/fix-bug`       | Có lỗi, test đỏ chưa rõ vì sao | Test đỏ, nguyên nhân `file:dòng`, sơ đồ luồng cũ/mới, cách sửa; dừng chờ duyệt                   |
+| `/implement`     | Kế hoạch đã duyệt              | Kiểm tra nhánh, rồi code theo thứ tự DB → backend → frontend → Postman → backlog, test từng bước |
+| `/write-tests`   | Viết, bổ sung test             | Bảng ca test đủ sáu nhóm (AGENTS.md mục 10), test đã thử làm đỏ, kết quả chạy                    |
+| `/new-migration` | Đổi schema                     | `V{n}__...sql` mới, entity, ERD, test schema                                                     |
+| `/pre-pr-check`  | Xong card, trước khi push      | Kiểm tra nhánh, kết quả format, lint, test; checklist; tiêu đề, mô tả PR và lệnh git để chép     |
 
 Câu mẫu:
 
@@ -139,7 +141,7 @@ Sơ đồ trong kế hoạch là Mermaid: dán vào mục "Ghi chú cho người
 | Skill             | Khi nào                        | Kết quả                                                                                                                                      |
 | ----------------- | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
 | `/review-pr <số>` | PR của Huy cần review          | Chạy test trên worktree riêng, bản nháp nhận xét `bắt buộc:`/`gợi ý:`/`hỏi:`; Đình đồng ý thì đăng lên GitHub (Request changes hoặc Comment) |
-| `/self-review`    | Code của Đình, trước khi mở PR | Báo cáo cần sửa / nên sửa; khi sạch thì soạn PR có dòng "Đã tự review"                                                                       |
+| `/self-review`    | Code của Đình, trước khi mở PR | Báo cáo cần sửa / nên sửa, kèm lời nhắn sửa để dán vào Antigravity; khi sạch thì soạn PR có dòng "Đã tự review"                              |
 
 Claude không approve và không merge; nhận xét đăng bằng tài khoản của Đình nên luôn có bước Đình đọc trước.
 
@@ -151,11 +153,11 @@ Skill `plan-sprint` trong tài khoản claude.ai của Đình: gọi khi bắt �
 
 Mã nguồn: `tools/agent-hooks/` (Node, không cần cài thêm). Test: `node --test tools/agent-hooks/hooks.test.mjs`.
 
-| Hook         | Khi nào                       | Làm gì                                                                                                                                                                                         |
-| ------------ | ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `guard.mjs`  | Trước mỗi lệnh, đọc, sửa file | Chặn git ngoài nhóm chỉ đọc; `gh` làm đổi GitHub; xóa hàng loạt; `docker compose down -v`; đọc, sửa `.env`, khóa; sửa migration đã có trên `develop`; sửa file sinh tự động; sửa cấu hình hook |
-| `format.mjs` | Sau khi Antigravity sửa file  | Chạy Prettier trên đúng file frontend vừa sửa                                                                                                                                                  |
-| `stop.mjs`   | Khi Antigravity kết thúc lượt | File Java đổi thì chạy `./gradlew spotlessApply` một lần; có code đổi thì nhắc tự soát test, Postman, backlog, báo cáo (mỗi trạng thái nhắc một lần)                                           |
+| Hook         | Khi nào                       | Làm gì                                                                                                                                                                                                                                                               |
+| ------------ | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `guard.mjs`  | Trước mỗi lệnh, đọc, sửa file | Chặn git ngoài nhóm chỉ đọc; `gh` làm đổi GitHub; sửa file của repo khi đang ở `develop`, `main` (trừ file git bỏ qua); xóa hàng loạt; `docker compose down -v`; đọc, sửa `.env`, khóa; sửa migration đã có trên `develop`; sửa file sinh tự động; sửa cấu hình hook |
+| `format.mjs` | Sau khi Antigravity sửa file  | Chạy Prettier trên đúng file frontend vừa sửa                                                                                                                                                                                                                        |
+| `stop.mjs`   | Khi Antigravity kết thúc lượt | File Java đổi thì chạy `./gradlew spotlessApply` một lần; có code đổi thì nhắc tự soát test, Postman, backlog, báo cáo (mỗi trạng thái nhắc một lần)                                                                                                                 |
 
 Claude Code dùng chung `guard.mjs` (được thêm `git fetch`, `git worktree`, đăng review bằng `gh`; vẫn không
 approve, merge, push).

@@ -1,0 +1,41 @@
+.header {
+  margin-bottom: var(--xl-space-lg);
+}
+
+/* Lồng dưới .header để thắng `h3.ant-typography` (0,1,1). */
+.header .title {
+  margin: 0;
+}
+
+.filterBar {
+  margin-bottom: var(--xl-space-lg);
+}
+
+.searchInput {
+  flex: 1 1 220px;
+}
+
+.groupSelect {
+  flex: 1 1 180px;
+}
+
+.statusSelect {
+  flex: 1 1 140px;
+}
+
+.errorAlert {
+  margin-bottom: var(--xl-space-lg);
+}
+
+.serviceCard {
+  margin-bottom: var(--xl-space-md);
+}
+
+/* Lồng dưới .serviceCard để thắng `div.ant-typography` (0,1,1), vốn đặt margin-bottom 1em. */
+.serviceCard .cardSubtext {
+  margin: var(--xl-space-xs) 0 var(--xl-space-sm);
+}
+
+.serviceCard .cardPrice {
+  margin-bottom: var(--xl-space-md);
+}

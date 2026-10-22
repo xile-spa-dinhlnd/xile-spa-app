@@ -25,6 +25,7 @@ import {
 import { useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router'
 import { ChangePasswordModal, useCurrentUser, useLogout, type UserRole } from '@/features/auth'
+import styles from './AppLayout.module.css'
 
 const { Header, Sider, Content } = Layout
 
@@ -90,7 +91,6 @@ export function AppLayout() {
       mode="inline"
       selectedKeys={[pathname]}
       items={menuItems}
-      style={{ borderInlineEnd: 'none' }}
       onClick={({ key }) => {
         navigate(key)
         setDrawerOpen(false)
@@ -118,16 +118,12 @@ export function AppLayout() {
   ]
 
   return (
-    <Layout style={{ minHeight: '100vh' }}>
+    <Layout className={styles.layout}>
       {isDesktop && (
         <Sider theme="light" width={220}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '16px 20px' }}>
-            <img
-              src="/logo.png"
-              alt="Xile Logo"
-              style={{ height: 32, width: 'auto', objectFit: 'contain' }}
-            />
-            <Typography.Title level={4} style={{ margin: 0 }}>
+          <div className={styles.siderBrand}>
+            <img src="/logo.png" alt="Xile Logo" className={styles.siderLogo} />
+            <Typography.Title level={4} className={styles.siderTitle}>
               Xile Spa
             </Typography.Title>
           </div>
@@ -135,35 +131,20 @@ export function AppLayout() {
         </Sider>
       )}
       <Layout>
-        <Header
-          style={{
-            background: '#ffffff',
-            padding: isDesktop ? '0 24px' : '0 16px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            borderBottom: '1px solid #f0f0f0',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <Header className={styles.header}>
+          <div className={styles.headerLeft}>
             {!isDesktop && (
               <Button
                 type="text"
                 icon={<MenuOutlined />}
                 aria-label="Mở menu"
-                style={{ height: 44, width: 44 }}
+                className={styles.menuButton}
                 onClick={() => setDrawerOpen(true)}
               />
             )}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              {!isDesktop && (
-                <img
-                  src="/logo.png"
-                  alt="Xile Logo"
-                  style={{ height: 26, width: 'auto', objectFit: 'contain' }}
-                />
-              )}
-              <Typography.Text strong style={{ fontSize: 16 }}>
+            <div className={styles.headerBrand}>
+              {!isDesktop && <img src="/logo.png" alt="Xile Logo" className={styles.headerLogo} />}
+              <Typography.Text strong className={styles.headerTitle}>
                 {isDesktop ? 'Quản trị tiệm' : 'Xile Spa'}
               </Typography.Text>
             </div>
@@ -171,43 +152,26 @@ export function AppLayout() {
 
           {user && (
             <Dropdown menu={{ items: userMenuItems }} trigger={['click']} placement="bottomRight">
-              <Button
-                type="text"
-                style={{
-                  height: 'auto',
-                  padding: '6px 10px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  borderRadius: 8,
-                }}
-              >
+              <Button type="text" className={styles.userButton}>
                 <Space size={8} align="center">
-                  <Avatar
-                    size="default"
-                    icon={<UserOutlined />}
-                    style={{ backgroundColor: '#2b5a3e' }}
-                  />
+                  <Avatar size="default" icon={<UserOutlined />} className={styles.userAvatar} />
                   <Typography.Text strong>{user.displayName}</Typography.Text>
                   {isDesktop && <Tag color={roleInfo.color}>{roleInfo.label}</Tag>}
-                  <DownOutlined style={{ fontSize: 11, color: '#888' }} />
+                  <DownOutlined className={styles.dropdownArrow} />
                 </Space>
               </Button>
             </Dropdown>
           )}
         </Header>
-        <Content style={{ padding: isDesktop ? 24 : 16 }}>
+        <Content className={styles.content}>
           <Outlet />
         </Content>
       </Layout>
       {!isDesktop && (
         <Drawer
           title={
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <img
-                src="/logo.png"
-                alt="Xile Logo"
-                style={{ height: 26, width: 'auto', objectFit: 'contain' }}
-              />
+            <div className={styles.drawerTitleBrand}>
+              <img src="/logo.png" alt="Xile Logo" className={styles.drawerLogo} />
               <span>Xile Spa</span>
             </div>
           }
@@ -215,43 +179,25 @@ export function AppLayout() {
           size={260}
           open={drawerOpen}
           onClose={() => setDrawerOpen(false)}
-          styles={{
-            body: {
-              padding: 0,
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-            },
+          rootClassName={styles.drawer}
+          classNames={{
+            body: styles.drawerBody,
           }}
         >
           <div>
             {user && (
-              <div
-                style={{
-                  padding: '16px 20px',
-                  borderBottom: '1px solid #f0f0f0',
-                  background: '#fafafa',
-                }}
-              >
-                <Typography.Text strong style={{ display: 'block' }}>
+              <div className={styles.drawerUserCard}>
+                <Typography.Text strong className={styles.drawerUserName}>
                   {user.displayName}
                 </Typography.Text>
-                <div style={{ marginTop: 4 }}>
+                <div className={styles.drawerUserRole}>
                   <Tag color={roleInfo.color}>{roleInfo.label}</Tag>
                 </div>
               </div>
             )}
             {menu}
           </div>
-          <div
-            style={{
-              padding: 16,
-              borderTop: '1px solid #f0f0f0',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 8,
-            }}
-          >
+          <div className={styles.drawerFooter}>
             <Button
               type="text"
               icon={<KeyOutlined />}
@@ -259,7 +205,7 @@ export function AppLayout() {
                 setDrawerOpen(false)
                 setChangePasswordOpen(true)
               }}
-              style={{ height: 40, justifyContent: 'flex-start' }}
+              className={styles.drawerActionButton}
             >
               Đổi mật khẩu
             </Button>
@@ -271,7 +217,7 @@ export function AppLayout() {
                 setDrawerOpen(false)
                 confirmLogout()
               }}
-              style={{ height: 40, justifyContent: 'flex-start' }}
+              className={styles.drawerActionButton}
             >
               Đăng xuất
             </Button>

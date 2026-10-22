@@ -7,6 +7,7 @@ import { ApiError } from '@/shared/api/errors'
 import { useCreateService, useServiceGroups, useUpdateService } from '../api'
 import { serviceFormSchema, type ServiceFormValues } from '../schemas'
 import type { ServiceItem } from '../types'
+import styles from './ServiceFormDrawer.module.css'
 
 interface ServiceFormDrawerProps {
   open: boolean
@@ -108,7 +109,7 @@ export function ServiceFormDrawer({ open, service, onClose }: ServiceFormDrawerP
       size={screens.md ? 480 : '100%'}
       destroyOnHidden
       footer={
-        <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
+        <Space className={styles.footerActions}>
           <Button onClick={onClose} size="large">
             Hủy
           </Button>
@@ -230,7 +231,7 @@ export function ServiceFormDrawer({ open, service, onClose }: ServiceFormDrawerP
                 precision={0}
                 inputMode="numeric"
                 placeholder="Ví dụ: 30"
-                style={{ width: '100%' }}
+                className={styles.fullWidth}
               />
             )}
           />

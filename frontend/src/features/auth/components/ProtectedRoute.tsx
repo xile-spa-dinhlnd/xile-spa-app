@@ -1,6 +1,7 @@
 import { Spin } from 'antd'
 import { Navigate, Outlet, useLocation } from 'react-router'
 import { useCurrentUser } from '../api'
+import styles from './ProtectedRoute.module.css'
 
 /**
  * Component bảo vệ các trang nghiệp vụ nội bộ (FR-AUTH-01).
@@ -12,15 +13,7 @@ export function ProtectedRoute() {
 
   if (isPending) {
     return (
-      <div
-        style={{
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: '#f8faf9',
-        }}
-      >
+      <div className={styles.loadingContainer}>
         <Spin size="large" />
       </div>
     )

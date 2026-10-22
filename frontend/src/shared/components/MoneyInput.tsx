@@ -1,5 +1,6 @@
 import { InputNumber } from 'antd'
 import type { CSSProperties } from 'react'
+import styles from './MoneyInput.module.css'
 
 const MAX_MONEY = 1_000_000_000
 
@@ -40,7 +41,8 @@ export function MoneyInput({ value, onChange, style, ...rest }: MoneyInputProps)
       formatter={(v) => formatDigits(v)}
       parser={(text) => Number((text ?? '').replace(/\D/g, '') || 0)}
       suffix="đ"
-      style={{ width: '100%', ...style }}
+      className={styles.input}
+      style={style}
     />
   )
 }

@@ -1,6 +1,7 @@
 import { Spin } from 'antd'
 import { Navigate, Outlet } from 'react-router'
 import { useCurrentUser } from '../api'
+import styles from './PublicOnlyRoute.module.css'
 
 /**
  * Component dành riêng cho trang công khai như /login.
@@ -11,15 +12,7 @@ export function PublicOnlyRoute() {
 
   if (isPending) {
     return (
-      <div
-        style={{
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: '#f8faf9',
-        }}
-      >
+      <div className={styles.loadingContainer}>
         <Spin size="large" />
       </div>
     )
