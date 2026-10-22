@@ -1,7 +1,8 @@
 # AGENTS.md — quy tắc chung cho AI làm việc trong repo này
 
 File này là **nguồn quy tắc duy nhất** cho mọi công cụ AI (Claude Code, Antigravity, hoặc công cụ khác).
-`CLAUDE.md` chỉ trỏ về đây. Nếu quy tắc ở nơi khác lệch với file này thì file này đúng.
+Antigravity tự đọc file này (và `AGENTS.md` trong thư mục con); `CLAUDE.md` chỉ trỏ về đây. Phần riêng của từng
+agent nằm ở mục 8. Nếu quy tắc ở nơi khác lệch với file này thì file này đúng.
 
 Giữ file ngắn. Quy tắc nghiệp vụ nằm ở SRS, cấu trúc dữ liệu nằm ở migration và `docs/design/erd.md`;
 ở đây **chỉ trỏ đường, không chép lại**.
@@ -32,6 +33,7 @@ Nhóm hai người: **Đình** và **Huy**, chia việc theo tính năng, Scrum 
 | Phiên bản nào chứa gì, mốc tới v1.0.0                   | `docs/roadmap.md`                                                                                                             |
 | Nhánh, commit, Pull Request, nhịp sprint                | `CONTRIBUTING.md`                                                                                                             |
 | Thử API bằng Postman                                    | `docs/postman/` (collection và environment dev)                                                                               |
+| Dùng skill, hook của agent; luồng làm việc với AI       | `docs/guides/ai-agents.md`                                                                                                    |
 
 Quy tắc riêng của từng phần: `backend/AGENTS.md`, `frontend/AGENTS.md`.
 
@@ -43,6 +45,22 @@ JUnit 5 + Testcontainers · Vitest · Docker Compose · GitHub Actions.
 
 Chi tiết và lý do: `docs/adr/0001-tech-stack.md`. **Muốn thêm thư viện hoặc đổi cách làm thì đối chiếu
 ADR-0001 trước và nói rõ trong PR**, đừng tự thêm dependency.
+
+### Lệnh thường dùng
+
+Cần JDK 21, Node 22+, Docker Desktop **đang chạy** (database dev và test tích hợp dùng Testcontainers).
+
+| Việc                       | Backend (trong `backend/`)                                                             | Frontend (trong `frontend/`)                                      |
+| -------------------------- | -------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| Cài                        | (không cần, dùng `./gradlew`)                                                          | `npm ci`                                                          |
+| Build                      | `./gradlew build`                                                                      | `npm run build`                                                   |
+| Format + test đầy đủ       | `./gradlew spotlessApply test`                                                         | `npm run format && npm run lint && npm run typecheck && npm test` |
+| Chạy riêng một lớp test    | `./gradlew test --tests 'com.xilespa.module.staff.service.StaffServiceTest'`           | `npx vitest run src/shared/lib/money.test.ts`                     |
+| Chạy riêng một method test | `./gradlew test --tests 'com.xilespa.module.staff.service.StaffServiceTest.tenMethod'` | `npx vitest run src/shared/lib/money.test.ts -t "tên test"`       |
+| Chạy ứng dụng              | `./gradlew bootRun` (profile `dev`)                                                    | `npm run dev` (http://localhost:5173)                             |
+| Test của hook agent        | `node --test tools/agent-hooks/hooks.test.mjs` (chạy ở gốc repo)                       |                                                                   |
+
+Database dev: `docker compose up -d` ở gốc repo. Windows dùng `gradlew.bat` thay cho `./gradlew`.
 
 ## 4. Quy tắc bắt buộc
 
@@ -70,12 +88,16 @@ ADR-0001 trước và nói rõ trong PR**, đừng tự thêm dependency.
 11. **Giữ các file AGENTS luôn đúng với code.** Khi đổi kiến trúc, cấu trúc thư mục, quy ước đặt tên, thư viện
     hay cách làm chung thì cập nhật `AGENTS.md`, `backend/AGENTS.md` hoặc `frontend/AGENTS.md` **trong cùng
     PR** (kèm ADR nếu là quyết định công nghệ), để cả nhóm và AI theo kịp.
+12. **Không sửa tay file sinh tự động:** `frontend/package-lock.json` (chỉ đổi qua `npm install`), Gradle Wrapper
+    (`backend/gradlew*`, `backend/gradle/wrapper/`), sơ đồ `docs/design/diagrams/` (sinh bằng
+    `docs/design/tools/gen_erd_mermaid.py`), thư mục build (`build/`, `dist/`, `node_modules/`).
 
 ## 5. Quy trình làm một card
 
 1. Đọc card trong backlog của sprint (`docs/backlog/`) và các mã FR / BR mà card trỏ tới. **Chuyển trạng thái
    card sang "Đang làm"** trong file backlog (và trên Trello).
 2. **Nêu kế hoạch trước khi viết code**: sẽ sửa file nào, thêm bảng hay API nào, test gì. Chờ người duyệt.
+   Antigravity dùng skill `/plan` (tính năng) hoặc `/fix-bug` (sửa lỗi, phải tái hiện bằng test đỏ trước).
 3. Viết code theo quy tắc của `backend/AGENTS.md` hoặc `frontend/AGENTS.md`.
 4. Viết test cho logic nghiệp vụ. Chạy build và test tại máy trước khi commit.
 5. Tự đọc lại diff, nêu rõ phần nào còn chưa chắc.
@@ -91,3 +113,31 @@ ADR-0001 trước và nói rõ trong PR**, đừng tự thêm dependency.
 
 Thêm **một dòng** vào mục 4 hoặc vào file quy tắc của phần liên quan, đừng viết thêm một bộ quy tắc mới.
 Quy tắc sinh ra từ lỗi thật mới đáng giữ.
+
+## 7. Điểm dễ gây lỗi trong repo
+
+Đã gặp thật, kiểm tra kỹ khi viết và khi review:
+
+- Spring Boot 4 dùng **Jackson 3**: import `tools.jackson.databind...`, không phải `com.fasterxml.jackson.databind...`.
+- Gọi `Instant.now()`, `LocalDate.now()`, `ZoneId.systemDefault()` không qua `Clock`: sai múi giờ, test không ổn định.
+- Test tích hợp `deleteAll()` bảng dùng chung hoặc đếm toàn bảng `audit_log`: làm đỏ test khác chạy chung database.
+- Test tích hợp đỏ hàng loạt với lỗi kết nối: Docker chưa bật, không phải code sai.
+- Mapper chép từ Request vào trường nhạy cảm (id, trạng thái, giá đã chốt): phải `ignore = true`, gán trong service.
+- Gọi `AuditService.record` ngoài transaction (báo lỗi `MANDATORY`) hoặc truyền entity JPA làm `before`/`after`.
+- Frontend tự tính tiền, gọi `fetch` trực tiếp trong component, import sâu vào file bên trong feature khác.
+- Quên cập nhật Postman collection và trạng thái card trong `docs/backlog/` (mục 5, bước 7 và 8).
+- Hai nhánh cùng lấy một số migration `V{n}`: báo số cho người kia trước (CONTRIBUTING.md mục 4).
+- Dùng `@Profile("!prod")` để chọn hành vi theo môi trường: thay bằng thuộc tính và `@ConditionalOnProperty` (backend/AGENTS.md mục Cấu hình).
+
+## 8. Vai trò từng agent
+
+| Agent                             | Ai dùng   | Làm gì                                                       | Cấu hình riêng                           |
+| --------------------------------- | --------- | ------------------------------------------------------------ | ---------------------------------------- |
+| Antigravity                       | Đình, Huy | Viết code, test, tài liệu của card; git chỉ được đọc         | `.agents/` (rules, skills, `hooks.json`) |
+| Claude Code (máy Đình)            | Đình      | Review PR của thành viên, tự soát code của Đình trước khi PR | `.claude/` chỉ ở máy Đình, không commit  |
+| Claude app (dự án trên claude.ai) | Đình      | Lập kế hoạch sprint, chia card, release, tài liệu lớn        | bộ nhớ dự án trên claude.ai              |
+
+- Hook dùng chung `tools/agent-hooks/` chặn: lệnh git làm đổi nhánh, commit, push; xóa hàng loạt; đọc, sửa file bí
+  mật; sửa migration đã có trên `develop`; sửa file sinh tự động; tự sửa cấu hình hook. Bị chặn thì dừng và báo
+  người dùng, không tìm cách lách.
+- Cách dùng từng skill và luồng làm việc đầy đủ: `docs/guides/ai-agents.md`.

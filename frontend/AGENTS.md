@@ -114,5 +114,7 @@ Quy tắc:
   npm run format && npm run lint && npm run typecheck && npm test
   ```
 
+- Chạy riêng một file test: `npx vitest run src/shared/lib/money.test.ts` (thêm `-t "tên test"` cho một test);
+  Playwright (khi đã thêm): `npx playwright test e2e/login.spec.ts`.
 - Chạy dev: `npm run dev` (http://localhost:5173). `/api` và `/actuator` được proxy tới backend
   `http://localhost:8080` (đổi bằng biến `BACKEND_URL`).

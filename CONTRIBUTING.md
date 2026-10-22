@@ -321,24 +321,28 @@ Chỉ Owner (Đình) sửa được các cấu hình này. Đổi gì thì cập
 - **Code security:** Dependabot alerts, Dependabot security updates, Secret scanning, Push protection.
 - **Chưa bật:** Require status checks (bật ở card D-01 khi có CI).
 
-## 8. Làm việc với AI (Claude Code, Antigravity)
+## 8. Làm việc với AI (Antigravity, Claude Code)
 
-Mục tiêu: người trong nhóm **tự cầm lái phần git** để luyện Git Flow; AI lo phần code, test và review.
+Mục tiêu: người trong nhóm **tự cầm lái phần git** để luyện Git Flow; AI lo phần code, test và review. Vai trò
+từng agent: `AGENTS.md` mục 8. Cách dùng skill, hook và luồng chi tiết: [docs/guides/ai-agents.md](docs/guides/ai-agents.md).
 
 **Cách mặc định cho một card:**
 
 1. Người làm card tạo nhánh: `git switch develop && git pull && git switch -c feature/<mã-card>-<mô-tả>`,
-   rồi báo AI tên nhánh.
-2. AI gửi kế hoạch (file nào, bảng hay API nào, test gì). Người làm card duyệt (AGENTS.md mục 5).
-3. AI **chỉ sửa file và chạy test** trên nhánh đó. AI **không** chạy lệnh git làm đổi nhánh, commit, push hay
-   sửa lịch sử. Xong thì báo: file đã sửa, kết quả test, gợi ý câu commit.
+   rồi mở Antigravity trên thư mục repo.
+2. Antigravity chạy `/plan` (tính năng) hoặc `/fix-bug` (sửa lỗi): kế hoạch có sơ đồ luồng, lỗi phải được tái
+   hiện bằng test đỏ. Người làm card duyệt (AGENTS.md mục 5).
+3. Antigravity chạy `/implement`: **chỉ sửa file và chạy test** trên nhánh đó. Git chỉ được đọc (`status`, `log`,
+   `diff`...); hook chặn commit, push, đổi nhánh. Xong mỗi bước thì báo file đã sửa, kết quả test, gợi ý câu commit.
 4. **Trong lúc AI đang sửa file, không đổi nhánh.** Chờ AI báo xong rồi mới commit hoặc làm việc khác.
-5. Người làm card đọc thay đổi (VS Code, tab Source Control), rồi `git add`, `git commit`, `git push`, mở PR.
-6. AI review PR như một đồng đội. Sửa xong thì commit, push tiếp; merge theo mục 4.
+5. Người làm card đọc thay đổi, `git add`, `git commit`. Xong card thì Antigravity chạy `/pre-pr-check`, rồi người
+   làm card `git push` và mở PR bằng bản nháp nó soạn.
+6. Review: PR của Huy thì Đình chạy `/review-pr <số>` bằng Claude Code, xem lại rồi đăng nhận xét lên GitHub. PR
+   của Đình thì chạy `/self-review` ở máy trước khi mở PR, rồi merge theo mục 4.
 
-**Khi giao trọn cho AI** (việc nhỏ, tài liệu, lúc bận): AI làm trong **thư mục riêng** (`git worktree`), tự tạo
-nhánh, commit, push và gửi link mở PR; người duyệt chỉ review rồi merge. AI không bao giờ push thẳng `develop`
-hay `main`, không tự merge PR, không sửa ruleset.
+**Khi giao trọn cho AI** (việc nhỏ, tài liệu, lúc bận): Claude app làm trong **thư mục riêng** (`git worktree` hoặc
+máy trên cloud), tự tạo nhánh, commit, push và gửi link mở PR; người duyệt chỉ review rồi merge. AI không bao giờ
+push thẳng `develop` hay `main`, không tự merge PR, không sửa ruleset.
 
 **Không dùng chung một thư mục cho hai bên cùng chạy lệnh git** (ví dụ AI commit trong lúc IDE đổi nhánh): commit
 sẽ rơi nhầm nhánh. Đã xảy ra ở Sprint 0.

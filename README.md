@@ -26,11 +26,14 @@ xile-spa-app/
 ├─ frontend/            # React + TypeScript (Vite), quy tắc: frontend/AGENTS.md
 ├─ docker-compose.yml   # chỉ PostgreSQL cho máy dev
 ├─ .env.example         # thông số database dev
+├─ .agents/            # cấu hình Antigravity: rules, skills, hooks (AGENTS.md mục 8)
+├─ tools/agent-hooks/   # hook dùng chung cho các agent AI
 └─ docs/
    ├─ srs/              # Đặc tả yêu cầu phần mềm (SRS)
    ├─ design/           # Thiết kế CSDL: ERD, sơ đồ sinh tự động, thiết kế đợt R2/R3
    ├─ adr/              # Các quyết định kiến trúc (Architecture Decision Records)
-   └─ backlog/          # Card của từng sprint
+   ├─ backlog/          # Card của từng sprint
+   └─ guides/           # Sổ tay: dùng agent AI (ai-agents.md)
 ```
 
 ## Chạy trên máy dev (từ máy trống)
