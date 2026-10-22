@@ -6,12 +6,10 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
-  currentBranch,
   emitDecision,
   existsOnDevelop,
   isGeneratedFile,
   isGuardFile,
-  isIgnoredByGit,
   isMigrationFile,
   isSecretFile,
   normalize,
@@ -50,8 +48,6 @@ const GIT_DENY_REASON =
   'Đổi nhánh, commit, push, stash, restore... là việc của người làm card (CONTRIBUTING.md mục 8). ' +
   'Hãy dừng lại và ghi lệnh cần chạy vào báo cáo cho người dùng.'
 
-const PROTECTED_BRANCHES = new Set(['develop', 'main'])
-
 const SHELLS = new Set(['sh', 'bash', 'zsh', 'pwsh', 'powershell', 'cmd', 'eval'])
 const WRAPPERS = new Set(['sudo', 'command', 'env', 'time', 'nohup', 'exec'])
 
@@ -69,27 +65,11 @@ export function check(action, deps = {}) {
   }
   if (action.kind === 'write') {
     for (const file of action.paths) {
-      const repoPath = toRepoPath(action.root, file)
-      const reason =
-        checkWritePath(action, repoPath, onDevelop) ?? checkBranch(action, repoPath, deps)
+      const reason = checkWritePath(action, toRepoPath(action.root, file), onDevelop)
       if (reason) return reason
     }
   }
   return null
-}
-
-// Không sửa file của repo khi đang đứng trên develop hoặc main (CONTRIBUTING.md mục 2, AGENTS.md mục 5 bước 1):
-// thay đổi sẽ lẫn vào nhánh chung và người làm card dễ commit nhầm.
-function checkBranch(action, repoPath, deps) {
-  if (repoPath.startsWith('../') || path.isAbsolute(repoPath)) return null
-  const branch = (deps.currentBranch ?? currentBranch)(action.root)
-  if (!PROTECTED_BRANCHES.has(branch)) return null
-  if ((deps.isIgnoredByGit ?? isIgnoredByGit)(action.root, repoPath)) return null
-  return (
-    `Đang ở nhánh ${branch}: không sửa file trực tiếp trên develop hay main (AGENTS.md mục 5 bước 1). ` +
-    'Dừng lại và nhờ người dùng tạo nhánh card, ví dụ: git switch -c feature/<mã-card>-<mô-tả> ' +
-    '(fix/, docs/, chore/ theo loại việc, CONTRIBUTING.md mục 2). Thay đổi chưa commit sẽ đi theo sang nhánh mới.'
-  )
 }
 
 function checkWritePath(action, repoPath, onDevelop) {

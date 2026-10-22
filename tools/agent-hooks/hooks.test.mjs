@@ -168,54 +168,6 @@ describe('sửa file', () => {
   })
 })
 
-describe('sửa file trên develop hoặc main', () => {
-  const checkOn =
-    (branch, ignored = []) =>
-    (action) =>
-      check(action, {
-        existsOnDevelop: onDevelop,
-        currentBranch: () => branch,
-        isIgnoredByGit: (_root, repoPath) => ignored.includes(repoPath),
-      })
-  const claudeWrite = (file_path) =>
-    normalize({ tool_name: 'Edit', tool_input: { file_path } }, { CLAUDE_PROJECT_DIR: root })
-
-  for (const branch of ['develop', 'main']) {
-    test(`chặn Antigravity sửa file của repo trên ${branch}`, () => {
-      const reason = checkOn(branch)(agWrite('/repo/frontend/src/App.tsx'))
-
-      assert.match(reason, new RegExp(`Đang ở nhánh ${branch}`))
-      assert.match(reason, /git switch -c feature\//)
-    })
-  }
-  test('chặn Claude Code sửa file của repo trên develop', () => {
-    assert.match(checkOn('develop')(claudeWrite('/repo/docs/roadmap.md')), /Đang ở nhánh develop/)
-  })
-  for (const branch of [
-    'feature/S2-10-css-modules',
-    'chore/agents-branch-guard',
-    'release/v0.3.0',
-  ]) {
-    test(`cho phép trên nhánh ${branch}`, () => {
-      assert.equal(checkOn(branch)(agWrite('/repo/frontend/src/App.tsx')), null)
-    })
-  }
-  test('cho phép khi không đọc được nhánh (detached HEAD, không phải repo git)', () => {
-    assert.equal(checkOn(null)(agWrite('/repo/frontend/src/App.tsx')), null)
-  })
-  test('cho phép file nằm ngoài repo', () => {
-    assert.equal(checkOn('develop')(claudeWrite('/tmp/scratchpad/notes.md')), null)
-  })
-  test('cho phép file git bỏ qua', () => {
-    const file = '.claude/skills/self-review/SKILL.md'
-
-    assert.equal(checkOn('develop', [file])(claudeWrite(`/repo/${file}`)), null)
-  })
-  test('quy tắc khác vẫn báo lý do riêng của nó', () => {
-    assert.match(checkOn('develop')(agWrite('/repo/.env')), /bí mật/)
-  })
-})
-
 describe('chạy như hook thật', () => {
   const run = (script, input, cwd = here) =>
     spawnSync(process.execPath, [path.join(here, script)], {
@@ -265,32 +217,50 @@ describe('chạy như hook thật', () => {
     assert.equal(result.stdout, '')
   })
 
-  test('sửa file trên develop bị chặn, file git bỏ qua và nhánh card thì cho qua', () => {
+  test('sửa file trên develop được phép (chỉ commit, push mới cần nhánh card)', () => {
     const repo = fs.mkdtempSync(path.join(os.tmpdir(), 'xile-branch-'))
+    execFileSync('git', ['init', '-q', '-b', 'develop'], { cwd: repo })
+
+    const out = JSON.parse(
+      run(
+        'guard.mjs',
+        {
+          toolCall: {
+            name: 'write_to_file',
+            args: { TargetFile: path.join(repo, 'frontend/src/a.ts') },
+          },
+          workspacePaths: [repo],
+        },
+        repo,
+      ).stdout,
+    )
+
+    assert.deepEqual(out, { decision: 'allow' })
+    fs.rmSync(repo, { recursive: true, force: true })
+  })
+
+  test('Stop: đang ở develop thì nhắc tạo nhánh trước khi commit, ở nhánh card thì không', () => {
+    const repo = fs.mkdtempSync(path.join(os.tmpdir(), 'xile-stop-branch-'))
     const git = (...args) => execFileSync('git', args, { cwd: repo })
     git('init', '-q', '-b', 'develop')
-    fs.writeFileSync(path.join(repo, '.gitignore'), 'local/\n')
-    const write = (file) =>
-      JSON.parse(
-        run(
-          'guard.mjs',
-          {
-            toolCall: { name: 'write_to_file', args: { TargetFile: path.join(repo, file) } },
-            workspacePaths: [repo],
-          },
-          repo,
-        ).stdout,
-      )
+    fs.mkdirSync(path.join(repo, 'frontend/src'), { recursive: true })
+    const input = (id) => ({
+      fullyIdle: true,
+      terminationReason: 'model_stop',
+      conversationId: `test-branch-${id}-${process.pid}-${Date.now()}`,
+      workspacePaths: [repo],
+    })
+    fs.writeFileSync(path.join(repo, 'frontend/src/a.ts'), 'export const a = 1\n')
 
-    const onDevelopBranch = write('frontend/src/a.ts')
-    const ignoredFile = write('local/notes.md')
+    const onDevelop = JSON.parse(run('stop.mjs', input('develop'), repo).stdout)
     git('switch', '-q', '-c', 'feature/S9-01-thu')
-    const onCardBranch = write('frontend/src/a.ts')
+    const onCardBranch = JSON.parse(run('stop.mjs', input('card'), repo).stdout)
 
-    assert.equal(onDevelopBranch.decision, 'deny')
-    assert.match(onDevelopBranch.reason, /Đang ở nhánh develop/)
-    assert.equal(ignoredFile.decision, 'allow')
-    assert.equal(onCardBranch.decision, 'allow')
+    assert.equal(onDevelop.decision, 'continue')
+    assert.match(onDevelop.reason, /Đang ở nhánh develop/)
+    assert.match(onDevelop.reason, /git switch -c feature\//)
+    assert.equal(onCardBranch.decision, 'continue')
+    assert.doesNotMatch(onCardBranch.reason, /Đang ở nhánh/)
     fs.rmSync(repo, { recursive: true, force: true })
   })
 

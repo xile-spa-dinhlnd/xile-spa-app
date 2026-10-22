@@ -96,9 +96,9 @@ Database dev: `docker compose up -d` ở gốc repo. Windows dùng `gradlew.bat`
 
 ## 5. Quy trình làm một card
 
-1. **Kiểm tra nhánh trước khi sửa file** (`git branch --show-current`). Đang ở `develop` hoặc `main` thì dừng, đưa
-   người dùng lệnh tạo nhánh theo mã card (`git switch -c feature/S2-06-service-group`, mẫu tên ở CONTRIBUTING.md
-   mục 2) và chờ họ tạo xong; hook cũng chặn sửa file trên hai nhánh này. Đọc card trong backlog của sprint
+1. **Kiểm tra nhánh** (`git branch --show-current`). Được sửa file khi đang ở `develop`, nhưng commit và push chỉ
+   trên nhánh card: đang ở `develop` hoặc `main` thì nhắc người dùng tạo nhánh trước khi commit
+   (`git switch -c feature/S2-06-service-group`, mẫu tên ở CONTRIBUTING.md mục 2). Đọc card trong backlog của sprint
    (`docs/backlog/`) và các mã FR / BR mà card trỏ tới. **Chuyển trạng thái card sang "Đang làm"** trong file
    backlog (và trên Trello).
 2. **Nêu kế hoạch trước khi viết code**: sẽ sửa file nào, thêm bảng hay API nào, test gì. Chờ người duyệt.
@@ -143,9 +143,9 @@ Quy tắc sinh ra từ lỗi thật mới đáng giữ.
 | Claude Code (máy Đình)            | Đình      | Review PR của thành viên, tự soát code của Đình trước khi PR | `.claude/` chỉ ở máy Đình, không commit  |
 | Claude app (dự án trên claude.ai) | Đình      | Lập kế hoạch sprint, chia card, release, tài liệu lớn        | bộ nhớ dự án trên claude.ai              |
 
-- Hook dùng chung `tools/agent-hooks/` chặn: lệnh git làm đổi nhánh, commit, push; sửa file của repo khi đang ở
-  `develop` hoặc `main`; xóa hàng loạt; đọc, sửa file bí mật; sửa migration đã có trên `develop`; sửa file sinh tự
-  động; tự sửa cấu hình hook. Bị chặn thì dừng và báo người dùng, không tìm cách lách.
+- Hook dùng chung `tools/agent-hooks/` chặn: lệnh git làm đổi nhánh, commit, push; xóa hàng loạt; đọc, sửa file bí
+  mật; sửa migration đã có trên `develop`; sửa file sinh tự động; tự sửa cấu hình hook. Bị chặn thì dừng và báo
+  người dùng, không tìm cách lách. Hook Stop của Antigravity nhắc tạo nhánh khi đang ở `develop` hoặc `main`.
 - **Nạp quy tắc của thư mục con:** nội dung chỉ viết ở `backend/AGENTS.md`, `frontend/AGENTS.md`. Antigravity nạp
   qua rule glob `.agents/rules/backend.md`, `frontend.md`; Claude Code nạp qua `backend/CLAUDE.md`,
   `frontend/CLAUDE.md` (một dòng `@AGENTS.md`). Thêm thư mục có `AGENTS.md` riêng thì thêm cả hai lớp trỏ này.

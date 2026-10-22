@@ -84,8 +84,8 @@ flowchart TD
 Ghi nhớ:
 
 - AI không commit, không push, không đổi nhánh. Người làm card làm mọi lệnh git (CONTRIBUTING.md mục 8).
-- Còn đứng trên `develop` hay `main` thì `/plan-task`, `/fix-bug`, `/implement` dừng và đưa lệnh tạo nhánh; hook
-  cũng chặn sửa file trên hai nhánh này (AGENTS.md mục 5 bước 1).
+- Sửa file trên `develop` được, nhưng commit và push chỉ trên nhánh card. Còn ở `develop` hay `main` thì skill và
+  hook Stop nhắc tạo nhánh trước khi commit; `/pre-pr-check` không báo sẵn sàng (AGENTS.md mục 5 bước 1).
 - Trong lúc Antigravity đang sửa file, không đổi nhánh.
 - Mỗi bước của `/implement` có một câu commit gợi ý: commit ngay khi bước đó xanh.
 
@@ -155,11 +155,11 @@ Skill `plan-sprint` trong tài khoản claude.ai của Đình: gọi khi bắt �
 
 Mã nguồn: `tools/agent-hooks/` (Node, không cần cài thêm). Test: `node --test tools/agent-hooks/hooks.test.mjs`.
 
-| Hook         | Khi nào                       | Làm gì                                                                                                                                                                                                                                                               |
-| ------------ | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `guard.mjs`  | Trước mỗi lệnh, đọc, sửa file | Chặn git ngoài nhóm chỉ đọc; `gh` làm đổi GitHub; sửa file của repo khi đang ở `develop`, `main` (trừ file git bỏ qua); xóa hàng loạt; `docker compose down -v`; đọc, sửa `.env`, khóa; sửa migration đã có trên `develop`; sửa file sinh tự động; sửa cấu hình hook |
-| `format.mjs` | Sau khi Antigravity sửa file  | Chạy Prettier trên đúng file frontend vừa sửa                                                                                                                                                                                                                        |
-| `stop.mjs`   | Khi Antigravity kết thúc lượt | File Java đổi thì chạy `./gradlew spotlessApply` một lần; có code đổi thì nhắc tự soát test, Postman, backlog, báo cáo, kèm danh sách file code đổi mà chưa có test đổi theo (mỗi trạng thái nhắc một lần)                                                           |
+| Hook         | Khi nào                       | Làm gì                                                                                                                                                                                                                                                    |
+| ------------ | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `guard.mjs`  | Trước mỗi lệnh, đọc, sửa file | Chặn git ngoài nhóm chỉ đọc; `gh` làm đổi GitHub; xóa hàng loạt; `docker compose down -v`; đọc, sửa `.env`, khóa; sửa migration đã có trên `develop`; sửa file sinh tự động; sửa cấu hình hook                                                            |
+| `format.mjs` | Sau khi Antigravity sửa file  | Chạy Prettier trên đúng file frontend vừa sửa                                                                                                                                                                                                             |
+| `stop.mjs`   | Khi Antigravity kết thúc lượt | File Java đổi thì chạy `./gradlew spotlessApply` một lần; có code đổi thì nhắc tự soát test, Postman, backlog, báo cáo, kèm danh sách file code đổi mà chưa có test đổi theo, và nhắc tạo nhánh nếu đang ở `develop`/`main` (mỗi trạng thái nhắc một lần) |
 
 Claude Code dùng chung `guard.mjs` (được thêm `git fetch`, `git worktree`, đăng review bằng `gh`; vẫn không
 approve, merge, push).
