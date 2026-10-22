@@ -1,80 +1,64 @@
 <!--
-Điền mọi mục trước khi gán Đình review. Ô nào không áp dụng thì vẫn tick và ghi "(không áp dụng)".
-Quy tắc gốc: AGENTS.md (mục 4, 5), CONTRIBUTING.md (mục 3, 4), backend/AGENTS.md, frontend/AGENTS.md.
+Tiêu đề PR: <loại>(<phạm vi>): <mô tả ngắn có dấu> [<mã thẻ>]
+Ví dụ:      feat(catalog): quản lý dịch vụ [S1-05]
+Base: develop (chỉ release/* và hotfix/* mới vào main). Quy tắc đầy đủ: CONTRIBUTING.md mục 3, 4.
+Các dòng hướng dẫn dạng chú thích như thế này không hiện ra khi xem PR. Mục không áp dụng thì ghi "Không".
 -->
 
-## Thẻ
+## Tóm tắt
 
-- Mã thẻ: <!-- S2-01. Gom nhiều thẻ thì liệt kê đủ: S2-01, S2-02 -->
-- Trello: <!-- link card -->
-- Yêu cầu liên quan: <!-- FR-SVC-01, BR-19, OQ-06 ... -->
+<!-- 1 đến 3 câu: PR giải quyết vấn đề gì và vì sao cần. -->
 
-## Đã làm gì
+## Liên kết
 
-<!-- Gạch đầu dòng ngắn. PR gom nhiều thẻ thì chia mục theo từng thẻ. -->
+- Thẻ: <!-- S2-01 (link Trello). Gom nhiều thẻ thì liệt kê đủ. -->
+- Yêu cầu: <!-- FR-SVC-01, BR-19, OQ-06, ADR-0003 ... -->
+
+## Loại thay đổi
+
+- [ ] `feat`: chức năng mới
+- [ ] `fix`: sửa lỗi
+- [ ] `refactor` / `perf`: đổi cấu trúc hoặc hiệu năng, không đổi hành vi
+- [ ] `test` / `docs` / `build` / `ci` / `chore`
+- [ ] **Breaking change**: đổi API mà frontend đang gọi, đổi schema, đổi cấu hình hoặc biến môi trường
+
+## Thay đổi chính
+
+<!-- Gạch đầu dòng, nhóm theo backend / frontend / DB / tài liệu. PR gom nhiều thẻ thì chia theo thẻ. -->
 
 -
 
-## Cách thử
+## Kiểm thử
 
-<!-- Các bước thử bằng Postman hoặc giao diện, kèm kết quả mong đợi và trường hợp biên. -->
+<!-- Ghi kết quả thật, ví dụ "Backend 142/142 (gồm test tích hợp), Frontend 59/59". Chưa chạy được phần nào thì nói lý do. -->
 
-1.
-
-## Kết quả test ở máy
-
-<!-- Dán số test chạy qua, ví dụ: "Backend 142/142, gồm test tích hợp. Frontend 59/59". Chưa chạy được phần nào thì ghi rõ lý do. -->
-
-## Giả định, điểm chưa chắc
-
-<!-- Chỗ nào tự quyết vì SRS chưa rõ, OQ nào liên quan, phần nào sửa ngoài phạm vi thẻ. Không có thì ghi "Không". -->
+- Tự động:
+- Thủ công (Postman hoặc giao diện, kèm kết quả mong đợi):
+  1.
 
 ## Ảnh chụp màn hình
 
-<!-- Có đổi giao diện: chụp cỡ máy tính và cỡ điện thoại. Không có thì ghi "Không". -->
+<!-- Có đổi giao diện: chụp cả cỡ máy tính và điện thoại, nên có trước / sau. -->
 
-## Tự kiểm tra
+| Trước | Sau |
+| ----- | --- |
+|       |     |
 
-**Nhánh và PR**
+## Rủi ro và cách quay lại
 
-- [ ] Base là `develop` (chỉ `release/*`, `hotfix/*` mới vào `main`)
-- [ ] Tiêu đề theo Conventional Commits, tiếng Việt có dấu, mã thẻ ở cuối: `feat(catalog): quản lý dịch vụ [S1-05]`
-- [ ] Mô tả commit khi squash có `Refs:` đủ mọi thẻ của PR
-- [ ] PR nhỏ (khoảng dưới 400 dòng), hoặc đã ghi lý do ở mục "Giả định"
-- [ ] Đã tự đọc lại toàn bộ diff trên GitHub, kể cả phần AI viết
+<!-- Phần nào dễ hỏng, ảnh hưởng dữ liệu nào, có migration không, cần đặt biến môi trường gì khi deploy. -->
 
-**Build và test**
+## Ghi chú cho người review
 
-- [ ] Backend: `./gradlew spotlessApply test` qua, đã bật Docker Desktop để chạy cả test tích hợp
-- [ ] Frontend: `npm run format:check && npm run lint && npm run typecheck && npm test` qua
-- [ ] Có test cho logic nghiệp vụ mới; không `@Disabled`, không `skip`, không nới assert cho xanh
-- [ ] CI xanh (khi repo đã có CI)
+<!-- Giả định tự quyết vì SRS chưa rõ, chỗ còn chưa chắc, phần sửa ngoài phạm vi thẻ, file nên xem kỹ. -->
 
-**Nghiệp vụ và dữ liệu**
+## Checklist
 
-- [ ] Tiền là số nguyên đồng (không `float`, `double`); giao diện không tự tính tiền
-- [ ] Không sửa dữ liệu ngày đã chốt; sửa sai bằng bút toán điều chỉnh
-- [ ] Thay đổi tài chính, danh mục có ghi `audit_log` trong cùng transaction; không xóa cứng
-- [ ] Đổi schema bằng migration mới `V{n}__...`, không sửa migration cũ, đã báo số `V{n}` cho người kia
-- [ ] Thời gian lấy từ `Clock` (`Asia/Ho_Chi_Minh`), không gọi `Instant.now()`, `LocalDate.now()` trực tiếp
-
-**Bảo mật và cấu hình**
-
-- [ ] Không có bí mật, `.env`, dữ liệu khách thật; không ghi mật khẩu, token ra log
-- [ ] Phần đăng nhập, quên mật khẩu: thông báo lỗi và thời gian phản hồi không làm lộ email có tồn tại
-- [ ] Khác biệt môi trường đặt bằng thuộc tính trong `application-{profile}.yml`, giá trị mặc định chỉ ở `application.yml`
-- [ ] Không thêm thư viện ngoài ADR-0001; nếu thêm thì đã cập nhật ADR và nói rõ ở trên
-
-**Code**
-
-- [ ] Đúng cấu trúc thư mục và quy ước của `backend/AGENTS.md`, `frontend/AGENTS.md` (entity không setter, form React Hook Form + Zod...)
-- [ ] Không còn code bị comment bỏ, `console.log`, `System.out.println`
-- [ ] Giao diện dùng được trên điện thoại; lỗi từ backend gắn vào đúng ô theo mã lỗi
-
-**Tài liệu trong cùng PR**
-
-- [ ] SRS, ERD, README đã cập nhật nếu hành vi đổi
-- [ ] Postman collection đã có request cho endpoint mới hoặc đã sửa
-- [ ] File backlog đã chuyển trạng thái thẻ (Đang làm, Xong)
-- [ ] File AGENTS đã cập nhật nếu đổi kiến trúc, quy ước, thư viện
-- [ ] PR của Đình: đã ghi "Đã tự review" trước khi bypass
+- [ ] Đã tự đọc lại toàn bộ diff (kể cả phần AI viết); PR nhỏ, khoảng dưới 400 dòng hoặc đã giải thích
+- [ ] Build và test qua ở máy: `./gradlew spotlessApply test` (bật Docker) và `npm run format:check && npm run lint && npm run typecheck && npm test`; CI xanh nếu có
+- [ ] Có test cho logic nghiệp vụ mới; không `@Disabled`, không `skip`, không nới assert
+- [ ] Quy tắc nghiệp vụ (AGENTS.md mục 4): tiền là số nguyên đồng, không sửa ngày đã chốt, ghi `audit_log` cùng transaction, không xóa cứng, thời gian qua `Clock`
+- [ ] Đổi schema bằng migration mới `V{n}__...`, không sửa migration cũ
+- [ ] Không có bí mật, `.env`, dữ liệu khách thật; không log mật khẩu, token; phần đăng nhập không làm lộ email có tồn tại
+- [ ] Đúng cấu trúc và quy ước trong `backend/AGENTS.md`, `frontend/AGENTS.md`; thư viện mới đã ghi ADR-0001
+- [ ] Đã cập nhật trong cùng PR: SRS / ERD / README nếu hành vi đổi, Postman nếu đổi endpoint, trạng thái thẻ trong backlog, AGENTS nếu đổi quy ước
