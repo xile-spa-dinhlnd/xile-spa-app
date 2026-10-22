@@ -5,6 +5,7 @@ import {
   KeyOutlined,
   LogoutOutlined,
   MenuOutlined,
+  TeamOutlined,
   UserOutlined,
 } from '@ant-design/icons'
 import {
@@ -31,6 +32,7 @@ const { Header, Sider, Content } = Layout
 const menuItems: MenuProps['items'] = [
   { key: '/', icon: <DashboardOutlined />, label: 'Tổng quan' },
   { key: '/services', icon: <AppstoreOutlined />, label: 'Dịch vụ' },
+  { key: '/staff', icon: <TeamOutlined />, label: 'Nhân viên' },
 ]
 
 function getRoleLabel(role?: UserRole): { label: string; color: string } {

@@ -2,6 +2,7 @@ import type { RouteObject } from 'react-router'
 import { authRoutes, ProtectedRoute } from '@/features/auth'
 import { catalogRoutes } from '@/features/catalog'
 import { dashboardRoutes } from '@/features/dashboard'
+import { staffRoutes } from '@/features/staff'
 import { AppLayout } from './layout/AppLayout'
 import { NotFoundPage } from './NotFoundPage'
 
@@ -16,7 +17,12 @@ export const routes: RouteObject[] = [
     children: [
       {
         element: <AppLayout />,
-        children: [...dashboardRoutes, ...catalogRoutes, { path: '*', element: <NotFoundPage /> }],
+        children: [
+          ...dashboardRoutes,
+          ...catalogRoutes,
+          ...staffRoutes,
+          { path: '*', element: <NotFoundPage /> },
+        ],
       },
     ],
   },

@@ -227,7 +227,7 @@ cd frontend && npm run lint && npm run typecheck && npm test
 | ----------------------------- | -------------------------- | ---------------------------------------------------------------------------------------- |
 | Sprint planning               | Đầu sprint, khoảng 1 giờ   | Chọn card từ `Product Backlog`, chia việc, ước lượng điểm, chốt mục tiêu sprint         |
 | Check-in hằng ngày (nhắn tin) | Mỗi ngày làm việc          | Ba dòng: hôm qua làm gì, hôm nay làm gì, đang bị chặn bởi gì                             |
-| Sprint review                 | Cuối sprint                | Demo trên máy dev (sau này trên VPS); gom câu hỏi mở (OQ) hỏi chủ tiệm                  |
+| Sprint review                 | Cuối sprint                | Đình và Huy demo cho nhau trên máy dev. Chủ tiệm chỉ xem demo tổng thể khi có MVP (giai đoạn dùng thử); câu hỏi mở (OQ) vẫn hỏi chủ tiệm theo lô qua tin nhắn khi cần |
 | Retro                         | Ngay sau review, 15–30 phút | Một điều giữ, một điều bỏ, một điều thử; ghi thành card hoặc sửa file quy tắc này       |
 
 Lịch cụ thể chốt ở card S0-01.

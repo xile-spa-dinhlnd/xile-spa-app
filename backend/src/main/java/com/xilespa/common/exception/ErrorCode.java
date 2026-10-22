@@ -27,6 +27,9 @@ public enum ErrorCode {
     SERVICE_GROUP_NOT_FOUND(
             HttpStatus.BAD_REQUEST, "Nhóm dịch vụ không tồn tại hoặc đã ngừng sử dụng."),
 
+    // Nhân viên (module staff)
+    STAFF_NAME_DUPLICATE(HttpStatus.CONFLICT, "Đã có nhân viên đang làm trùng tên."),
+
     // Lỗi do trigger của cơ sở dữ liệu ném ra (docs/design/erd.md mục 5.5), xem DatabaseErrors.
     DAY_CLOSED(
             HttpStatus.CONFLICT,

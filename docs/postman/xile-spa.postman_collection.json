@@ -1092,7 +1092,362 @@
       ]
     },
     {
-      "name": "4. Trường hợp lỗi (thử phá)",
+      "name": "4. Nhân viên (S2-05)",
+      "item": [
+        {
+          "name": "Thêm nhân viên",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/staff",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "staff"
+              ]
+            },
+            "description": "FR-STF-01. Trả 201 và header Location. Vai trò: OWNER (Chủ tiệm) hoặc THERAPIST (KTV).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"KTV thử {{staffRunId}}\",\n  \"role\": \"THERAPIST\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"staffRunId\", Date.now());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 201\", () => pm.response.to.have.status(201));",
+                  "const s = pm.response.json();",
+                  "pm.collectionVariables.set(\"staffId\", s.id);",
+                  "pm.test(\"Đúng dữ liệu\", () => { pm.expect(s.role).to.eql(\"THERAPIST\"); pm.expect(s.active).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Danh sách nhân viên (không lọc)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/staff",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "staff"
+              ]
+            },
+            "description": "Người đang làm xếp trước, rồi theo tên."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Có phân trang\", () => pm.expect(pm.response.json().totalElements).to.be.a(\"number\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Tìm nhân viên theo tên, vai trò, đang làm",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/staff?q=ktv thử {{staffRunId}}&role=THERAPIST&active=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "staff"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "ktv thử {{staffRunId}}"
+                },
+                {
+                  "key": "role",
+                  "value": "THERAPIST"
+                },
+                {
+                  "key": "active",
+                  "value": "true"
+                }
+              ]
+            },
+            "description": "Lọc kết hợp: q (không phân biệt hoa thường), role, active."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 200\", () => pm.response.to.have.status(200));",
+                  "const d = pm.response.json();",
+                  "pm.test(\"Tìm thấy đúng 1 người\", () => pm.expect(d.totalElements).to.eql(1));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Xem một nhân viên",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/staff/{{staffId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "staff",
+                "{{staffId}}"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Đúng id\", () => pm.expect(pm.response.json().id).to.eql(pm.collectionVariables.get(\"staffId\")));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sửa tên và vai trò",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/staff/{{staffId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "staff",
+                "{{staffId}}"
+              ]
+            },
+            "description": "PUT thay thế toàn bộ: gửi đủ fullName và role.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"KTV thử {{staffRunId}} (sửa)\",\n  \"role\": \"OWNER\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Đã đổi vai trò\", () => pm.expect(pm.response.json().role).to.eql(\"OWNER\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Nhật ký của nhân viên",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/audit-logs?entityType=staff&entityId={{staffId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "audit-logs"
+              ],
+              "query": [
+                {
+                  "key": "entityType",
+                  "value": "staff"
+                },
+                {
+                  "key": "entityId",
+                  "value": "{{staffId}}"
+                }
+              ]
+            },
+            "description": "Mỗi thay đổi nhân viên ghi một dòng nhật ký (BR-18)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Có ít nhất 2 dòng (tạo, sửa)\", () => pm.expect(pm.response.json().totalElements).to.be.at.least(2));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cho nghỉ",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/staff/{{staffId}}/deactivate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "staff",
+                "{{staffId}}",
+                "deactivate"
+              ]
+            },
+            "description": "Không xóa cứng; gọi lại khi đã nghỉ thì không đổi gì."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Đã nghỉ\", () => pm.expect(pm.response.json().active).to.eql(false));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Lọc nhân viên đã nghỉ",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/staff?active=false&size=100",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "staff"
+              ],
+              "query": [
+                {
+                  "key": "active",
+                  "value": "false"
+                },
+                {
+                  "key": "size",
+                  "value": "100"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Có người vừa cho nghỉ\", () => pm.expect(pm.response.json().content.map(s => s.id)).to.include(pm.collectionVariables.get(\"staffId\")));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cho làm lại",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/staff/{{staffId}}/activate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "staff",
+                "{{staffId}}",
+                "activate"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Đang làm\", () => pm.expect(pm.response.json().active).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "5. Trường hợp lỗi (thử phá)",
       "item": [
         {
           "name": "Đăng nhập sai mật khẩu",
@@ -1514,11 +1869,160 @@
           "protocolProfileBehavior": {
             "disableCookies": true
           }
+        },
+        {
+          "name": "Thêm nhân viên trùng tên người đang làm",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/staff",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "staff"
+              ]
+            },
+            "description": "Trùng tên không phân biệt hoa thường và khoảng trắng thừa, chỉ so với người đang làm.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"  ktv   THỬ {{staffRunId}} (SỬA) \",\n  \"role\": \"THERAPIST\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 409\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"STAFF_NAME_DUPLICATE\", () => pm.expect(pm.response.json().code).to.eql(\"STAFF_NAME_DUPLICATE\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Thêm nhân viên thiếu tên và vai trò",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/staff",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "staff"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 400\", () => pm.response.to.have.status(400));",
+                  "const e = pm.response.json();",
+                  "pm.test(\"VALIDATION_FAILED theo từng ô\", () => { pm.expect(e.code).to.eql(\"VALIDATION_FAILED\"); pm.expect(e.fieldErrors.map(f => f.field)).to.include.members([\"fullName\", \"role\"]); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Nhân viên không tồn tại",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/staff/999999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "staff",
+                "999999"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 404\", () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Xóa nhân viên (không hỗ trợ)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/staff/{{staffId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "staff",
+                "{{staffId}}"
+              ]
+            },
+            "description": "Không xóa cứng (AGENTS quy tắc 3)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 405\", () => pm.response.to.have.status(405));"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
     {
-      "name": "5. Đăng xuất",
+      "name": "6. Đăng xuất",
       "item": [
         {
           "name": "Đăng xuất",
@@ -1598,6 +2102,14 @@
     },
     {
       "key": "serviceId",
+      "value": ""
+    },
+    {
+      "key": "staffRunId",
+      "value": ""
+    },
+    {
+      "key": "staffId",
       "value": ""
     }
   ]

@@ -295,6 +295,15 @@ Mọi yêu cầu có trạng thái ban đầu là `Draft`. Quy tắc nghiệp v�
 | FR-PAY-03 | Số còn nợ = tiền tour phát sinh − đã trả | S | R3 |
 | FR-PAY-04 | Phiếu lương theo tháng, xem và xuất PDF | S | R3 |
 
+**FR-STF-01 Quản lý nhân viên**
+- *Story:* Là chủ tiệm, tôi muốn có danh sách nhân viên để chọn người làm khi ghi giao dịch.
+- *AC:*
+  - Thông tin: tên (bắt buộc, tối đa 100 ký tự), vai trò Chủ tiệm hoặc KTV.
+  - Hai nhân viên đang làm không được trùng tên (không phân biệt hoa thường và khoảng trắng thừa); trùng thì thêm chữ để phân biệt, ví dụ "Lan A". Người đã nghỉ không chặn tên.
+  - Không xóa nhân viên. Người nghỉ việc chuyển sang "đã nghỉ": vẫn giữ trong lịch sử giao dịch, không hiện khi chọn người làm cho giao dịch mới; có thể cho làm lại (nếu không trùng tên người đang làm).
+  - Chủ tiệm không tự động là nhân viên; nếu có làm dịch vụ thì tự thêm mình với vai trò Chủ tiệm.
+  - Mọi thay đổi ghi nhật ký (BR-18).
+
 **FR-PAY-02 và FR-PAY-03 Trả lương linh hoạt**
 - *Story:* Là chủ tiệm, tôi có hôm trả lương ngay trong ngày, có hôm trả cuối tháng, tôi muốn hệ thống theo dõi được cả hai cách.
 - *AC:*
