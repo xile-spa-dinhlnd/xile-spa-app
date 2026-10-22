@@ -97,7 +97,7 @@ Database dev: `docker compose up -d` ở gốc repo. Windows dùng `gradlew.bat`
 1. Đọc card trong backlog của sprint (`docs/backlog/`) và các mã FR / BR mà card trỏ tới. **Chuyển trạng thái
    card sang "Đang làm"** trong file backlog (và trên Trello).
 2. **Nêu kế hoạch trước khi viết code**: sẽ sửa file nào, thêm bảng hay API nào, test gì. Chờ người duyệt.
-   Antigravity dùng skill `/plan` (tính năng) hoặc `/fix-bug` (sửa lỗi, phải tái hiện bằng test đỏ trước).
+   Antigravity dùng skill `/plan-task` (tính năng) hoặc `/fix-bug` (sửa lỗi, phải tái hiện bằng test đỏ trước).
 3. Viết code theo quy tắc của `backend/AGENTS.md` hoặc `frontend/AGENTS.md`.
 4. Viết test cho logic nghiệp vụ. Chạy build và test tại máy trước khi commit.
 5. Tự đọc lại diff, nêu rõ phần nào còn chưa chắc.

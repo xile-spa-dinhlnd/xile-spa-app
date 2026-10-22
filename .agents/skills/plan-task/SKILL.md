@@ -1,17 +1,19 @@
 ---
-name: plan
-description: Lập kế hoạch chi tiết có sơ đồ luồng (Mermaid) trước khi code một card hoặc tính năng của Xile Spa, rồi dừng chờ duyệt. Dùng khi bắt đầu card mới, khi người dùng gõ /plan, hoặc khi được nhờ làm một tính năng mà chưa có kế hoạch được duyệt.
+name: plan-task
+description: Lập kế hoạch chi tiết có sơ đồ luồng (Mermaid) cho một card hoặc task cụ thể của Xile Spa trước khi code, rồi dừng chờ duyệt. Dùng khi bắt đầu card mới, khi người dùng gõ /plan-task <tên task>, hoặc khi được nhờ lập kế hoạch cho một task.
 ---
 
-# /plan: kế hoạch trước khi code
+# /plan-task <tên task>: kế hoạch trước khi code
 
 Mục tiêu: người dùng đọc kế hoạch trong 5 phút là biết bạn sẽ làm gì, theo luồng nào, đụng file nào, test gì.
 **Không sửa file code nào trong skill này.**
 
 ## Các bước
 
-1. **Xác định card.** Lấy mã card từ lời người dùng hoặc tên nhánh (`git branch --show-current`, ví dụ
-   `feature/S2-06-service-group`). Đọc dòng của card trong `docs/backlog/sprint-*.md`.
+1. **Xác định task/card.** Lấy mã card hoặc tên task từ tham số đi kèm lệnh `/plan-task <tên task>` (ví dụ
+   `/plan-task S2-06` hoặc `/plan-task "quản lý nhóm dịch vụ"`). Nếu người dùng không nhập tham số, lấy từ tên
+   nhánh (`git branch --show-current`, ví dụ `feature/S2-06-service-group`) hoặc câu hỏi của người dùng.
+   Đọc dòng của card trong `docs/backlog/sprint-*.md`.
 2. **Đọc yêu cầu.** Mở đúng mục FR trong `docs/srs/03-functional-requirements.md`, các BR liên quan trong
    `docs/srs/04-business-rules.md`, OQ trong `docs/srs/07-open-questions.md`. Đụng tiền hay chốt sổ thì đọc thêm
    theo bảng ở `AGENTS.md` mục 2.

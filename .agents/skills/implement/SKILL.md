@@ -1,11 +1,11 @@
 ---
 name: implement
-description: Thực hiện một kế hoạch đã được duyệt cho card của Xile Spa - viết backend, frontend, test, Postman và cập nhật backlog theo đúng thứ tự và khuôn của dự án. Dùng sau khi người dùng duyệt kết quả của /plan hoặc /fix-bug, hoặc khi người dùng gõ /implement.
+description: Thực hiện một kế hoạch đã được duyệt cho card của Xile Spa - viết backend, frontend, test, Postman và cập nhật backlog theo đúng thứ tự và khuôn của dự án. Dùng sau khi người dùng duyệt kết quả của /plan-task hoặc /fix-bug, hoặc khi người dùng gõ /implement.
 ---
 
 # /implement: làm theo kế hoạch đã duyệt
 
-Chỉ chạy khi đã có kế hoạch được duyệt trong cuộc trò chuyện. Chưa có thì chạy `/plan` trước.
+Chỉ chạy khi đã có kế hoạch được duyệt trong cuộc trò chuyện. Chưa có thì chạy `/plan-task <tên task>` trước.
 Lệch khỏi kế hoạch (thêm bảng, đổi API, đụng module của người kia) thì dừng và hỏi.
 
 ## Thứ tự làm

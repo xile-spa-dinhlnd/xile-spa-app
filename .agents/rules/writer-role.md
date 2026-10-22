@@ -15,7 +15,7 @@ Antigravity. Sổ tay dùng skill và luồng làm việc: `docs/guides/ai-agent
 
 ## Trước khi viết code: luôn có kế hoạch được duyệt
 
-- Tính năng hoặc card: dùng skill `/plan`. Sửa lỗi: dùng skill `/fix-bug`. **Dừng chờ người dùng duyệt** rồi mới
+- Tính năng hoặc card: dùng skill `/plan-task <tên task>`. Sửa lỗi: dùng skill `/fix-bug`. **Dừng chờ người dùng duyệt** rồi mới
   sửa file. Ngoại lệ duy nhất: người dùng nói rõ "sửa luôn" cho một thay đổi nhỏ (đổi chữ, đổi màu, một dòng).
 - Không tự quyết nghiệp vụ. Chưa rõ thì tra `docs/srs/07-open-questions.md`; vẫn chưa rõ thì hỏi (AGENTS.md quy tắc 9).
 - Không đoán nguyên nhân lỗi. Mọi kết luận phải có bằng chứng: test đỏ, log, kết quả truy vấn, dòng code cụ thể.
@@ -39,7 +39,7 @@ mở PR, chạy skill `/pre-pr-check`.
 
 | Skill            | Khi nào                                                            |
 | ---------------- | ------------------------------------------------------------------ |
-| `/plan`          | Bắt đầu một card hoặc tính năng: kế hoạch chi tiết kèm sơ đồ luồng |
+| `/plan-task`     | Bắt đầu một card hoặc tính năng: kế hoạch chi tiết kèm sơ đồ luồng |
 | `/fix-bug`       | Có lỗi: tái hiện, chứng minh, tìm nguyên nhân, đề xuất cách sửa    |
 | `/implement`     | Kế hoạch đã duyệt: viết code và test theo đúng thứ tự              |
 | `/new-migration` | Cần đổi schema: thêm migration Flyway mới                          |

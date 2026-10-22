@@ -49,7 +49,7 @@ mục 4 ("Review"). Thêm:
   `feat(catalog): quản lý nhóm dịch vụ [S2-06]`.
 - **Mô tả:** điền đúng các mục của `.github/pull_request_template.md` (Tóm tắt, Liên kết, Loại thay đổi, Thay đổi
   chính, Kiểm thử với số liệu thật, Ảnh chụp màn hình, Rủi ro và cách quay lại, Ghi chú cho người review,
-  Checklist). Có sơ đồ từ `/plan` hoặc `/fix-bug` thì dán vào "Ghi chú cho người review".
+  Checklist). Có sơ đồ từ `/plan-task` hoặc `/fix-bug` thì dán vào "Ghi chú cho người review".
 - **Câu squash merge:** tiêu đề PR + dòng `Refs: <mọi mã card>, <FR/BR>`.
 
 Trả bản nháp trong một khối markdown để người dùng chép.

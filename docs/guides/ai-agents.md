@@ -59,7 +59,7 @@ Antigravity hoặc lệnh `claude` ở terminal, mở tại gốc repo.
 
 ```mermaid
 flowchart TD
-    A[Người làm card: tạo nhánh feature/S2-06-...] --> B[Antigravity: /plan]
+    A[Người làm card: tạo nhánh feature/S2-06-...] --> B[Antigravity: /plan-task]
     B --> C{Duyệt kế hoạch?}
     C -- cần sửa --> B
     C -- duyệt --> D[Antigravity: /implement từng bước]
@@ -118,7 +118,7 @@ Gõ `/<tên>` trong khung chat, hoặc nói việc cần làm; agent tự chọn
 
 | Skill            | Khi nào                        | Kết quả                                                                        |
 | ---------------- | ------------------------------ | ------------------------------------------------------------------------------ |
-| `/plan`          | Bắt đầu card, tính năng        | Kế hoạch: mục tiêu, ý tưởng, sơ đồ Mermaid, file sẽ sửa, test; dừng chờ duyệt  |
+| `/plan-task`     | Bắt đầu card, tính năng        | Kế hoạch: mục tiêu, ý tưởng, sơ đồ Mermaid, file sẽ sửa, test; dừng chờ duyệt  |
 | `/fix-bug`       | Có lỗi, test đỏ chưa rõ vì sao | Test đỏ, nguyên nhân `file:dòng`, sơ đồ luồng cũ/mới, cách sửa; dừng chờ duyệt |
 | `/implement`     | Kế hoạch đã duyệt              | Code theo thứ tự DB → backend → frontend → Postman → backlog, test từng bước   |
 | `/write-tests`   | Viết, bổ sung test             | Bảng ca test đủ sáu nhóm (AGENTS.md mục 10), test đã thử làm đỏ, kết quả chạy  |
@@ -127,7 +127,7 @@ Gõ `/<tên>` trong khung chat, hoặc nói việc cần làm; agent tự chọn
 
 Câu mẫu:
 
-- `/plan S2-06` hoặc "Lập kế hoạch cho card S2-06 quản lý nhóm dịch vụ".
+- `/plan-task S2-06` hoặc "Lập kế hoạch cho card S2-06 quản lý nhóm dịch vụ".
 - `/fix-bug Lưu nhân viên trùng tên với người đã nghỉ vẫn báo lỗi 409, mong đợi là lưu được.`
 - "Kế hoạch ổn, `/implement` đi, làm tới hết backend thì dừng cho mình commit."
 - `/pre-pr-check`

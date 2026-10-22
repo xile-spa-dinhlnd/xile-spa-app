@@ -345,7 +345,7 @@ từng agent: `AGENTS.md` mục 8. Cách dùng skill, hook và luồng chi tiế
 
 1. Người làm card tạo nhánh: `git switch develop && git pull && git switch -c feature/<mã-card>-<mô-tả>`,
    rồi mở Antigravity trên thư mục repo.
-2. Antigravity chạy `/plan` (tính năng) hoặc `/fix-bug` (sửa lỗi): kế hoạch có sơ đồ luồng, lỗi phải được tái
+2. Antigravity chạy `/plan-task <tên task>` (tính năng) hoặc `/fix-bug` (sửa lỗi): kế hoạch có sơ đồ luồng, lỗi phải được tái
    hiện bằng test đỏ. Người làm card duyệt (AGENTS.md mục 5).
 3. Antigravity chạy `/implement`: **chỉ sửa file và chạy test** trên nhánh đó. Git chỉ được đọc (`status`, `log`,
    `diff`...); hook chặn commit, push, đổi nhánh. Xong mỗi bước thì báo file đã sửa, kết quả test, gợi ý câu commit.
