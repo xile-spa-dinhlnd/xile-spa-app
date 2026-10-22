@@ -11,8 +11,17 @@ cài đặt, luồng làm việc, từng skill, hook.
 | Claude Code (máy Đình) | Đình       | Review PR của Huy (`/review-pr`), tự soát code của Đình (`/self-review`) |
 | Claude app (claude.ai) | Đình       | Cuối sprint: release, retro, lập kế hoạch và chia card sprint sau        |
 
-Một nguồn quy tắc: cả Antigravity và Claude Code đều tự đọc `AGENTS.md`, `backend/AGENTS.md`, `frontend/AGENTS.md`.
-Phần riêng của Antigravity ở `.agents/`; phần riêng của Claude Code ở `.claude/` (chỉ ở máy Đình, không commit).
+Một nguồn quy tắc: nội dung chỉ viết ở `AGENTS.md`, `backend/AGENTS.md`, `frontend/AGENTS.md`. Mỗi agent có một lớp
+trỏ mỏng để nạp đúng lúc:
+
+| File quy tắc         | Antigravity nạp qua                | Claude Code nạp qua                |
+| -------------------- | ---------------------------------- | ---------------------------------- |
+| `AGENTS.md`          | tự đọc ở gốc                       | `CLAUDE.md` (`@AGENTS.md`)         |
+| `backend/AGENTS.md`  | `.agents/rules/backend.md` (glob)  | `backend/CLAUDE.md` (`@AGENTS.md`) |
+| `frontend/AGENTS.md` | `.agents/rules/frontend.md` (glob) | `frontend/CLAUDE.md`               |
+
+Quy tắc là hướng dẫn, agent vẫn có thể làm sai; chỉ những gì hook chặn (mục 5) mới chắc chắn. Phần riêng của
+Antigravity ở `.agents/`; phần riêng của Claude Code ở `.claude/` (chỉ ở máy Đình, không commit).
 
 ## 2. Cài đặt
 
@@ -22,7 +31,8 @@ Phần riêng của Antigravity ở `.agents/`; phần riêng của Claude Code 
    từ thư mục `.agents/` (nơi có `hooks.json`), nên lệnh trong đó viết `node ../tools/agent-hooks/...`.
 2. Cần Node 22+ (đã có cho frontend) và `npm ci` trong `frontend/` (hook format dùng Prettier của frontend).
 3. Rules, skills, hooks tự nạp từ `.agents/`. Kiểm tra trong panel **Customizations**:
-   - Rules: `writer-role` (luôn bật), `migrations` (bật khi đụng thư mục migration).
+   - Rules: `writer-role` (luôn bật), `backend`, `frontend` (bật khi đụng thư mục đó), `migrations` (bật khi đụng
+     thư mục migration).
    - Skills: `plan`, `fix-bug`, `implement`, `write-tests`, `new-migration`, `pre-pr-check`.
    - Hooks: `xile-guard`, `xile-format`, `xile-stop`.
 4. **Thử rào chắn:** nhờ agent chạy `git push --dry-run`. Phải bị chặn kèm lời nhắc tiếng Việt. Nếu lệnh chạy được

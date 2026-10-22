@@ -201,10 +201,25 @@ cd frontend && npm run lint && npm run typecheck && npm test
 
 - Đình review PR của Huy **trong vòng 1 ngày làm việc**. Không kịp thì nhắn báo.
 - Đình ưu tiên review PR đang chờ trước khi bắt đầu card mới: PR chờ lâu làm cả nhóm chậm.
+- **Tiêu chuẩn duyệt:** approve khi PR làm code tốt hơn và không vi phạm quy tắc bắt buộc, không đòi hoàn hảo.
+  Chỉ còn `gợi ý:` hoặc `nit:` thì approve kèm bình luận, không chặn.
+- **Thứ tự đọc:** phạm vi và thiết kế (đúng card, đúng chỗ trong cấu trúc) → đúng nghiệp vụ (FR, BR, tiền, chốt sổ)
+  → test (đủ nhóm ca ở `AGENTS.md` mục 10) → tên và độ dễ đọc → style. Format để Spotless, Prettier lo, không bình
+  luận tay.
 - Ghi tiền tố cho bình luận để rõ mức độ:
   - `bắt buộc:` phải sửa mới merge.
   - `gợi ý:` nên sửa, người viết quyết định.
   - `hỏi:` chưa hiểu, cần giải thích (có thể kèm sửa tài liệu).
+  - `nit:` chi tiết rất nhỏ, không sửa cũng được.
+  - `khen:` chỗ làm tốt, để giữ cách làm đó.
+- **Người viết PR:**
+  - Trả lời mọi bình luận: đã sửa ở commit nào, hoặc vì sao không sửa. Không im lặng bấm Resolve.
+  - Chỉ người mở bình luận mới bấm **Resolve conversation** (với `nit:`, `khen:` thì người viết tự resolve được).
+  - Sửa xong thì bấm **Re-request review**; không push thêm việc ngoài phạm vi card vào PR đang review.
+- **Bất đồng:** qua lại quá 2 vòng trên cùng một bình luận thì nói chuyện trực tiếp, chốt xong ghi kết luận vào
+  bình luận đó. Chạm quy tắc nghiệp vụ chưa rõ thì ghi mã OQ, không tự quyết (`AGENTS.md` quy tắc 9).
+- **Review bằng AI:** AI (skill `/review-pr`, `/self-review`) chỉ đọc lượt đầu. Đình đọc từng nhận xét, bỏ hoặc
+  sửa cái sai, rồi mới đăng; người viết trả lời như với bình luận của người. AI không approve, không merge.
 - Danh sách soát khi review:
   - [ ] Tiền là số nguyên, không tự tính tiền ở giao diện.
   - [ ] Không sửa dữ liệu ngày đã chốt; sửa sai bằng bút toán điều chỉnh.
