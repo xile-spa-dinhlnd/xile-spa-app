@@ -27,11 +27,11 @@ Excel) để Sprint 3 nhập được giao dịch. Mỗi card gồm cả backend
 | S2-07 | Combo backend                                | 5    | BE      | Đình      | Product Backlog | FR-CMB-01 đến 05. Giá combo, dịch vụ thành phần và số lượng; tiền tour mặc định của combo (OQ-06, mặc định 0); backend tính tổng giá lẻ và mức tiết kiệm (giao diện chỉ hiển thị); sửa không ảnh hưởng giao dịch đã ghi; ngừng bán, bán lại; ghi audit; Postman             |
 | S2-08 | Combo giao diện                              | 3    | FE      | Đình      | Product Backlog | FR-CMB-01 đến 05. Danh sách, form chọn dịch vụ thành phần, hiển thị tổng giá lẻ, giá combo, mức tiết kiệm; dùng `MoneyInput`                                                                                          |
 | S2-09 | Nhập bảng giá từ Excel                       | 3    | BE, FE  | Đình      | Product Backlog | FR-IMP-01. Đọc sheet `LIST K XOÁ`, xem trước rồi mới lưu, báo lỗi theo dòng; thêm Apache POI, ghi ADR-0001. **Làm nếu dư thời gian**                                                                                  |
-| S2-10 | Chuyển style inline sang CSS Modules        | 3    | FE      | Huy       | Product Backlog | Nợ kỹ thuật (Đình chốt 22/10/2026, `frontend/AGENTS.md` mục CSS). Chuyển 112 chỗ `style={{}}` trong 14 file (`AppLayout`, các trang và form của `auth`, `catalog`, `staff`, `dashboard`, `MoneyInput`) sang `<Component>.module.css` cạnh component; màu, khoảng cách dùng biến trong `src/styles/tokens.css`. Giao diện không đổi (chụp trước/sau cỡ máy tính và điện thoại); `npm test` xanh nguyên. Chỉ giữ `style` cho giá trị tính lúc chạy |
+| S2-10 | Chuyển style inline sang CSS Modules        | 3    | FE      | Đình      | Product Backlog | Nợ kỹ thuật (Đình chốt 22/10/2026, `frontend/AGENTS.md` mục CSS). Chuyển 112 chỗ `style={{}}` trong 14 file (`AppLayout`, các trang và form của `auth`, `catalog`, `staff`, `dashboard`, `MoneyInput`) sang `<Component>.module.css` cạnh component; màu, khoảng cách dùng biến trong `src/styles/tokens.css`. Giao diện không đổi (chụp trước/sau cỡ máy tính và điện thoại); `npm test` xanh nguyên. Chỉ giữ `style` cho giá trị tính lúc chạy |
 
-**Tổng điểm:** khoảng 33 (Huy 17, Đình 16), quá năng lực 28. S2-04 và S2-09 là "làm nếu dư thời gian"; nếu
-S1-06 bị dời sang Sprint 2 thì bỏ hai card này trước. S2-10 thêm ngày 22/10/2026 cho Huy vì các card của Huy đã xong
-và phần lớn style inline nằm ở trang `auth` do Huy làm; chưa kịp thì dời sang đầu Sprint 3.
+**Tổng điểm:** khoảng 33 (Huy 14, Đình 19), quá năng lực 28. S2-04 và S2-09 là "làm nếu dư thời gian"; nếu
+S1-06 bị dời sang Sprint 2 thì bỏ hai card này trước. S2-10 thêm ngày 22/10/2026, Đình tự nhận; chưa kịp thì dời
+sang đầu Sprint 3.
 
 **Phụ thuộc:** S2-08 cần S2-07. S2-09 cần S2-06 (nhóm dịch vụ) và module catalog (S1-05).
 
