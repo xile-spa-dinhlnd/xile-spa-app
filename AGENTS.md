@@ -85,7 +85,8 @@ Database dev: `docker compose up -d` ở gốc repo. Windows dùng `gradlew.bat`
 9. **Không tự ý quyết định nghiệp vụ.** Thiếu thông tin thì tra `docs/srs/07-open-questions.md`; nếu vẫn
    chưa có câu trả lời thì dừng và hỏi, ghi giả định vào PR thay vì đoán.
 10. **Một card một PR, PR nhỏ.** Không sửa file nằm ngoài phạm vi card (nhất là SRS, ERD, migration cũ)
-    mà không nói trước.
+    mà không nói trước. Card dự kiến quá khoảng 400 dòng thì kế hoạch phải có mục "Chia PR" (CONTRIBUTING.md
+    mục 2); việc không thuộc card đi PR riêng.
 11. **Giữ các file AGENTS luôn đúng với code.** Khi đổi kiến trúc, cấu trúc thư mục, quy ước đặt tên, thư viện
     hay cách làm chung thì cập nhật `AGENTS.md`, `backend/AGENTS.md` hoặc `frontend/AGENTS.md` **trong cùng
     PR** (kèm ADR nếu là quyết định công nghệ), để cả nhóm và AI theo kịp.

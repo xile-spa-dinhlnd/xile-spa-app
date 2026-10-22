@@ -11,7 +11,7 @@ Các dòng hướng dẫn dạng chú thích như thế này không hiện ra kh
 
 ## Liên kết
 
-- Thẻ: <!-- S2-01 (link Trello). Gom nhiều thẻ thì liệt kê đủ. -->
+- Thẻ: <!-- Một thẻ, ví dụ S2-01 (link Trello). Card chia nhiều PR thì ghi "PR 1/2". Việc quy trình không có thẻ thì ghi "Không". -->
 - Yêu cầu: <!-- FR-SVC-01, BR-19, OQ-06, ADR-0003 ... -->
 
 ## Loại thay đổi
@@ -24,7 +24,7 @@ Các dòng hướng dẫn dạng chú thích như thế này không hiện ra kh
 
 ## Thay đổi chính
 
-<!-- Gạch đầu dòng, nhóm theo backend / frontend / DB / tài liệu. PR gom nhiều thẻ thì chia theo thẻ. -->
+<!-- Gạch đầu dòng, nhóm theo backend / frontend / DB / tài liệu. -->
 
 -
 
@@ -54,7 +54,7 @@ Các dòng hướng dẫn dạng chú thích như thế này không hiện ra kh
 
 ## Checklist
 
-- [ ] Đã tự đọc lại toàn bộ diff (kể cả phần AI viết); PR nhỏ, khoảng dưới 400 dòng hoặc đã giải thích
+- [ ] Đã tự đọc lại toàn bộ diff (kể cả phần AI viết); PR thuộc một thẻ, khoảng dưới 400 dòng hoặc đã giải thích
 - [ ] Build và test qua ở máy: `./gradlew spotlessApply test` (bật Docker) và `npm run format:check && npm run lint && npm run typecheck && npm test`; CI xanh nếu có
 - [ ] Có test cho logic nghiệp vụ mới; không `@Disabled`, không `skip`, không nới assert
 - [ ] Quy tắc nghiệp vụ (AGENTS.md mục 4): tiền là số nguyên đồng, không sửa ngày đã chốt, ghi `audit_log` cùng transaction, không xóa cứng, thời gian qua `Clock`

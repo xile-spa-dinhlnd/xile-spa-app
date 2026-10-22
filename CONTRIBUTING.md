@@ -67,10 +67,16 @@ Quy tắc:
   | Hạ tầng, cấu hình | `chore/<mã-card>-<mô-tả>`   | `chore/S0-02-gitignore`       |
   | Phát hành         | `release/v<phiên-bản>`      | `release/v0.1.0`              |
   | Sửa gấp bản đã phát hành | `hotfix/v<phiên-bản>-<mô-tả>` | `hotfix/v0.1.1-closing-timezone` |
+  | Quy trình, không có card | `docs/<mô-tả>`, `chore/<mô-tả>` | `docs/quy-trinh-agent` |
 
 - Mô tả viết thường, không dấu, nối bằng `-`, tối đa khoảng 5 từ.
-- Nhánh card sống **ngắn** (lý tưởng 1 đến 3 ngày). Card lớn hơn thì chia nhiều PR nhỏ trên nhiều nhánh
-  (ví dụ `feature/S1-01-login`, `feature/S1-01-refresh`, `feature/S1-01-logout`).
+- Nhánh card sống **ngắn** (lý tưởng 1 đến 3 ngày). Card lớn hơn khoảng 400 dòng thì chia nhiều PR nhỏ trên nhiều
+  nhánh, theo mục "Chia PR" trong kế hoạch của card:
+  - Card có cả backend và frontend: PR 1 là migration, backend, test, Postman (`feature/S2-07-combo-api`); PR 2
+    là frontend (`feature/S2-07-combo-ui`), tạo nhánh từ `develop` sau khi PR 1 đã merge.
+  - Card backend lớn: chia theo nhóm endpoint (`feature/S1-01-login`, `feature/S1-01-refresh`).
+  - Card chuyển sang "Xong" trong backlog ở PR cuối cùng của card.
+- Việc không thuộc card (sửa quy trình, AGENTS, hook, tài liệu chung) đi PR riêng, **không gộp vào PR của card**.
 - Bắt đầu một card:
 
   ```bash
@@ -179,8 +185,9 @@ cd frontend && npm run lint && npm run typecheck && npm test
   trên `develop`: `feat(catalog): quản lý dịch vụ [S1-05]`.
 - **Nội dung** theo `.github/pull_request_template.md`: card Trello, mã FR/BR, đã làm gì, cách thử,
   giả định còn chưa chắc, ảnh chụp màn hình (nếu có giao diện, chụp cả cỡ điện thoại).
-- **Nhỏ:** cố gắng dưới khoảng 400 dòng thay đổi (không tính file sinh tự động, lock file). Lớn hơn thì
-  chia nhỏ.
+- **Nhỏ, một việc:** một PR thuộc đúng một card (hoặc một việc quy trình không có card), dưới khoảng 400 dòng
+  thay đổi, không tính file sinh tự động, lock file, Postman collection. Lớn hơn thì chia theo mục 2; không gom
+  nhiều card vào một PR. Ngoại lệ phải ghi lý do trong "Ghi chú cho người review".
 - **Tự review trước:** đọc lại toàn bộ diff trên GitHub trước khi gán người review.
 - **Người duyệt: Đình là người duyệt duy nhất** (code owner, file `.github/CODEOWNERS`).
   - PR của Huy: Đình review và approve, rồi Huy bấm merge. Huy có thể bình luận vào PR của Đình nhưng
