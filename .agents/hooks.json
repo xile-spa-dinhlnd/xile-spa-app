@@ -1,0 +1,25 @@
+{
+  "xile-guard": {
+    "PreToolUse": [
+      {
+        "matcher": "run_command|write_to_file|replace_file_content|multi_replace_file_content|view_file",
+        "hooks": [
+          { "type": "command", "command": "node tools/agent-hooks/guard.mjs", "timeout": 10 }
+        ]
+      }
+    ]
+  },
+  "xile-format": {
+    "PostToolUse": [
+      {
+        "matcher": "write_to_file|replace_file_content|multi_replace_file_content",
+        "hooks": [
+          { "type": "command", "command": "node tools/agent-hooks/format.mjs", "timeout": 20 }
+        ]
+      }
+    ]
+  },
+  "xile-stop": {
+    "Stop": [{ "type": "command", "command": "node tools/agent-hooks/stop.mjs", "timeout": 180 }]
+  }
+}

@@ -228,5 +228,8 @@ có ghi log). Trigger là rào chắn cuối: service vẫn nên tự kiểm tra
   thật và MockMvc. Cần **Docker Desktop đang chạy**.
 - Chạy (trong `backend/`, cần JDK 21): `./gradlew spotlessApply test`. Chạy ứng dụng: `./gradlew bootRun`
   (profile `dev`, cần Postgres ở máy, card S0-05).
+- Chạy riêng một lớp hoặc một method test: `./gradlew test --tests 'com.xilespa.module.staff.service.StaffServiceTest'`
+  (thêm `.tenMethod` cho một method; dùng `*` được, ví dụ `'*StaffControllerIT'`). Sửa lỗi thì chạy riêng test đỏ
+  trước, xanh rồi mới chạy cả bộ.
 - Format: Spotless (google-java-format kiểu AOSP, thụt 4 khoảng). Chạy `spotlessApply` trước khi commit.
 - Spring Boot 4 dùng Jackson 3: import `tools.jackson.databind...`, không phải `com.fasterxml.jackson.databind...`.
