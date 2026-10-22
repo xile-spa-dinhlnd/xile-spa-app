@@ -16,8 +16,8 @@ Chỉ ghi mốc và phạm vi. Card chi tiết ở [backlog](backlog/sprint-0-1.
 | Phiên bản | Sprint | Thời gian (dự kiến) | Mục tiêu | Trạng thái |
 | --------- | ------ | ------------------- | -------- | ---------- |
 | v0.1.0 | Sprint 0 | 01–06/10/2026 | Nền móng: khung backend, frontend, database, quy trình | Đã phát hành |
-| v0.2.0 | Sprint 1 | 06–19/10/2026 | Đăng nhập, bảng giá dịch vụ, nhật ký thay đổi | Đang làm |
-| v0.3.0 | Sprint 2 | 20/10–02/11 | Hoàn thiện tài khoản, nhân viên, nhóm dịch vụ, combo, nhập bảng giá | Dự kiến |
+| v0.2.0 | Sprint 1 | 06–11/10/2026 | Đăng nhập, bảng giá dịch vụ, nhật ký thay đổi | Đã phát hành |
+| v0.3.0 | Sprint 2 | 20/10–02/11 | Hoàn thiện tài khoản, nhân viên, nhóm dịch vụ, combo, nhập bảng giá | Đang làm |
 | v0.4.0 | Sprint 3 | 03–16/11 | Khách hàng cơ bản, nhập giao dịch (phần 1) | Dự kiến |
 | v0.5.0 | Sprint 4 | 17–30/11 | Giao dịch (phần 2), chi phí, chốt sổ và bút toán | Dự kiến |
 | v0.6.0 | Sprint 5 | 01–14/12 | Dashboard, hoàn thiện cho dùng thử | Dự kiến |
@@ -33,7 +33,7 @@ Chỉ ghi mốc và phạm vi. Card chi tiết ở [backlog](backlog/sprint-0-1.
 Card S0-01 đến S0-08. Khung Spring Boot 4 và React + Ant Design, PostgreSQL bằng docker compose, migration V1 và V2,
 kiểm thử lược đồ và ánh xạ lỗi XL với Postgres thật, Git Flow, README chạy từ máy trống.
 
-### v0.2.0 — Sprint 1: Đăng nhập và bảng giá
+### v0.2.0 — Sprint 1: Đăng nhập và bảng giá (đã phát hành 11/10/2026)
 
 - **Phạm vi:** FR-AUTH-01, 02, 07 · FR-SYS-01 · FR-SVC-01 đến 04 (card S1-01 đến S1-06).
 - **Xong khi:** demo trên máy dev: đăng nhập, tạo dịch vụ, đổi giá, ngừng bán, xem nhật ký thay đổi.
@@ -108,3 +108,4 @@ OQ-15, OQ-17 (lương), OQ-18 đến OQ-20 (AI). Phần AI cần VPS mạnh hơn
 | ---- | -------- |
 | 06/10/2026 | Bản đầu tiên, sau khi phát hành v0.1.0 |
 | 11/10/2026 | Duyệt kế hoạch Sprint 2 và 3 (`backlog/sprint-2-3.md`); chốt OQ-02, 06, 07, 08, 10; thêm card S3-06 |
+| 15/10/2026 | Đánh dấu v0.2.0 đã phát hành (11/10). Chủ tiệm chỉ xem demo tổng thể khi có MVP (giai đoạn dùng thử); sprint review là nội bộ Đình và Huy. D-01 (CI) giữ ở giai đoạn DevOps |
