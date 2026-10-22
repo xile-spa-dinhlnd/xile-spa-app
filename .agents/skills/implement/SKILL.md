@@ -8,17 +8,17 @@ description: Thực hiện một kế hoạch đã được duyệt cho card c�
 Chỉ chạy khi đã có kế hoạch được duyệt trong cuộc trò chuyện. Chưa có thì chạy `/plan-task <tên task>` trước.
 Lệch khỏi kế hoạch (thêm bảng, đổi API, đụng module của người kia) thì dừng và hỏi.
 
-## Trước khi sửa file: kiểm tra nhánh
+## Kiểm tra nhánh
 
-Chạy `git branch --show-current`. Nếu là `develop` hoặc `main`: **không sửa file nào**, dừng và đưa người dùng lệnh
-tạo nhánh theo mã card, chọn tiền tố theo loại việc ở CONTRIBUTING.md mục 2:
+Chạy `git branch --show-current`. Được sửa file khi đang ở `develop` (AGENTS.md mục 5 bước 1), nhưng nếu là
+`develop` hoặc `main` thì ghi lên đầu báo cáo đầu tiên và nhắc lại ở bước cuối: người dùng phải tạo nhánh theo mã
+card **trước khi commit**, tiền tố theo loại việc ở CONTRIBUTING.md mục 2:
 
 ```bash
 git switch -c feature/<mã-card>-<mô-tả>   # fix/, docs/, chore/ tùy loại
 ```
 
-Thay đổi chưa commit sẽ đi theo sang nhánh mới. Chờ người dùng báo đã tạo, chạy lại lệnh kiểm tra rồi mới làm tiếp.
-Hook cũng chặn sửa file trên hai nhánh này (AGENTS.md mục 5 bước 1).
+Thay đổi chưa commit sẽ đi theo sang nhánh mới.
 
 ## Phạm vi của lần chạy này
 
@@ -55,7 +55,7 @@ Mỗi bước là một commit gợi ý (code và test của nó đi chung một
    được sang bước 8.
 8. **Backlog:** chuyển card sang "Xong" khi đủ Definition of Done (chỉ ở PR cuối của card).
 9. **Dừng.** Không tự chạy `/pre-pr-check`. Báo cho người dùng: bảng đối chiếu, các câu commit gợi ý, và bước tiếp
-   theo là "đọc lại diff, commit, rồi gõ `/pre-pr-check`".
+   theo là "đọc lại diff, commit, rồi gõ `/pre-pr-check`" (còn ở `develop` thì nhắc tạo nhánh trước khi commit).
 
 ## Bảng đối chiếu hành vi và test (bước 7)
 

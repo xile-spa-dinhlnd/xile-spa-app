@@ -11,8 +11,8 @@ ghi nhãn.
 
 ## Giai đoạn 1: điều tra (không sửa code)
 
-0. **Kiểm tra nhánh** (`git branch --show-current`). Đang ở `develop` hoặc `main` thì dừng, đưa người dùng lệnh
-   `git switch -c fix/<mã-card>-<mô-tả>` (CONTRIBUTING.md mục 2) và chờ họ tạo xong rồi mới viết test đỏ.
+0. **Kiểm tra nhánh** (`git branch --show-current`). Đang ở `develop` hoặc `main` thì ghi lên đầu báo cáo lệnh
+   `git switch -c fix/<mã-card>-<mô-tả>` (CONTRIBUTING.md mục 2) và nhắc người dùng chạy trước khi commit.
 1. **Mô tả lỗi** bằng ba dòng: các bước làm, kết quả mong đợi (trích FR/BR nếu có), kết quả thực tế. Thiếu bước
    tái hiện thì hỏi người dùng, đừng tự bịa.
 2. **Tái hiện bằng test đỏ.** Viết test nhỏ nhất cho thấy lỗi:

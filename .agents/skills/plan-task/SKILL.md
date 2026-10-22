@@ -15,7 +15,7 @@ Mục tiêu: người dùng đọc kế hoạch trong 5 phút là biết bạn s
    nhánh (`git branch --show-current`, ví dụ `feature/S2-06-service-group`) hoặc câu hỏi của người dùng.
    Đọc dòng của card trong `docs/backlog/sprint-*.md`. Nếu nhánh hiện tại là `develop` hoặc `main`: ghi ở đầu kế
    hoạch lệnh tạo nhánh cho card (`git switch -c feature/<mã-card>-<mô-tả>`, mẫu ở CONTRIBUTING.md mục 2) và nhắc
-   người dùng chạy trước khi duyệt; `/implement` sẽ không bắt đầu khi chưa ở nhánh card.
+   người dùng chạy trước khi commit (sửa file trên `develop` được, commit thì không).
 2. **Đọc yêu cầu.** Mở đúng mục FR trong `docs/srs/03-functional-requirements.md`, các BR liên quan trong
    `docs/srs/04-business-rules.md`, OQ trong `docs/srs/07-open-questions.md`. Đụng tiền hay chốt sổ thì đọc thêm
    theo bảng ở `AGENTS.md` mục 2.

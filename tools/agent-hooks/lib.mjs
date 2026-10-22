@@ -108,11 +108,6 @@ export function currentBranch(root, git = runGit) {
   return git(root, ['symbolic-ref', '--short', '-q', 'HEAD'])?.trim() || null
 }
 
-// File git bỏ qua (.gitignore, .git/info/exclude) không vào commit nên sửa trên nhánh nào cũng được.
-export function isIgnoredByGit(root, repoPath, git = runGit) {
-  return git(root, ['check-ignore', '-q', repoPath]) !== null
-}
-
 export function runGit(root, args) {
   try {
     return execFileSync('git', args, {
