@@ -82,7 +82,8 @@ sequenceDiagram
 
 Khi refresh thất bại, `notifySessionExpired` hiện **chưa có component nào đăng ký** (`onSessionExpired`), nên trang
 đang mở chỉ hiện lỗi 401 của request đó. Người dùng được đưa về `/login` khi `ProtectedRoute` thấy query
-`authKeys.me` lỗi, tức là khi query này chạy lại (hết `staleTime` 5 phút, hoặc tải lại trang).
+`authKeys.me` lỗi, tức là khi query này chạy lại (hết `staleTime` 5 phút, hoặc tải lại trang). Sửa ở thẻ S3-07
+(`docs/backlog/sprint-2-3.md`); sửa xong thì cập nhật đoạn này theo luồng mới.
 
 Kiểm tra trong `AuthService.refresh`, theo thứ tự:
 
