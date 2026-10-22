@@ -1,8 +1,8 @@
 # AGENTS.md — quy tắc chung cho AI làm việc trong repo này
 
 File này là **nguồn quy tắc duy nhất** cho mọi công cụ AI (Claude Code, Antigravity, hoặc công cụ khác).
-Antigravity tự đọc file này (và `AGENTS.md` trong thư mục con); `CLAUDE.md` chỉ trỏ về đây. Phần riêng của từng
-agent nằm ở mục 8. Nếu quy tắc ở nơi khác lệch với file này thì file này đúng.
+Antigravity tự đọc file này; `CLAUDE.md` chỉ trỏ về đây. Quy tắc riêng của `backend/`, `frontend/` nằm ở
+`AGENTS.md` trong thư mục đó và được nạp khi agent đụng file ở đó (mục 8). Phần riêng của từng agent nằm ở mục 8. Nếu quy tắc ở nơi khác lệch với file này thì file này đúng.
 
 Giữ file ngắn. Quy tắc nghiệp vụ nằm ở SRS, cấu trúc dữ liệu nằm ở migration và `docs/design/erd.md`;
 ở đây **chỉ trỏ đường, không chép lại**.
@@ -140,6 +140,11 @@ Quy tắc sinh ra từ lỗi thật mới đáng giữ.
 - Hook dùng chung `tools/agent-hooks/` chặn: lệnh git làm đổi nhánh, commit, push; xóa hàng loạt; đọc, sửa file bí
   mật; sửa migration đã có trên `develop`; sửa file sinh tự động; tự sửa cấu hình hook. Bị chặn thì dừng và báo
   người dùng, không tìm cách lách.
+- **Nạp quy tắc của thư mục con:** nội dung chỉ viết ở `backend/AGENTS.md`, `frontend/AGENTS.md`. Antigravity nạp
+  qua rule glob `.agents/rules/backend.md`, `frontend.md`; Claude Code nạp qua `backend/CLAUDE.md`,
+  `frontend/CLAUDE.md` (một dòng `@AGENTS.md`). Thêm thư mục có `AGENTS.md` riêng thì thêm cả hai lớp trỏ này.
+- **Review PR** (người hay AI) theo `CONTRIBUTING.md` mục 4 "Review": mức bình luận, thứ tự đọc, danh sách soát.
+  Nhận xét do AI soạn chỉ là bản nháp, người review đọc và quyết định trước khi đăng.
 - Cách dùng từng skill và luồng làm việc đầy đủ: `docs/guides/ai-agents.md`.
 
 ## 9. Code sạch (áp dụng cho cả backend và frontend)
