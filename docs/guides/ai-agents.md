@@ -18,8 +18,8 @@ Phần riêng của Antigravity ở `.agents/`; phần riêng của Claude Code 
 
 ### Antigravity (Đình và Huy, mỗi máy làm một lần)
 
-1. Mở **thư mục gốc repo** làm workspace (không mở riêng `backend/` hay `frontend/`), vì hook chạy lệnh
-   `node tools/agent-hooks/...` tính từ gốc.
+1. Mở **thư mục gốc repo** làm workspace (không mở riêng `backend/` hay `frontend/`). Antigravity chạy lệnh hook
+   từ thư mục `.agents/` (nơi có `hooks.json`), nên lệnh trong đó viết `node ../tools/agent-hooks/...`.
 2. Cần Node 22+ (đã có cho frontend) và `npm ci` trong `frontend/` (hook format dùng Prettier của frontend).
 3. Rules, skills, hooks tự nạp từ `.agents/`. Kiểm tra trong panel **Customizations**:
    - Rules: `writer-role` (luôn bật), `migrations` (bật khi đụng thư mục migration).

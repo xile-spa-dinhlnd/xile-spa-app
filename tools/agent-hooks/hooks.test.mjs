@@ -247,3 +247,20 @@ describe('chạy như hook thật', () => {
     fs.rmSync(repo, { recursive: true, force: true })
   })
 })
+
+describe('.agents/hooks.json', () => {
+  // Antigravity chạy lệnh hook với thư mục làm việc là .agents/ (đã kiểm tra trên máy thật 22/10/2026).
+  test('mọi lệnh node trỏ tới file có thật khi chạy từ .agents/', () => {
+    const agentsDir = path.join(here, '..', '..', '.agents')
+    const config = JSON.parse(fs.readFileSync(path.join(agentsDir, 'hooks.json'), 'utf8'))
+    const commands = JSON.stringify(config).match(/node [^"]+?\.mjs/g) ?? []
+    assert.equal(commands.length, 3)
+    for (const command of commands) {
+      const script = command.replace(/^node /, '')
+      assert.ok(
+        fs.existsSync(path.resolve(agentsDir, script)),
+        `${script} không tồn tại khi tính từ .agents/`,
+      )
+    }
+  })
+})
