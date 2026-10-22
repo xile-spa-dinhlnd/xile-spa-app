@@ -15,6 +15,8 @@ export const theme: ThemeConfig = {
       itemHoverBg: 'rgba(47, 125, 109, 0.10)',
       itemActiveBg: 'rgba(47, 125, 109, 0.18)',
       itemHeight: 44,
+      // Bỏ đường kẻ bên phải menu; class CSS không ghi đè được vì selector của Ant Design mạnh hơn (0,3,0).
+      activeBarBorderWidth: 0,
     },
   },
 }

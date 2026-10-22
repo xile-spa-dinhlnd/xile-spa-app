@@ -25,6 +25,7 @@ import { formatMoney } from '@/shared/lib/money'
 import { useServiceGroups, useServices, useSetServiceActive } from '../api'
 import { ServiceFormDrawer } from '../components/ServiceFormDrawer'
 import type { ServiceItem } from '../types'
+import styles from './ServiceListPage.module.css'
 
 const PAGE_SIZE = 20
 type StatusFilter = 'all' | 'active' | 'inactive'
@@ -145,8 +146,8 @@ export function ServiceListPage() {
   const data = services.data
   return (
     <>
-      <Flex justify="space-between" align="center" wrap gap={12} style={{ marginBottom: 16 }}>
-        <Typography.Title level={3} style={{ margin: 0 }}>
+      <Flex justify="space-between" align="center" wrap gap={12} className={styles.header}>
+        <Typography.Title level={3} className={styles.title}>
           Dịch vụ
         </Typography.Title>
         <Button type="primary" size="large" icon={<PlusOutlined />} onClick={openCreate}>
@@ -154,7 +155,7 @@ export function ServiceListPage() {
         </Button>
       </Flex>
 
-      <Flex wrap gap={8} style={{ marginBottom: 16 }}>
+      <Flex wrap gap={8} className={styles.filterBar}>
         <Input
           allowClear
           size="large"
@@ -166,7 +167,7 @@ export function ServiceListPage() {
             setSearch(e.target.value)
             setPage(0)
           }}
-          style={{ flex: '1 1 220px' }}
+          className={styles.searchInput}
         />
         <Select
           allowClear
@@ -179,7 +180,7 @@ export function ServiceListPage() {
             setPage(0)
           }}
           options={(groups.data ?? []).map((g) => ({ value: g.id, label: g.name }))}
-          style={{ flex: '1 1 180px' }}
+          className={styles.groupSelect}
         />
         <Select
           size="large"
@@ -194,7 +195,7 @@ export function ServiceListPage() {
             { value: 'inactive', label: 'Ngừng bán' },
             { value: 'all', label: 'Tất cả' },
           ]}
-          style={{ flex: '1 1 140px' }}
+          className={styles.statusSelect}
         />
         {hasFilters && (
           <Button size="large" icon={<ClearOutlined />} onClick={clearFilters}>
@@ -207,7 +208,7 @@ export function ServiceListPage() {
         <Alert
           type="error"
           showIcon
-          style={{ marginBottom: 16 }}
+          className={styles.errorAlert}
           title="Không tải được danh sách dịch vụ"
           description={services.error.message}
           action={
@@ -240,16 +241,16 @@ export function ServiceListPage() {
             dataSource={data?.content ?? []}
             locale={{ emptyText }}
             renderItem={(s) => (
-              <Card key={s.id} size="small" style={{ marginBottom: 12 }}>
+              <Card key={s.id} size="small" className={styles.serviceCard}>
                 <Flex justify="space-between" align="start" gap={8}>
                   <Typography.Text strong>{s.name}</Typography.Text>
                   {statusTag(s.active)}
                 </Flex>
-                <Typography.Paragraph type="secondary" style={{ margin: '4px 0 8px' }}>
+                <Typography.Paragraph type="secondary" className={styles.cardSubtext}>
                   {s.groupName}
                   {s.durationMinutes ? ` · ${s.durationMinutes} phút` : ''}
                 </Typography.Paragraph>
-                <Typography.Paragraph style={{ marginBottom: 12 }}>
+                <Typography.Paragraph className={styles.cardPrice}>
                   Giá: <b>{formatMoney(s.listPrice)}</b> · Tour: {formatMoney(s.tourFee)}
                 </Typography.Paragraph>
                 {actions(s)}

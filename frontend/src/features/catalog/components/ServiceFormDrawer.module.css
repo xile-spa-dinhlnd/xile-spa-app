@@ -1,0 +1,8 @@
+.footerActions {
+  width: 100%;
+  justify-content: flex-end;
+}
+
+.fullWidth {
+  width: 100%;
+}

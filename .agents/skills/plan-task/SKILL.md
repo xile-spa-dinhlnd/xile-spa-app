@@ -13,13 +13,16 @@ Mục tiêu: người dùng đọc kế hoạch trong 5 phút là biết bạn s
 1. **Xác định task/card.** Lấy mã card hoặc tên task từ tham số đi kèm lệnh `/plan-task <tên task>` (ví dụ
    `/plan-task S2-06` hoặc `/plan-task "quản lý nhóm dịch vụ"`). Nếu người dùng không nhập tham số, lấy từ tên
    nhánh (`git branch --show-current`, ví dụ `feature/S2-06-service-group`) hoặc câu hỏi của người dùng.
-   Đọc dòng của card trong `docs/backlog/sprint-*.md`.
+   Đọc dòng của card trong `docs/backlog/sprint-*.md`. Nếu nhánh hiện tại là `develop` hoặc `main`: ghi ở đầu kế
+   hoạch lệnh tạo nhánh cho card (`git switch -c feature/<mã-card>-<mô-tả>`, mẫu ở CONTRIBUTING.md mục 2) và nhắc
+   người dùng chạy trước khi duyệt; `/implement` sẽ không bắt đầu khi chưa ở nhánh card.
 2. **Đọc yêu cầu.** Mở đúng mục FR trong `docs/srs/03-functional-requirements.md`, các BR liên quan trong
    `docs/srs/04-business-rules.md`, OQ trong `docs/srs/07-open-questions.md`. Đụng tiền hay chốt sổ thì đọc thêm
    theo bảng ở `AGENTS.md` mục 2.
 3. **Đọc code hiện có.** Tìm module gần giống nhất để làm theo (ví dụ `module/staff` cho danh mục đơn giản,
    `module/catalog` cho danh mục có giá). Đọc migration hiện có nếu cần bảng. Dùng `git log` để xem các card trước
-   đã làm thế nào.
+   đã làm thế nào. Module đã có `docs/design/flows/<module>.md` thì đọc trước: sơ đồ trong kế hoạch vẽ phần thay
+   đổi trên luồng đang có, không vẽ lại từ đầu.
 4. **Viết kế hoạch** theo mẫu bên dưới, dưới dạng Implementation Plan của Antigravity.
 5. **Chuyển card sang "Đang làm"** trong file backlog là việc của bước `/implement`; ở đây chỉ ghi vào kế hoạch.
 6. **Dừng lại**, hỏi: "Bạn duyệt kế hoạch này chứ? Có gì cần đổi?" Chỉ khi người dùng duyệt mới chuyển sang
@@ -45,13 +48,14 @@ Yêu cầu: FR-..., BR-..., OQ-... (đã chốt / còn mở)
 
 ## 4. Thay đổi
 
-| Phần     | Thay đổi                                                        |
-| -------- | --------------------------------------------------------------- |
-| DB       | Migration V{n}__... : bảng, cột, index, trigger (hoặc "Không")  |
-| API      | `POST /api/...` body, mã trạng thái, mã lỗi mới trong ErrorCode |
-| Backend  | file sẽ thêm/sửa theo khuôn module trong backend/AGENTS.md      |
-| Frontend | feature, page, component, schema Zod, query key                 |
-| Tài liệu | Postman, backlog, ERD, SRS, AGENTS (nếu đổi quy ước)            |
+| Phần     | Thay đổi                                                                                               |
+| -------- | ------------------------------------------------------------------------------------------------------ |
+| DB       | Migration V{n}__... : bảng, cột, index, trigger (hoặc "Không")                                         |
+| API      | `POST /api/...` body, mã trạng thái, mã lỗi mới trong ErrorCode                                        |
+| Backend  | file sẽ thêm/sửa theo khuôn module trong backend/AGENTS.md                                             |
+| Frontend | feature, page, component, schema Zod, query key                                                        |
+| Tài liệu | Postman, backlog, ERD, SRS, AGENTS (nếu đổi quy ước)                                                   |
+| Luồng    | Tạo / sửa mục nào trong `docs/design/flows/<module>.md`, hoặc "Không" (CRUD đơn giản, xem README ở đó) |
 
 ## 5. Quy tắc nghiệp vụ phải giữ
 

@@ -1,0 +1,42 @@
+.container {
+  min-height: 100vh;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--xl-gradient-auth);
+  padding: var(--xl-space-lg) var(--xl-space-md);
+}
+
+/* Lồng dưới .container để thắng `.ant-card:not(.ant-card-bordered)` (0,2,0), vốn thay bóng đổ. */
+.container .card {
+  width: 100%;
+  max-width: 420px;
+  border-radius: var(--xl-radius-xl);
+  box-shadow: var(--xl-shadow-card);
+  padding: var(--xl-space-md) var(--xl-space-sm);
+}
+
+.brandHeader {
+  text-align: center;
+  margin-bottom: var(--xl-space-lg);
+}
+
+.logo {
+  max-height: 90px;
+  max-width: 80%;
+  object-fit: contain;
+  margin-bottom: var(--xl-space-sm);
+  display: inline-block;
+}
+
+/* Lồng dưới .brandHeader để thắng `h4.ant-typography` (0,1,1), vốn đặt margin-bottom và màu tiêu đề. */
+.brandHeader .brandTitle {
+  margin: 0;
+  color: var(--xl-color-heading);
+  font-weight: 600;
+}
+
+.brandSubtitle {
+  font-size: 13px;
+}

@@ -17,6 +17,7 @@
 
   /* Nền và viền */
   --xl-color-bg-page: #f8faf9;
+  --xl-color-bg-container: #ffffff;
   --xl-color-bg-subtle: #fafafa;
   --xl-color-border: #f0f0f0;
 
@@ -32,4 +33,8 @@
   --xl-radius-sm: 4px;
   --xl-radius-md: 8px;
   --xl-radius-lg: 12px;
+  --xl-radius-xl: 16px;
+
+  /* Đổ bóng */
+  --xl-shadow-card: 0 8px 30px rgba(0, 0, 0, 0.06);
 }

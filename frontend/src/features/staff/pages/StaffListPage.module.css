@@ -1,0 +1,37 @@
+.header {
+  margin-bottom: var(--xl-space-lg);
+}
+
+/* Lồng dưới .header để thắng `h3.ant-typography` (0,1,1). */
+.header .title {
+  margin: 0;
+}
+
+.filterBar {
+  margin-bottom: var(--xl-space-lg);
+}
+
+.searchInput {
+  flex: 1 1 220px;
+}
+
+.roleSelect {
+  flex: 1 1 160px;
+}
+
+.statusSelect {
+  flex: 1 1 140px;
+}
+
+.errorAlert {
+  margin-bottom: var(--xl-space-lg);
+}
+
+/* Lồng dưới .staffCard để thắng `div.ant-typography` (0,1,1), vốn đặt margin-bottom 1em. */
+.staffCard .cardRole {
+  margin: var(--xl-space-xs) 0 var(--xl-space-md);
+}
+
+.pagination {
+  margin-top: var(--xl-space-md);
+}

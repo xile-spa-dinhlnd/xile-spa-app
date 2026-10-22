@@ -8,6 +8,18 @@ description: Thực hiện một kế hoạch đã được duyệt cho card c�
 Chỉ chạy khi đã có kế hoạch được duyệt trong cuộc trò chuyện. Chưa có thì chạy `/plan-task <tên task>` trước.
 Lệch khỏi kế hoạch (thêm bảng, đổi API, đụng module của người kia) thì dừng và hỏi.
 
+## Trước khi sửa file: kiểm tra nhánh
+
+Chạy `git branch --show-current`. Nếu là `develop` hoặc `main`: **không sửa file nào**, dừng và đưa người dùng lệnh
+tạo nhánh theo mã card, chọn tiền tố theo loại việc ở CONTRIBUTING.md mục 2:
+
+```bash
+git switch -c feature/<mã-card>-<mô-tả>   # fix/, docs/, chore/ tùy loại
+```
+
+Thay đổi chưa commit sẽ đi theo sang nhánh mới. Chờ người dùng báo đã tạo, chạy lại lệnh kiểm tra rồi mới làm tiếp.
+Hook cũng chặn sửa file trên hai nhánh này (AGENTS.md mục 5 bước 1).
+
 ## Thứ tự làm
 
 Làm từng bước, chạy test của bước đó trước khi sang bước sau. Mỗi bước là một commit gợi ý.
@@ -27,7 +39,9 @@ Làm từng bước, chạy test của bước đó trước khi sang bước sa
    thoại, iPad, máy tính. Style bằng CSS Modules cạnh component, không `style={{}}` (`frontend/AGENTS.md` mục CSS).
 5. **Postman:** thêm hoặc sửa request trong `docs/postman/xile-spa.postman_collection.json` (body mẫu, kiểm tra mã
    trạng thái). Trường hợp lỗi chính cũng có request riêng.
-6. **Tài liệu:** SRS, ERD, README nếu hành vi đổi; `AGENTS.md` nếu đổi quy ước (AGENTS.md quy tắc 11).
+6. **Tài liệu:** SRS, ERD, README nếu hành vi đổi; `AGENTS.md` nếu đổi quy ước (AGENTS.md quy tắc 11). Kế hoạch
+   có dòng "Luồng" thì cập nhật `docs/design/flows/<module>.md` theo **code vừa viết** (không chép sơ đồ trong kế
+   hoạch nếu lúc làm đã đổi), theo khung ở `docs/design/flows/README.md`.
 7. **Backlog:** chuyển card sang "Xong" khi đủ Definition of Done.
 8. Chạy `/pre-pr-check`.
 

@@ -1,0 +1,34 @@
+.errorAlert {
+  margin-bottom: var(--xl-space-xl);
+}
+
+.inputIcon {
+  color: var(--xl-color-text-muted);
+}
+
+.input {
+  height: 44px;
+}
+
+.forgotPasswordWrapper {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: calc(-1 * var(--xl-space-sm));
+  margin-bottom: var(--xl-space-lg);
+}
+
+.forgotPasswordLink {
+  font-size: 13px;
+  color: var(--xl-color-brand-strong);
+}
+
+.submitItem {
+  margin-top: var(--xl-space-lg);
+  margin-bottom: var(--xl-space-sm);
+}
+
+.submitButton {
+  height: 46px;
+  font-size: 16px;
+  font-weight: 600;
+}

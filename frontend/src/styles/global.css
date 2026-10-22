@@ -1,6 +1,12 @@
 /* CSS toàn cục, nạp một lần ở main.tsx. Style của từng component để trong <Component>.module.css. */
 @import './tokens.css';
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 html,
 body,
 #root {

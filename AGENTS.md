@@ -25,6 +25,7 @@ Nhóm hai người: **Đình** và **Huy**, chia việc theo tính năng, Scrum 
 | Tiền, giảm giá, doanh thu, chốt sổ, bút toán điều chỉnh | `docs/srs/04-business-rules.md`, `docs/design/erd.md` (mục 5 và 6), `docs/adr/0003-closed-day-corrections-via-adjustments.md` |
 | Một API hoặc một màn hình mới                           | mục tương ứng trong `docs/srs/03-functional-requirements.md` (theo mã FR)                                                     |
 | Bảng, cột, index, migration                             | `docs/design/erd.md`, rồi `backend/src/main/resources/db/migration/`                                                          |
+| Sửa lỗi, đổi luồng xử lý của một module                 | `docs/design/flows/<module>.md` (sơ đồ luồng theo code đang chạy; quy ước ở `docs/design/flows/README.md`)                    |
 | Lựa chọn công nghệ, thư viện                            | `docs/adr/0001-tech-stack.md`                                                                                                 |
 | Google Sheets, nguồn dữ liệu gốc                        | `docs/adr/0002-source-of-truth-and-sheets-mirror.md`                                                                          |
 | Thuật ngữ, tên trường                                   | `docs/srs/06-data-dictionary.md`                                                                                              |
@@ -94,15 +95,18 @@ Database dev: `docker compose up -d` ở gốc repo. Windows dùng `gradlew.bat`
 
 ## 5. Quy trình làm một card
 
-1. Đọc card trong backlog của sprint (`docs/backlog/`) và các mã FR / BR mà card trỏ tới. **Chuyển trạng thái
-   card sang "Đang làm"** trong file backlog (và trên Trello).
+1. **Kiểm tra nhánh trước khi sửa file** (`git branch --show-current`). Đang ở `develop` hoặc `main` thì dừng, đưa
+   người dùng lệnh tạo nhánh theo mã card (`git switch -c feature/S2-06-service-group`, mẫu tên ở CONTRIBUTING.md
+   mục 2) và chờ họ tạo xong; hook cũng chặn sửa file trên hai nhánh này. Đọc card trong backlog của sprint
+   (`docs/backlog/`) và các mã FR / BR mà card trỏ tới. **Chuyển trạng thái card sang "Đang làm"** trong file
+   backlog (và trên Trello).
 2. **Nêu kế hoạch trước khi viết code**: sẽ sửa file nào, thêm bảng hay API nào, test gì. Chờ người duyệt.
    Antigravity dùng skill `/plan-task` (tính năng) hoặc `/fix-bug` (sửa lỗi, phải tái hiện bằng test đỏ trước).
 3. Viết code theo quy tắc của `backend/AGENTS.md` hoặc `frontend/AGENTS.md`.
 4. Viết test cho logic nghiệp vụ. Chạy build và test tại máy trước khi commit.
 5. Tự đọc lại diff, nêu rõ phần nào còn chưa chắc.
-6. Cập nhật tài liệu trong **cùng PR** nếu hành vi đổi (SRS, ERD, README), và các file AGENTS nếu đổi
-   kiến trúc hay quy ước (quy tắc 11).
+6. Cập nhật tài liệu trong **cùng PR** nếu hành vi đổi (SRS, ERD, README, sơ đồ luồng ở `docs/design/flows/` khi
+   luồng có rẽ nhánh nghiệp vụ được thêm hoặc đổi), và các file AGENTS nếu đổi kiến trúc hay quy ước (quy tắc 11).
 7. **Thêm hoặc sửa endpoint thì cập nhật Postman collection** `docs/postman/xile-spa.postman_collection.json`
    trong cùng PR: mỗi endpoint một request, có ví dụ body và kiểm tra mã trạng thái mong đợi.
 8. **Card xong thì chuyển trạng thái sang "Xong"** trong file backlog ngay trong PR của card đó.
@@ -128,6 +132,7 @@ Quy tắc sinh ra từ lỗi thật mới đáng giữ.
 - Quên cập nhật Postman collection và trạng thái card trong `docs/backlog/` (mục 5, bước 7 và 8).
 - Hai nhánh cùng lấy một số migration `V{n}`: báo số cho người kia trước (CONTRIBUTING.md mục 4).
 - Dùng `@Profile("!prod")` để chọn hành vi theo môi trường: thay bằng thuộc tính và `@ConditionalOnProperty` (backend/AGENTS.md mục Cấu hình).
+- Editor (Antigravity IDE, VS Code) mặc định dùng TypeScript 5.x đi kèm, chưa bật `strict` như TypeScript 6 của dự án, nên báo đỏ khác `npm run typecheck`: giữ `"strict": true` trong `frontend/tsconfig.app.json`, chọn "Use Workspace Version" trong editor, lấy `npm run typecheck` làm chuẩn.
 
 ## 8. Vai trò từng agent
 
@@ -137,9 +142,9 @@ Quy tắc sinh ra từ lỗi thật mới đáng giữ.
 | Claude Code (máy Đình)            | Đình      | Review PR của thành viên, tự soát code của Đình trước khi PR | `.claude/` chỉ ở máy Đình, không commit  |
 | Claude app (dự án trên claude.ai) | Đình      | Lập kế hoạch sprint, chia card, release, tài liệu lớn        | bộ nhớ dự án trên claude.ai              |
 
-- Hook dùng chung `tools/agent-hooks/` chặn: lệnh git làm đổi nhánh, commit, push; xóa hàng loạt; đọc, sửa file bí
-  mật; sửa migration đã có trên `develop`; sửa file sinh tự động; tự sửa cấu hình hook. Bị chặn thì dừng và báo
-  người dùng, không tìm cách lách.
+- Hook dùng chung `tools/agent-hooks/` chặn: lệnh git làm đổi nhánh, commit, push; sửa file của repo khi đang ở
+  `develop` hoặc `main`; xóa hàng loạt; đọc, sửa file bí mật; sửa migration đã có trên `develop`; sửa file sinh tự
+  động; tự sửa cấu hình hook. Bị chặn thì dừng và báo người dùng, không tìm cách lách.
 - **Nạp quy tắc của thư mục con:** nội dung chỉ viết ở `backend/AGENTS.md`, `frontend/AGENTS.md`. Antigravity nạp
   qua rule glob `.agents/rules/backend.md`, `frontend.md`; Claude Code nạp qua `backend/CLAUDE.md`,
   `frontend/CLAUDE.md` (một dòng `@AGENTS.md`). Thêm thư mục có `AGENTS.md` riêng thì thêm cả hai lớp trỏ này.

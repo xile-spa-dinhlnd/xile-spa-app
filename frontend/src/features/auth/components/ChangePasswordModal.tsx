@@ -3,6 +3,7 @@ import { Alert, App, Button, Form, Input, Modal, Space } from 'antd'
 import { useState } from 'react'
 import { ApiError, toFormFieldErrors } from '@/shared/api/errors'
 import { useChangePassword } from '../api'
+import styles from './ChangePasswordModal.module.css'
 
 interface ChangePasswordFormValues {
   oldPassword: string
@@ -78,14 +79,14 @@ export function ChangePasswordModal({ open, onClose }: ChangePasswordModalProps)
         name="change-password"
         requiredMark={false}
         onFinish={handleSubmit}
-        style={{ marginTop: 16 }}
+        className={styles.form}
       >
         {serverError && (
           <Alert
             type="error"
             showIcon
             title={serverError}
-            style={{ marginBottom: 16 }}
+            className={styles.errorAlert}
             role="alert"
           />
         )}
@@ -96,10 +97,10 @@ export function ChangePasswordModal({ open, onClose }: ChangePasswordModalProps)
           rules={[{ required: true, message: 'Vui lòng nhập mật khẩu hiện tại.' }]}
         >
           <Input.Password
-            prefix={<LockOutlined style={{ color: '#8c8c8c' }} />}
+            prefix={<LockOutlined className={styles.inputIcon} />}
             placeholder="Nhập mật khẩu hiện tại"
             autoComplete="current-password"
-            style={{ height: 44 }}
+            className={styles.input}
           />
         </Form.Item>
 
@@ -121,10 +122,10 @@ export function ChangePasswordModal({ open, onClose }: ChangePasswordModalProps)
           extra="Tối thiểu 10 ký tự (tối đa 72 bytes). Không dùng mật khẩu quá phổ biến hoặc trùng mật khẩu cũ."
         >
           <Input.Password
-            prefix={<LockOutlined style={{ color: '#8c8c8c' }} />}
+            prefix={<LockOutlined className={styles.inputIcon} />}
             placeholder="Nhập mật khẩu mới"
             autoComplete="new-password"
-            style={{ height: 44 }}
+            className={styles.input}
           />
         </Form.Item>
 
@@ -145,19 +146,19 @@ export function ChangePasswordModal({ open, onClose }: ChangePasswordModalProps)
           ]}
         >
           <Input.Password
-            prefix={<LockOutlined style={{ color: '#8c8c8c' }} />}
+            prefix={<LockOutlined className={styles.inputIcon} />}
             placeholder="Nhập lại mật khẩu mới"
             autoComplete="new-password"
-            style={{ height: 44 }}
+            className={styles.input}
           />
         </Form.Item>
 
-        <Form.Item style={{ marginBottom: 0, marginTop: 24 }}>
-          <Space style={{ display: 'flex', justifyContent: 'flex-end', width: '100%' }}>
+        <Form.Item className={styles.footerItem}>
+          <Space className={styles.footerActions}>
             <Button
               onClick={handleClose}
               disabled={changePasswordMutation.isPending}
-              style={{ height: 40 }}
+              className={styles.cancelButton}
             >
               Hủy
             </Button>
@@ -165,7 +166,7 @@ export function ChangePasswordModal({ open, onClose }: ChangePasswordModalProps)
               type="primary"
               htmlType="submit"
               loading={changePasswordMutation.isPending}
-              style={{ height: 40, minWidth: 120 }}
+              className={styles.submitButton}
             >
               Đổi mật khẩu
             </Button>
