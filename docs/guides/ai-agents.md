@@ -23,7 +23,7 @@ Phần riêng của Antigravity ở `.agents/`; phần riêng của Claude Code 
 2. Cần Node 22+ (đã có cho frontend) và `npm ci` trong `frontend/` (hook format dùng Prettier của frontend).
 3. Rules, skills, hooks tự nạp từ `.agents/`. Kiểm tra trong panel **Customizations**:
    - Rules: `writer-role` (luôn bật), `migrations` (bật khi đụng thư mục migration).
-   - Skills: `plan`, `fix-bug`, `implement`, `new-migration`, `pre-pr-check`.
+   - Skills: `plan`, `fix-bug`, `implement`, `write-tests`, `new-migration`, `pre-pr-check`.
    - Hooks: `xile-guard`, `xile-format`, `xile-stop`.
 4. **Thử rào chắn:** nhờ agent chạy `git push --dry-run`. Phải bị chặn kèm lời nhắc tiếng Việt. Nếu lệnh chạy được
    thì hook chưa nạp: kiểm tra bước 1 và báo trong nhóm.
@@ -111,6 +111,7 @@ Gõ `/<tên>` trong khung chat, hoặc nói việc cần làm; agent tự chọn
 | `/plan`          | Bắt đầu card, tính năng        | Kế hoạch: mục tiêu, ý tưởng, sơ đồ Mermaid, file sẽ sửa, test; dừng chờ duyệt  |
 | `/fix-bug`       | Có lỗi, test đỏ chưa rõ vì sao | Test đỏ, nguyên nhân `file:dòng`, sơ đồ luồng cũ/mới, cách sửa; dừng chờ duyệt |
 | `/implement`     | Kế hoạch đã duyệt              | Code theo thứ tự DB → backend → frontend → Postman → backlog, test từng bước   |
+| `/write-tests`   | Viết, bổ sung test             | Bảng ca test đủ sáu nhóm (AGENTS.md mục 10), test đã thử làm đỏ, kết quả chạy  |
 | `/new-migration` | Đổi schema                     | `V{n}__...sql` mới, entity, ERD, test schema                                   |
 | `/pre-pr-check`  | Xong card, trước khi push      | Kết quả format, lint, test; checklist; tiêu đề và mô tả PR để chép             |
 

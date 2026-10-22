@@ -19,7 +19,7 @@ frontend/
 ├─ public/
 ├─ e2e/                          # Playwright: login.spec.ts, services.spec.ts
 └─ src/
-   ├─ main.tsx                   # điểm vào, chỉ gắn <App />
+   ├─ main.tsx                   # điểm vào, gắn <App /> và nạp styles/global.css
    ├─ app/
    │  ├─ App.tsx
    │  ├─ providers.tsx           # QueryClient, ConfigProvider (locale vi_VN, theme)
@@ -34,6 +34,7 @@ frontend/
    │  ├─ expense/
    │  ├─ closing/
    │  └─ dashboard/
+   ├─ styles/                    # tokens.css, global.css, theme.ts (mục CSS)
    ├─ shared/                    # dùng chung, KHÔNG import từ features/
    │  ├─ api/
    │  │  ├─ client.ts            # wrapper fetch duy nhất: credentials 'include', parse lỗi chung (S0-08)
@@ -100,14 +101,75 @@ Quy tắc:
 - **Không lưu token vào `localStorage`/`sessionStorage`.** Phiên nằm trong cookie `httpOnly` do backend đặt.
 - Không đưa bí mật vào mã frontend hay biến `VITE_*` (mọi thứ trong đó đều lộ ra trình duyệt).
 
+## React và TypeScript
+
+- Component là function, **export có tên** (`export function StaffListPage`), không `export default`.
+  Kiểu props đặt tên `<Tên>Props`, khai báo ngay trên component.
+- **Không `any`**, không `as` để ép kiểu cho qua lỗi, không `// @ts-ignore`. Dữ liệu chưa rõ kiểu dùng `unknown`
+  rồi thu hẹp (Zod `parse`, type guard). Không tắt chế độ strict của TypeScript. Import kiểu bằng `import type`.
+- Hằng số và kiểu dữ liệu nghiệp vụ dùng union của chuỗi khớp enum backend (`type StaffRole = 'OWNER' |
+'THERAPIST'`), nhãn tiếng Việt trong một `Record<StaffRole, string>` (mẫu: `features/staff/types.ts`).
+- **State tối thiểu**: giá trị tính được từ props hoặc dữ liệu query thì tính trong lúc render, không `useState` +
+  `useEffect` để đồng bộ. `useEffect` chỉ để nối với thứ bên ngoài React (DOM, timer, subscription).
+- Dữ liệu máy chủ chỉ qua TanStack Query (mục Dữ liệu và trạng thái). Không `fetch` trong `useEffect`.
+- Logic của trang tách ra hook riêng (`useStaffFilters`) hoặc component con khi file quá khoảng 200 dòng.
+- `key` của danh sách là id ổn định, không dùng chỉ số mảng. `useMemo`, `useCallback`, `memo` chỉ dùng khi đo thấy
+  chậm hoặc cần giữ tham chiếu ổn định cho hook khác.
+- Xử lý đủ bốn trạng thái của mỗi màn hình có dữ liệu: đang tải, lỗi (có "Thử lại"), trống, có dữ liệu.
+
 ## Giao diện
 
 - Dùng tốt trên điện thoại, iPad và máy tính (chủ tiệm dùng cả ba). Kiểm tra cả ba cỡ màn hình.
 - Ưu tiên component có sẵn của Ant Design; bật tree-shaking; không thêm thư viện UI khác (ADR-0001).
+- Bố cục ưu tiên component của Ant Design (`Flex`, `Space`, `Row`/`Col`, `Grid.useBreakpoint()`) trước khi viết CSS.
+
+## CSS
+
+Quyết định 22/10/2026: **CSS Modules đặt cạnh component**, phần dùng chung ở `src/styles/`. Vite hỗ trợ sẵn, không
+thêm thư viện.
+
+```
+src/
+├─ styles/
+│  ├─ tokens.css          # biến CSS: màu thương hiệu, chữ, nền, khoảng cách, bo góc (--xl-color-brand...)
+│  ├─ global.css          # reset, html/body, focus-visible; import tokens.css; nạp một lần ở main.tsx
+│  └─ theme.ts            # ThemeConfig của Ant Design (cùng giá trị màu với tokens.css), providers.tsx dùng
+├─ app/layout/
+│  ├─ AppLayout.tsx
+│  └─ AppLayout.module.css
+└─ features/staff/pages/
+   ├─ StaffListPage.tsx
+   └─ StaffListPage.module.css
+```
+
+- **Không `style={{...}}`**, trừ giá trị chỉ biết lúc chạy (chiều rộng tính từ dữ liệu, màu lấy từ dữ liệu). Không
+  dùng thuộc tính `styles`/`style` của Ant Design để thay cho CSS Modules.
+- File CSS đặt cùng tên với component: `LoginForm.tsx` → `LoginForm.module.css`, import
+  `import styles from './LoginForm.module.css'`, dùng `className={styles.header}`.
+- Tên class `camelCase` theo vai trò (`.header`, `.filterBar`, `.emptyState`), không theo hình thức (`.red`,
+  `.mt16`). Không selector lồng quá 2 cấp, không `!important`, không `:global` trừ khi phải ghi đè class của
+  Ant Design (ghi chú lý do).
+- **Màu, khoảng cách, bo góc lấy từ biến** trong `tokens.css` (`var(--xl-space-md)`) hoặc token Ant Design; không
+  viết mã màu trực tiếp. Màu thương hiệu đổi ở một chỗ.
+- Responsive: mobile trước, `@media (min-width: ...)` với breakpoint của Ant Design: 576, 768, 992, 1200 px (CSS
+  không cho dùng `var()` trong `@media` nên ghi số, xem chú thích đầu `tokens.css`).
+- Component dùng chung trong `shared/components/` cũng có `.module.css` riêng; không import CSS của feature khác.
+- Code cũ còn `style={{}}` (card chuyển đổi riêng): sửa file nào thì chuyển file đó, không để lẫn hai kiểu trong
+  một file.
 
 ## Test và lệnh
 
 - Logic và hook: Vitest. Luồng chính (đăng nhập, tạo dịch vụ): Playwright.
+- Đủ các nhóm ca theo `AGENTS.md` mục 10. Phân tầng:
+  - **Hàm thuần** (`shared/lib`, `schemas.ts`): mỗi nhánh một `it`, dùng `it.each` cho nhiều đầu vào cùng kiểu.
+    Schema Zod: ca hợp lệ, từng ràng buộc sai, ca biên (chuỗi toàn khoảng trắng, số 0). Mẫu: `money.test.ts`,
+    `features/staff/schemas.test.ts`.
+  - **Component, trang:** Testing Library, bọc `Providers` và `MemoryRouter`, giả API bằng `vi.fn()` gán cho
+    `fetch` (không gọi backend thật). Kiểm tra: dữ liệu hiển thị, trạng thái tải/lỗi/trống, lỗi backend gắn đúng ô
+    (`setError`), gọi đúng API với body đúng. Mẫu: `StaffListPage.test.tsx`.
+- Tìm phần tử theo vai trò và chữ người dùng thấy (`getByRole('button', { name: 'Lưu' })`, `getByLabelText`), không
+  theo class CSS hay `data-testid` (trừ khi không còn cách). Chờ kết quả bất đồng bộ bằng `findBy...`/`waitFor`.
+- Mỗi test tự dọn: `afterEach(() => vi.restoreAllMocks())`; không phụ thuộc thứ tự chạy.
 - Chạy trước khi commit (trong `frontend/`):
 
   ```bash

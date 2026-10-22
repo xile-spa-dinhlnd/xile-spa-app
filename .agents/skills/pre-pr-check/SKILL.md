@@ -37,6 +37,8 @@ mục 4 ("Review"). Thêm:
 - [ ] Endpoint mới hoặc sửa đã có trong Postman collection.
 - [ ] Không còn `console.log`, `System.out.println`, code bị comment bỏ, TODO không có mã card.
 - [ ] Không có bí mật, không sửa `.env`, không sửa migration cũ, không sửa file sinh tự động.
+- [ ] Test đủ các nhóm ca của `AGENTS.md` mục 10 cho mọi hành vi mới hoặc sửa.
+- [ ] File frontend đã sửa không còn `style={{}}` (trừ giá trị tính lúc chạy); CSS ở `.module.css` cạnh component.
 - [ ] Đổi quy ước hay cấu trúc thì đã cập nhật `AGENTS.md` tương ứng.
 
 Ô nào chưa đạt thì ghi rõ và đề xuất sửa; sửa xong thì chạy lại bước 2.
