@@ -141,3 +141,47 @@ Quy tắc sinh ra từ lỗi thật mới đáng giữ.
   mật; sửa migration đã có trên `develop`; sửa file sinh tự động; tự sửa cấu hình hook. Bị chặn thì dừng và báo
   người dùng, không tìm cách lách.
 - Cách dùng từng skill và luồng làm việc đầy đủ: `docs/guides/ai-agents.md`.
+
+## 9. Code sạch (áp dụng cho cả backend và frontend)
+
+Chỉ ghi điều cụ thể cho repo này. Kiến trúc từng phần: `backend/AGENTS.md`, `frontend/AGENTS.md`.
+
+- **Một hàm làm một việc**, đọc được từ trên xuống: kiểm tra đầu vào và trả về sớm (early return), không lồng
+  `if` quá 2 cấp. Hàm dài quá khoảng 40 dòng hoặc component quá khoảng 200 dòng thì tách.
+- **Đặt tên theo nghiệp vụ** trong `docs/srs/06-data-dictionary.md` (`businessDate`, `tourFee`, không `date2`,
+  `data`, `tmp`). Boolean bắt đầu bằng `is`, `has`, `can`. Code và tên bằng tiếng Anh; thông báo, nhãn giao diện
+  bằng tiếng Việt có dấu.
+- **Không số ma thuật**: hằng số nghiệp vụ (số lần đăng nhập sai, thời hạn token, kích thước trang) đặt tên rõ,
+  để ở cấu hình hoặc hằng số của module.
+- **Không nuốt lỗi**: không `catch` rồi bỏ qua. Bắt thì dịch sang lỗi nghiệp vụ hoặc ghi log rồi ném tiếp.
+- **Không trừu tượng sớm**: lặp lại lần thứ ba mới tách hàm hay lớp dùng chung. Không thêm interface chỉ có một
+  cài đặt, không thêm tham số "để sau này dùng".
+- **Comment giải thích vì sao**, không kể lại code làm gì; ghi mã BR/FR/OQ khi code thực thi một quy tắc nghiệp vụ.
+- Không để lại code bị comment bỏ, `console.log`, `System.out.println`, `TODO` không có mã card.
+
+## 10. Viết test: điều kiện đạt
+
+Mỗi hành vi nghiệp vụ mới hoặc sửa (service, endpoint, schema form, hàm tiện ích có logic) phải có đủ các nhóm ca
+sau. Thiếu nhóm nào thì ghi lý do trong PR; người review coi thiếu ca là lỗi `bắt buộc:` với tiền, chốt sổ, bút
+toán, đăng nhập.
+
+| Nhóm ca               | Kiểm tra gì                                                                                                                                               |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Ca chuẩn (happy)      | Đầu vào hợp lệ điển hình cho kết quả đúng, kể cả dữ liệu được lưu và `audit_log` được ghi                                                                 |
+| Dữ liệu sai           | Từng ràng buộc validation: trống, quá dài, sai định dạng, sai enum → 400 với `fieldErrors` đúng ô                                                         |
+| Ca biên               | Tiền 0 và số rất lớn; chuỗi chỉ có khoảng trắng; trùng tên khác hoa thường; danh sách rỗng, trang cuối; ngày đầu/cuối tháng, ngày đã chốt, ngày tương lai |
+| Lỗi nghiệp vụ         | Mỗi `ErrorCode` mà code có thể ném (409 trùng, 409 `DAY_CLOSED`, 404 không tồn tại...)                                                                    |
+| Quyền                 | Chưa đăng nhập → 401 (mỗi controller ít nhất một test)                                                                                                    |
+| Không có tác dụng phụ | Khi lỗi: không lưu, không ghi audit (`verify(..., never())` hoặc kiểm tra DB)                                                                             |
+
+Quy tắc chung:
+
+- **Một test kiểm tra một hành vi**, tên test nói hành vi đó: backend `camelCase` tiếng Anh
+  (`createWithActiveDuplicateNameIsRejected`), frontend `it('...')` tiếng Việt. Thân test chia ba đoạn
+  chuẩn bị, thực hiện, kiểm tra (Arrange, Act, Assert), cách nhau một dòng trống.
+- **Assert giá trị cụ thể** (`isEqualTo(150_000L)`, `toHaveTextContent('1.500.000 đ')`), không chỉ `isNotNull()`
+  hay "không ném lỗi". Kiểm tra lỗi bằng mã (`ErrorCode`, `code` trong JSON), không bằng câu thông báo.
+- **Test phải đỏ được**: viết xong thì thử làm sai code một chút xem test có đỏ không. Test không bao giờ đỏ là vô ích.
+- **Độc lập và lặp lại được**: thời gian qua `Clock.fixed(...)`, không phụ thuộc thứ tự chạy, không phụ thuộc dữ liệu
+  test khác để lại.
+- Cách viết riêng: `backend/AGENTS.md` mục Test, `frontend/AGENTS.md` mục Test và lệnh. Skill Antigravity `/write-tests`.

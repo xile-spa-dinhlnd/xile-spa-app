@@ -224,6 +224,17 @@ có ghi log). Trigger là rào chắn cuối: service vẫn nên tự kiểm tra
 
 - Test tích hợp dùng **Testcontainers với PostgreSQL thật**, không dùng H2 (trigger và kiểu dữ liệu của Postgres khác H2).
 - Phần tiền, chốt sổ, bút toán luôn có test. Bộ test schema: `src/test/resources/sql/schema_smoke_test.sql`.
+- Đủ các nhóm ca theo `AGENTS.md` mục 10. Phân tầng:
+  - **Service:** test đơn vị Mockito (`@ExtendWith(MockitoExtension.class)`), mapper thật qua
+    `Mappers.getMapper(...)`, `Clock.fixed(...)`. Mỗi nhánh nghiệp vụ một test; ca lỗi kiểm tra `ErrorCode` và
+    `verify(repository, never()).save(any())`, `verify(auditService, never())...`. Mẫu: `StaffServiceTest`.
+  - **Controller:** `...ControllerIT` với `@IntegrationTest`: mã HTTP, JSON trả về (`jsonPath`), `fieldErrors`,
+    401 khi chưa đăng nhập, dữ liệu và `audit_log` thật trong DB. Người dùng test tạo riêng, dữ liệu có tiền tố
+    ngẫu nhiên (`prefix`). Mẫu: `StaffControllerIT`.
+  - **Entity:** test đơn vị cho method nghiệp vụ (`deactivate()`, `changePrice(...)`) không cần Spring.
+  - **Trigger, ràng buộc DB:** thêm vào `schema_smoke_test.sql`.
+- Assert bằng AssertJ (`assertThat`, `assertThatThrownBy(...).extracting("errorCode")`). Tiền viết `150_000L`.
+- Ca nhiều bộ dữ liệu cùng một kiểu (các chuỗi không hợp lệ, các mức tiền biên) dùng `@ParameterizedTest`.
 - Test tích hợp gắn `@IntegrationTest` (`src/test/java/com/xilespa/support`): chạy cả ứng dụng với Postgres 16
   thật và MockMvc. Cần **Docker Desktop đang chạy**.
 - Chạy (trong `backend/`, cần JDK 21): `./gradlew spotlessApply test`. Chạy ứng dụng: `./gradlew bootRun`

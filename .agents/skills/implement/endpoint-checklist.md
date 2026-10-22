@@ -21,6 +21,7 @@ Nguồn: `backend/AGENTS.md`, `frontend/AGENTS.md`, `AGENTS.md` mục 4. Đi h�
 
 ## Test
 
+- [ ] Đủ sáu nhóm ca của `AGENTS.md` mục 10 (dùng `/write-tests`).
 - [ ] Test đơn vị cho từng nhánh nghiệp vụ của service (thành công và từng lỗi).
 - [ ] `...ControllerIT` với `@IntegrationTest`: 2xx, 400 (validation, có `fieldErrors`), 401, 404, 409 nếu có.
 - [ ] Test IT tạo dữ liệu có tiền tố riêng, không `deleteAll()` bảng dùng chung, không đếm toàn bảng `audit_log`.
@@ -33,6 +34,7 @@ Nguồn: `backend/AGENTS.md`, `frontend/AGENTS.md`, `AGENTS.md` mục 4. Đi h�
 - [ ] Lỗi backend gắn vào ô bằng `setError` (mã lỗi nghiệp vụ và `fieldErrors`); lỗi khác `message.error`.
 - [ ] Tiền chỉ định dạng bằng `formatMoney`, nhập bằng `MoneyInput`; không tự tính tiền.
 - [ ] Máy tính dùng `Table`, điện thoại dùng `Card`; có trạng thái trống, lỗi tải có nút "Thử lại".
+- [ ] Style bằng `<Component>.module.css` và biến trong `src/styles/tokens.css`; không `style={{}}`, không mã màu cứng.
 
 ## Tài liệu
 

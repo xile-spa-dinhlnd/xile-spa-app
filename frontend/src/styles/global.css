@@ -1,3 +1,6 @@
+/* CSS toàn cục, nạp một lần ở main.tsx. Style của từng component để trong <Component>.module.css. */
+@import './tokens.css';
+
 html,
 body,
 #root {
@@ -8,6 +11,6 @@ body,
 /* Viền rõ khi di chuyển bằng bàn phím (Tab) trên menu bên trái, kể cả mục đang chọn. */
 .ant-menu-item:focus-visible,
 .ant-menu:focus-visible .ant-menu-item-active {
-  outline: 2px solid #1b4d43;
+  outline: 2px solid var(--xl-color-brand-strong);
   outline-offset: 2px;
 }

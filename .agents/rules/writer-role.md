@@ -43,4 +43,5 @@ mở PR, chạy skill `/pre-pr-check`.
 | `/fix-bug`       | Có lỗi: tái hiện, chứng minh, tìm nguyên nhân, đề xuất cách sửa    |
 | `/implement`     | Kế hoạch đã duyệt: viết code và test theo đúng thứ tự              |
 | `/new-migration` | Cần đổi schema: thêm migration Flyway mới                          |
+| `/write-tests`   | Viết hoặc bổ sung test theo bảng điều kiện đạt (AGENTS.md mục 10)  |
 | `/pre-pr-check`  | Xong việc: chạy đủ kiểm tra, soạn tiêu đề và mô tả PR              |

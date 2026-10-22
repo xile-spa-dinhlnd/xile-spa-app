@@ -18,13 +18,13 @@ Làm từng bước, chạy test của bước đó trước khi sang bước sa
    1. `entity/` (+ `enums/`): Lombok giới hạn, method nghiệp vụ thay cho setter, thời điểm truyền từ `Clock`.
    2. `repository/`.
    3. `service/`: `@Transactional`, kiểm tra nghiệp vụ, `AuditService.record(...)` trong cùng transaction,
-      lỗi bằng `BusinessException` + mã trong `ErrorCode`. Viết test đơn vị ngay sau.
+      lỗi bằng `BusinessException` + mã trong `ErrorCode`. Viết test đơn vị ngay sau bằng `/write-tests`.
    4. `dto/request`, `dto/response` (record, thông báo validation tiếng Việt), `mapper/` (MapStruct, chỉ chép dữ liệu).
    5. `controller/`: URL theo quy ước, không có logic. Viết test `...ControllerIT` (`@IntegrationTest`).
       Xem `endpoint-checklist.md` trong thư mục skill này cho từng endpoint.
 4. **Frontend**, theo `frontend/AGENTS.md`: `types.ts` → `api.ts` (query key, hook) → `schemas.ts` (Zod khớp
    backend) → component, page → `routes.tsx` → `index.ts`. Test Vitest cho logic và form. Kiểm tra cỡ điện
-   thoại, iPad, máy tính.
+   thoại, iPad, máy tính. Style bằng CSS Modules cạnh component, không `style={{}}` (`frontend/AGENTS.md` mục CSS).
 5. **Postman:** thêm hoặc sửa request trong `docs/postman/xile-spa.postman_collection.json` (body mẫu, kiểm tra mã
    trạng thái). Trường hợp lỗi chính cũng có request riêng.
 6. **Tài liệu:** SRS, ERD, README nếu hành vi đổi; `AGENTS.md` nếu đổi quy ước (AGENTS.md quy tắc 11).

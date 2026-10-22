@@ -1,0 +1,35 @@
+/*
+ * Biến thiết kế dùng chung (frontend/AGENTS.md mục CSS). Mọi màu, khoảng cách, bo góc trong *.module.css lấy từ
+ * đây; đổi màu thương hiệu thì sửa ở đây và ở theme.ts (Ant Design).
+ * Breakpoint không đặt được bằng biến (CSS không cho dùng var() trong @media): dùng số khớp Ant Design
+ * 576px (sm), 768px (md), 992px (lg), 1200px (xl).
+ */
+:root {
+  /* Thương hiệu */
+  --xl-color-brand: #2f7d6d;
+  --xl-color-brand-strong: #1b4d43;
+  --xl-gradient-auth: linear-gradient(145deg, #f0f5f1 0%, #e6efe8 100%);
+
+  /* Chữ */
+  --xl-color-heading: #1f2d24;
+  --xl-color-text-secondary: #595959;
+  --xl-color-text-muted: #8c8c8c;
+
+  /* Nền và viền */
+  --xl-color-bg-page: #f8faf9;
+  --xl-color-bg-subtle: #fafafa;
+  --xl-color-border: #f0f0f0;
+
+  /* Khoảng cách (bội số 4px) */
+  --xl-space-xs: 4px;
+  --xl-space-sm: 8px;
+  --xl-space-md: 12px;
+  --xl-space-lg: 16px;
+  --xl-space-xl: 24px;
+  --xl-space-2xl: 32px;
+
+  /* Bo góc */
+  --xl-radius-sm: 4px;
+  --xl-radius-md: 8px;
+  --xl-radius-lg: 12px;
+}
