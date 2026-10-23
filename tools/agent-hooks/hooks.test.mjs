@@ -26,7 +26,9 @@ const agWrite = (TargetFile) =>
     toolCall: { name: 'replace_file_content', args: { TargetFile } },
     workspacePaths: [root],
   })
-const denied = (action) => check(action, { existsOnDevelop: onDevelop }) !== null
+const deniedOn = (branch) => (action) =>
+  check(action, { existsOnDevelop: onDevelop, currentBranch: () => branch }) !== null
+const denied = deniedOn('develop')
 
 describe('splitSegments', () => {
   test('tách theo toán tử và bỏ dấu nháy', () => {
@@ -70,7 +72,6 @@ describe('git của Antigravity', () => {
     'git branch feature/x',
     'git branch -D feature/x',
     'git tag v1.0.0',
-    'git fetch origin',
     'git -C backend commit -am x',
     'npm test && git push origin HEAD',
     'bash -c "git push --force"',
@@ -80,6 +81,46 @@ describe('git của Antigravity', () => {
   ]) {
     test(`chặn: ${cmd}`, () => assert.equal(denied(agCommand(cmd)), true))
   }
+})
+
+describe('Antigravity tự tạo nhánh card', () => {
+  for (const cmd of [
+    'git fetch origin',
+    'git fetch origin develop',
+    'git switch -c feature/S2-06-service-group-ui origin/develop',
+    'git switch -q --create fix/S2-06-ngung-nhom origin/develop',
+    'git fetch origin && git switch -c chore/agent-workflow origin/develop',
+  ]) {
+    test(`cho phép khi đang ở develop: ${cmd}`, () => assert.equal(denied(agCommand(cmd)), false))
+  }
+  for (const cmd of [
+    'git switch -c feature/S2-06-ui',
+    'git switch -c feature/S2-06-ui develop',
+    'git switch -c feature/S2-06-ui origin/main',
+    'git switch -C feature/S2-06-ui origin/develop',
+    'git switch -c S2-06-ui origin/develop',
+    'git switch -c release/v0.3.0 origin/develop',
+    'git switch -c feature/S2-06-ui origin/develop extra',
+    'git checkout -b feature/S2-06-ui origin/develop',
+    'git fetch origin pull/31/head:pr-31',
+    'git fetch --all',
+  ]) {
+    test(`chặn: ${cmd}`, () => assert.equal(denied(agCommand(cmd)), true))
+  }
+  test('đang ở nhánh card khác thì không tự tạo nhánh', () => {
+    const reason = check(agCommand('git switch -c feature/S2-07-combo origin/develop'), {
+      existsOnDevelop: onDevelop,
+      currentBranch: () => 'feature/S2-06-service-group',
+    })
+
+    assert.match(reason, /Đang ở nhánh feature\/S2-06-service-group/)
+  })
+  test('ở main cũng được tạo nhánh card', () => {
+    assert.equal(
+      deniedOn('main')(agCommand('git switch -c feature/S2-07-combo origin/develop')),
+      false,
+    )
+  })
 })
 
 describe('git và gh của Claude (review)', () => {
@@ -99,6 +140,7 @@ describe('git và gh của Claude (review)', () => {
     'git push',
     'git checkout pr-31',
     'git branch -D develop',
+    'git switch -c feature/S2-06-ui origin/develop',
     'gh pr merge 31 --squash',
     'gh pr review 31 --approve',
     'gh api -X PUT repos/o/r/pulls/31/merge',
@@ -239,28 +281,22 @@ describe('chạy như hook thật', () => {
     fs.rmSync(repo, { recursive: true, force: true })
   })
 
-  test('Stop: đang ở develop thì nhắc tạo nhánh trước khi commit, ở nhánh card thì không', () => {
+  test('Stop: không nhắc gì về nhánh hay commit, kể cả khi đang ở develop', () => {
     const repo = fs.mkdtempSync(path.join(os.tmpdir(), 'xile-stop-branch-'))
-    const git = (...args) => execFileSync('git', args, { cwd: repo })
-    git('init', '-q', '-b', 'develop')
+    execFileSync('git', ['init', '-q', '-b', 'develop'], { cwd: repo })
     fs.mkdirSync(path.join(repo, 'frontend/src'), { recursive: true })
-    const input = (id) => ({
+    fs.writeFileSync(path.join(repo, 'frontend/src/a.ts'), 'export const a = 1\n')
+    const input = {
       fullyIdle: true,
       terminationReason: 'model_stop',
-      conversationId: `test-branch-${id}-${process.pid}-${Date.now()}`,
+      conversationId: `test-branch-${process.pid}-${Date.now()}`,
       workspacePaths: [repo],
-    })
-    fs.writeFileSync(path.join(repo, 'frontend/src/a.ts'), 'export const a = 1\n')
+    }
 
-    const onDevelop = JSON.parse(run('stop.mjs', input('develop'), repo).stdout)
-    git('switch', '-q', '-c', 'feature/S9-01-thu')
-    const onCardBranch = JSON.parse(run('stop.mjs', input('card'), repo).stdout)
+    const out = JSON.parse(run('stop.mjs', input, repo).stdout)
 
-    assert.equal(onDevelop.decision, 'continue')
-    assert.match(onDevelop.reason, /Đang ở nhánh develop/)
-    assert.match(onDevelop.reason, /git switch -c feature\//)
-    assert.equal(onCardBranch.decision, 'continue')
-    assert.doesNotMatch(onCardBranch.reason, /Đang ở nhánh/)
+    assert.equal(out.decision, 'continue')
+    assert.doesNotMatch(out.reason, /git switch|Đang ở nhánh|câu commit/)
     fs.rmSync(repo, { recursive: true, force: true })
   })
 

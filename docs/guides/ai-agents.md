@@ -7,8 +7,8 @@ cài đặt, luồng làm việc, từng skill, hook.
 
 | Agent                  | Người dùng | Việc                                                                     |
 | ---------------------- | ---------- | ------------------------------------------------------------------------ |
-| Antigravity            | Đình, Huy  | Lập kế hoạch, viết code, test, tài liệu của card. Git chỉ được đọc.      |
-| Claude Code (máy Đình) | Đình       | Review PR của Huy (`/review-pr`), tự soát code của Đình (`/self-review`) |
+| Antigravity            | Đình, Huy  | Thiết kế (Huy), code, test, tài liệu; tự tạo nhánh card; hướng dẫn git ở `/pre-pr-check` |
+| Claude Code (máy Đình) | Đình       | Thiết kế cho Đình (`/plan-feature`), tự soát (`/self-review`), review PR của Huy (`/review-pr`) |
 | Claude app (claude.ai) | Đình       | Cuối sprint: release, retro, lập kế hoạch và chia card sprint sau        |
 
 Một nguồn quy tắc: nội dung chỉ viết ở `AGENTS.md`, `backend/AGENTS.md`, `frontend/AGENTS.md`. Mỗi agent có một lớp
@@ -33,7 +33,7 @@ Antigravity ở `.agents/`; phần riêng của Claude Code ở `.claude/` (ch�
 3. Rules, skills, hooks tự nạp từ `.agents/`. Kiểm tra trong panel **Customizations**:
    - Rules: `writer-role` (luôn bật), `backend`, `frontend` (bật khi đụng thư mục đó), `migrations` (bật khi đụng
      thư mục migration).
-   - Skills: `plan`, `fix-bug`, `implement`, `write-tests`, `new-migration`, `pre-pr-check`.
+   - Skills: `plan-task`, `fix-bug`, `implement`, `write-tests`, `new-migration`, `pre-pr-check`.
    - Hooks: `xile-guard`, `xile-format`, `xile-stop`.
 4. **Thử rào chắn:** nhờ agent chạy `git push --dry-run`. Phải bị chặn kèm lời nhắc tiếng Việt. Nếu lệnh chạy được
    thì hook chưa nạp: kiểm tra bước 1 và báo trong nhóm.
@@ -41,7 +41,7 @@ Antigravity ở `.agents/`; phần riêng của Claude Code ở `.claude/` (ch�
    - Chế độ chạy lệnh terminal: **Request Review** (hỏi trước, trừ danh sách cho phép).
    - Cho phép tự chạy: `./gradlew test`, `./gradlew spotlessApply`, `./gradlew build`, `npm run format`,
      `npm run lint`, `npm run typecheck`, `npm test`, `npx vitest run`, `git status`, `git log`, `git diff`,
-     `git show`, `git blame`.
+     `git show`, `git blame`, `git fetch origin`.
    - Không bao giờ tự chạy: `git push`, `git commit`, `git checkout`, `git reset`, `rm`, `docker compose down`.
      Hook vẫn chặn các lệnh nguy hiểm kể cả khi đặt sai ở đây.
 
@@ -49,7 +49,7 @@ Workflows (`.agents/workflows/`) của Antigravity đã ngừng chạy từ 19/1
 
 ### Claude Code (chỉ Đình)
 
-Bộ `.claude/` (settings, skill `review-pr`, `self-review`) giữ riêng ở máy Đình, có README cài đặt đi kèm. Cần
+Bộ `.claude/` (settings, skill `plan-feature`, `review-pr`, `self-review`) giữ riêng ở máy Đình, có README cài đặt đi kèm. Cần
 GitHub CLI đã đăng nhập (`gh auth login`) để đọc PR và đăng review. Claude Code chạy bằng extension trong
 Antigravity hoặc lệnh `claude` ở terminal, mở tại gốc repo.
 
@@ -59,35 +59,36 @@ Antigravity hoặc lệnh `claude` ở terminal, mở tại gốc repo.
 
 ```mermaid
 flowchart TD
-    A[Người làm card: tạo nhánh feature/S2-06-...] --> B[Antigravity: /plan-task, có mục Chia PR]
-    B --> C{Duyệt kế hoạch?}
-    C -- cần sửa --> B
-    C -- duyệt --> D[Antigravity: /implement phần của PR hiện tại]
-    D --> D2[Mỗi tầng: code rồi /write-tests, test xanh mới sang tầng sau]
-    D2 --> D3[Bảng đối chiếu hành vi và test; còn ô trống thì quay lại /write-tests]
-    D3 --> E[Antigravity dừng. Người làm card: đọc diff, git add, git commit]
-    E --> F{Xong phần của PR này?}
-    F -- chưa --> D
-    F -- xong --> G[Người làm card gõ /pre-pr-check: đo kích thước, file thiếu test]
-    G --> H{Ai làm card?}
-    H -- Huy --> I[Huy: git push, mở PR bằng bản nháp]
-    I --> J[Đình: Claude Code /review-pr số]
-    J --> K{Có nhận xét bắt buộc?}
-    K -- có --> L[Huy: sửa bằng Antigravity, commit, push] --> J
-    K -- không --> M[Đình approve, Huy Squash and merge]
-    H -- Đình --> N[Đình: Claude Code /self-review]
-    N --> O{Còn cần sửa?}
-    O -- có --> D
-    O -- không --> P[Đình: push, mở PR ghi Đã tự review, Squash and merge]
+    A{Ai làm card?} -- Huy --> B[Antigravity: /plan-task card, viết file luồng, tự tạo nhánh]
+    A -- Đình --> C[Claude Code: /plan-feature card, viết file luồng]
+    B --> D{Duyệt thiết kế?}
+    C --> D
+    D -- cần sửa --> A
+    D -- duyệt --> E[Antigravity: /implement file luồng; tự tạo nhánh nếu chưa có]
+    E --> E2[Mỗi tầng: code rồi /write-tests, test xanh mới sang tầng sau]
+    E2 --> E3[File luồng khớp code: sơ đồ, lỗi, tên test thật, dòng lịch sử]
+    E3 --> F{Ai làm card?}
+    F -- Đình --> G[Claude Code: /self-review lần N]
+    G --> H{Còn cần sửa?}
+    H -- có --> I[Dán khối lần N vào Antigravity] --> G
+    H -- không --> J
+    F -- Huy --> J[Người làm card gõ /pre-pr-check: kiểm tra, câu commit, push, bản nháp PR]
+    J --> K{Ai làm card?}
+    K -- Đình --> L[Đình: merge bằng bypass, Squash and merge]
+    K -- Huy --> M[Đình: Claude Code /review-pr số, chấm điểm, đăng review]
+    M --> N{Còn bắt buộc?}
+    N -- có --> O[Huy: dán khối sửa trong review vào Antigravity, commit, push] --> M
+    N -- không --> P[Đình approve, Huy Squash and merge]
 ```
 
 Ghi nhớ:
 
-- AI không commit, không push, không đổi nhánh. Người làm card làm mọi lệnh git (CONTRIBUTING.md mục 8).
-- Sửa file trên `develop` được, nhưng commit và push chỉ trên nhánh card. Còn ở `develop` hay `main` thì skill và
-  hook Stop nhắc tạo nhánh trước khi commit; `/pre-pr-check` không báo sẵn sàng (AGENTS.md mục 5 bước 1).
+- Thiết kế trước, code sau: file luồng `docs/design/flows/<module>/<tính-năng>.md` là đầu vào của `/implement` và phải
+  khớp code khi mở PR (`docs/design/flows/README.md`).
+- Agent tự tạo nhánh card ở skill đầu tiên ghi file, chỉ khi đang ở `develop` hoặc `main`. Ngoài việc đó, AI không
+  commit, không push, không đổi nhánh; người làm card chạy mọi lệnh git (CONTRIBUTING.md mục 8).
+- Chỉ `/pre-pr-check` hướng dẫn git, và chỉ khi người dùng gõ. Các skill khác không đưa câu commit.
 - Trong lúc Antigravity đang sửa file, không đổi nhánh.
-- Mỗi bước của `/implement` có một câu commit gợi ý: commit ngay khi bước đó xanh.
 
 ### 3.2 Sửa lỗi
 
@@ -99,7 +100,7 @@ flowchart LR
     D --> E{Duyệt cách sửa?}
     E -- duyệt --> F[Sửa, test đỏ chuyển xanh, chạy cả bộ]
     E -- chưa đủ bằng chứng --> B
-    F --> G[Commit fix, tiếp như mục 3.1 từ /pre-pr-check]
+    F --> G[Cập nhật file luồng, tiếp như mục 3.1 từ bước soát]
 ```
 
 Không tái hiện được lỗi thì Antigravity dừng và hỏi thêm, không sửa "phòng hờ". Lỗi trên bản đã phát hành thì làm
@@ -122,28 +123,29 @@ Gõ `/<tên>` trong khung chat, hoặc nói việc cần làm; agent tự chọn
 
 | Skill            | Khi nào                        | Kết quả                                                                                                                     |
 | ---------------- | ------------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
-| `/plan-task`     | Bắt đầu card, tính năng        | Kế hoạch: mục tiêu, ý tưởng, sơ đồ Mermaid, file sẽ sửa, test; dừng chờ duyệt                                               |
-| `/fix-bug`       | Có lỗi, test đỏ chưa rõ vì sao | Test đỏ, nguyên nhân `file:dòng`, sơ đồ luồng cũ/mới, cách sửa; dừng chờ duyệt                                              |
-| `/implement`     | Kế hoạch đã duyệt              | Kiểm tra nhánh; làm phần của PR hiện tại, mỗi tầng có `/write-tests`; bảng đối chiếu hành vi và test; dừng cho người commit |
+| `/plan-task`     | Bắt đầu card (Huy)             | Tạo nhánh; file luồng: điểm vào, sơ đồ Mermaid, quy tắc, lỗi, ảnh hưởng, bảng test; dừng chờ duyệt                          |
+| `/fix-bug`       | Có lỗi, test đỏ chưa rõ vì sao | Tạo nhánh `fix/`; test đỏ, nguyên nhân `file:dòng`, sơ đồ luồng cũ/mới, cách sửa; dừng chờ duyệt                            |
+| `/implement`     | File luồng đã duyệt, khối sửa  | Tạo nhánh nếu chưa có; code theo file luồng, mỗi tầng có `/write-tests`; file luồng khớp code; dừng                         |
 | `/write-tests`   | Viết, bổ sung test             | Bảng ca test đủ sáu nhóm (AGENTS.md mục 10), test đã thử làm đỏ, kết quả chạy                                               |
 | `/new-migration` | Đổi schema                     | `V{n}__...sql` mới, entity, ERD, test schema                                                                                |
-| `/pre-pr-check`  | Xong card, trước khi push      | Kiểm tra nhánh, kích thước PR, file code thiếu test; format, lint, test; checklist; bản nháp PR và lệnh git                 |
+| `/pre-pr-check`  | Chỉ khi người dùng gõ          | Kích thước PR, file code thiếu test; format, lint, test; checklist; câu commit, lệnh push, bản nháp PR, cách squash merge   |
 
 Câu mẫu:
 
-- `/plan-task S2-06` hoặc "Lập kế hoạch cho card S2-06 quản lý nhóm dịch vụ".
-- `/fix-bug Lưu nhân viên trùng tên với người đã nghỉ vẫn báo lỗi 409, mong đợi là lưu được.`
-- "Kế hoạch ổn, `/implement` đi, làm tới hết backend thì dừng cho mình commit."
+- `/plan-task S2-06` hoặc "Thiết kế card S2-06 quản lý nhóm dịch vụ".
+- `/implement docs/design/flows/catalog/service-group.md`
+- `/fix-bug docs/design/flows/auth/login.md Sai mật khẩu 5 lần liên tiếp nhưng tài khoản không bị khóa tạm.`
 - `/pre-pr-check`
 
-Sơ đồ trong kế hoạch là Mermaid: dán vào mục "Ghi chú cho người review" của PR, GitHub hiển thị thành hình.
+Sơ đồ trong file luồng là Mermaid, GitHub hiển thị thành hình khi xem file hoặc khi dán vào PR.
 
 ### Claude Code (máy Đình)
 
 | Skill             | Khi nào                        | Kết quả                                                                                                                                      |
 | ----------------- | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/review-pr <số>` | PR của Huy cần review          | Chạy test trên worktree riêng, bản nháp nhận xét `bắt buộc:`/`gợi ý:`/`hỏi:`; Đình đồng ý thì đăng lên GitHub (Request changes hoặc Comment) |
-| `/self-review`    | Code của Đình, trước khi mở PR | Báo cáo cần sửa / nên sửa, kèm lời nhắn sửa để dán vào Antigravity; khi sạch thì soạn PR có dòng "Đã tự review"                              |
+| `/plan-feature <card>` | Bắt đầu card của Đình     | File luồng của tính năng (soát chỗ bị ảnh hưởng, đánh giá nghiệp vụ, câu hỏi mở kèm đề xuất); dừng chờ duyệt                                |
+| `/self-review`    | Code của Đình, trước khi mở PR | So code với file luồng, kiểm tra lại báo cáo của Antigravity, đánh giá nghiệp vụ; khối sửa "lần N" để dán vào Antigravity; không hướng dẫn git |
+| `/review-pr <số>` | PR của Huy cần review          | Chạy test trên worktree riêng; soát code, thiết kế, nghiệp vụ; chấm điểm sáu nhóm; trả lời câu hỏi của Huy; khối sửa; Đình đồng ý thì đăng      |
 
 Claude không approve và không merge; nhận xét đăng bằng tài khoản của Đình nên luôn có bước Đình đọc trước.
 
@@ -157,9 +159,9 @@ Mã nguồn: `tools/agent-hooks/` (Node, không cần cài thêm). Test: `node -
 
 | Hook         | Khi nào                       | Làm gì                                                                                                                                                                                                                                                    |
 | ------------ | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `guard.mjs`  | Trước mỗi lệnh, đọc, sửa file | Chặn git ngoài nhóm chỉ đọc; `gh` làm đổi GitHub; xóa hàng loạt; `docker compose down -v`; đọc, sửa `.env`, khóa; sửa migration đã có trên `develop`; sửa file sinh tự động; sửa cấu hình hook                                                            |
+| `guard.mjs`  | Trước mỗi lệnh, đọc, sửa file | Chặn git ngoài nhóm chỉ đọc (trừ Antigravity tạo nhánh card từ `develop`/`main`); `gh` làm đổi GitHub; xóa hàng loạt; `docker compose down -v`; đọc, sửa `.env`, khóa; sửa migration đã có trên `develop`; sửa file sinh tự động; sửa cấu hình hook                                                            |
 | `format.mjs` | Sau khi Antigravity sửa file  | Chạy Prettier trên đúng file frontend vừa sửa                                                                                                                                                                                                             |
-| `stop.mjs`   | Khi Antigravity kết thúc lượt | File Java đổi thì chạy `./gradlew spotlessApply` một lần; có code đổi thì nhắc tự soát test, Postman, backlog, báo cáo, kèm danh sách file code đổi mà chưa có test đổi theo, và nhắc tạo nhánh nếu đang ở `develop`/`main` (mỗi trạng thái nhắc một lần) |
+| `stop.mjs`   | Khi Antigravity kết thúc lượt | File Java đổi thì chạy `./gradlew spotlessApply` một lần; có code đổi thì nhắc tự soát test, Postman, backlog, báo cáo, kèm danh sách file code đổi mà chưa có test đổi theo (mỗi trạng thái nhắc một lần; không nhắc gì về git) |
 
 Claude Code dùng chung `guard.mjs` (được thêm `git fetch`, `git worktree`, đăng review bằng `gh`; vẫn không
 approve, merge, push).
@@ -175,5 +177,6 @@ không phải lỗi).
 
 - **Agent làm sai cùng một kiểu nhiều lần?** Thêm một dòng vào `AGENTS.md` mục 4 hoặc mục 7, trong PR của card đang làm.
 - **Muốn đổi skill?** Sửa `.agents/skills/<tên>/SKILL.md` trong một PR riêng (`docs` hoặc `chore`), ghi lý do.
-- **Antigravity hỏi có chạy lệnh git không?** Chỉ đồng ý với `status`, `log`, `diff`, `show`, `blame`, `branch`.
+- **Antigravity hỏi có chạy lệnh git không?** Chỉ đồng ý với `status`, `log`, `diff`, `show`, `blame`, `branch`, và
+  `git fetch origin` + `git switch -c <loại>/<mã-card>-<mô-tả> origin/develop` khi đang ở `develop` hoặc `main`.
 - **Test backend đỏ hàng loạt vì không kết nối được database?** Mở Docker Desktop rồi chạy lại.

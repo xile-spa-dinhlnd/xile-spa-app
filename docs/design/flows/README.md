@@ -1,39 +1,106 @@
-# Luồng xử lý
+# Luồng xử lý theo tính năng
 
-Sơ đồ luồng của các tính năng có rẽ nhánh nghiệp vụ hoặc nhiều bước, vẽ **theo code đang chạy** (không theo kế
-hoạch). Dùng khi sửa lỗi (`/fix-bug` đọc trước khi truy nguyên nhân) và khi đổi luồng (`/plan-task` vẽ thay đổi
-trên sơ đồ hiện có).
+Mỗi tính năng có một file luồng: **thiết kế viết trước khi code**, code theo đúng file đó, và file phải **khớp code
+khi mở PR**. Vì vậy file vừa là đầu vào của `/implement`, vừa là chỗ tra khi sửa lỗi (`/fix-bug`) và khi review
+(`/self-review`, `/review-pr`).
 
-Nguồn sự thật vẫn là code, SRS (`docs/srs/`) và ERD (`docs/design/erd.md`); file ở đây chỉ nối chúng lại thành
-luồng. Lệch với code thì sửa file này trong cùng PR với code (AGENTS.md mục 5 bước 6).
+Nguồn sự thật vẫn là SRS (`docs/srs/`), ERD (`docs/design/erd.md`) và code; file luồng nối chúng lại cho một tính
+năng. Lúc code thấy thiết kế sai hoặc không làm được thì dừng, hỏi, sửa thiết kế trước rồi mới code khác đi.
 
-## Khi nào cần
+## Cấu trúc
 
-- Có: tiền, chốt sổ, bút toán điều chỉnh, đăng nhập và phiên, giao dịch có kiểm tra trạng thái hay ngày đã chốt,
-  luồng nhiều màn hình, việc chạy nền (đồng bộ Sheets).
-- Không: CRUD danh mục chỉ kiểm tra trùng tên và ghi audit; FR và test đã đủ mô tả.
+```
+docs/design/flows/
+├─ README.md                 # file này: quy ước và khung
+└─ <module>/                 # cùng tên module backend: auth, catalog, staff, closing, visit...
+   ├─ README.md              # phần chung của module: cấu hình, quy ước dùng cho mọi tính năng
+   ├─ login.md               # một tính năng người dùng thấy
+   └─ forgot-password.md
+```
+
+- Một file một **tính năng người dùng thấy**, tên tiếng Anh kebab-case (`service-group.md`, `close-day.md`). Card có
+  nhiều tính năng thì mỗi tính năng một file; tính năng đã có file thì sửa file đó.
+- Card nào cũng có file luồng, kể cả CRUD đơn giản (file ngắn: điểm vào, quy tắc, lỗi, bảng test).
+- Phần chung của module viết một lần ở `<module>/README.md`, file tính năng không chép lại.
+
+## Vòng đời
+
+| Trạng thái            | Khi nào                                             | Ai đổi                                           |
+| --------------------- | --------------------------------------------------- | ------------------------------------------------ |
+| `thiết kế (chờ duyệt)` | Vừa viết, còn mục "Câu hỏi mở"                     | Claude `/plan-feature` (Đình), `/plan-task` (Huy) |
+| `thiết kế (đã duyệt)` | Người làm card duyệt, câu hỏi đã chốt              | người viết thiết kế                              |
+| `khớp code`           | Code xong, file đã sửa theo code, có tên test thật | `/implement`, `/fix-bug`                         |
+
+Tính năng làm dở giữa hai lần (ví dụ backend đã merge, giao diện chưa làm) thì ghi trạng thái theo từng phần:
+`khớp code (backend, PR #41) · thiết kế (chờ duyệt) (giao diện)`.
+
+Mỗi lần đổi file thì thêm một dòng vào bảng lịch sử: ngày (`dd/MM/yyyy`), người kèm agent đã viết, card hoặc PR,
+thay đổi gì.
 
 ## Quy ước
 
-- Một file một module, cùng tên module backend: `auth.md`, `closing.md`, `visit.md`. Mỗi luồng là một mục `##`.
 - Mermaid: `sequenceDiagram` cho luồng giữa các tầng, `flowchart TD` cho rẽ nhánh. Mỗi nhánh lỗi kết thúc bằng mã
-  HTTP và `ErrorCode` trả về.
-- Không chép lại code: chỉ tên lớp và method làm điểm vào, các quy tắc BR/FR, thứ tự kiểm tra và tác dụng phụ (ghi
-  gì, thu hồi gì, audit gì).
-- Số cấu hình (thời hạn token, số lần sai) ghi kèm tên thuộc tính trong `application.yml`, vì giá trị có thể đổi.
+  HTTP và `ErrorCode`. Ghi rõ chỗ mở transaction, ghi `audit_log`, kiểm tra ngày đã chốt. Nhãn tiếng Việt, ngắn.
+- Không chép code: chỉ tên lớp và method làm điểm vào, quy tắc BR/FR, thứ tự kiểm tra, tác dụng phụ (ghi gì, thu hồi
+  gì, audit gì).
+- Số cấu hình ghi kèm tên thuộc tính trong `application.yml`, vì giá trị có thể đổi.
+- Mục nào không áp dụng thì ghi "Không" kèm lý do ngắn, không bỏ trống.
 
-## Khung một mục
+## Khung một file
 
-```markdown
-## <Tên luồng> (FR-..., BR-...)
+````markdown
+# <Tên tính năng bằng tiếng Việt>
 
-Điểm vào: `METHOD /api/...` → `XxxController.method` → `XxxService.method`. Frontend: `features/x/...`.
+Trạng thái: <thiết kế (chờ duyệt) | thiết kế (đã duyệt) | khớp code> · Card: <S2-06> · Yêu cầu: <FR-..., BR-..., OQ-...>
 
-<sơ đồ Mermaid>
+| Ngày       | Người              | Card / PR  | Thay đổi  |
+| ---------- | ------------------ | ---------- | --------- |
+| 23/10/2026 | Đình (Claude)      | S2-06      | Thiết kế  |
+| 25/10/2026 | Đình (Antigravity) | S2-06, #42 | Khớp code |
 
-Quy tắc giữ trong luồng:
+## Mục tiêu
 
-- <BR-.., thứ tự kiểm tra, transaction, audit>
+<1 đến 3 câu: người dùng làm được gì, vì sao cần.>
 
-Lỗi trả về: `401 UNAUTHORIZED` (...), `409 ...` (...).
-```
+## Điểm vào
+
+| Loại     | Điểm vào                                                                 | Ghi chú                            |
+| -------- | ------------------------------------------------------------------------ | ---------------------------------- |
+| API      | `POST /api/...` → `XxxController.method` → `XxxService.method`           | body, mã trạng thái thành công     |
+| Màn hình | `features/<x>/pages/XxxPage` (route `/...`)                              | bảng ở máy tính, thẻ ở điện thoại |
+
+## Luồng
+
+<Sơ đồ Mermaid.>
+
+## Quy tắc nghiệp vụ
+
+- <BR-.., thứ tự kiểm tra, transaction, audit, không xóa cứng, tiền long, Clock...>
+
+## Lỗi trả về
+
+| HTTP | `code` | Khi nào | Giao diện hiển thị |
+| ---- | ------ | ------- | ------------------ |
+
+## Ảnh hưởng
+
+<Chỗ khác phải đổi theo: nơi gọi endpoint (frontend, test, Postman), method khác chạm cùng trạng thái, bản ghi tham
+chiếu tới (cả hai chiều). Mỗi dòng: file hoặc lớp, đổi gì. Không có thì "Không".>
+
+## Hành vi và test
+
+Theo sáu nhóm của `AGENTS.md` mục 10. Lúc thiết kế ghi ca cần có; lúc khớp code ghi tên test thật.
+
+| Hành vi | Tầng | Chuẩn | Dữ liệu sai | Biên | Lỗi nghiệp vụ | Quyền | Không tác dụng phụ |
+| ------- | ---- | ----- | ----------- | ---- | ------------- | ----- | ------------------ |
+
+Thử tay (Postman, giao diện): <bước và kết quả mong đợi>.
+
+## Câu hỏi mở
+
+<Chỉ có khi chờ duyệt. Mỗi câu kèm **Đề xuất:** và lý do. Xóa mục này khi đã chốt; câu thành quyết định nghiệp vụ
+thì ghi thêm OQ vào `docs/srs/07-open-questions.md`.>
+````
+
+File tách từ bản cũ (một file một module) giữ nguyên nội dung, chỉ thêm phần đầu; lần sửa tới thì bổ sung đủ các mục
+theo khung.

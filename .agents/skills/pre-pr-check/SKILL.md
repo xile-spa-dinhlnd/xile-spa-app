@@ -1,46 +1,41 @@
 ---
 name: pre-pr-check
-description: Chạy đủ kiểm tra trước khi mở Pull Request trong Xile Spa (format, lint, typecheck, test backend và frontend), tự soát checklist của mẫu PR, kiểm tra nhánh, rồi soạn sẵn tiêu đề, mô tả PR và các lệnh git để người dùng tự chạy. Dùng khi xong một card, trước khi người dùng commit lần cuối hoặc mở PR, hoặc khi người dùng gõ /pre-pr-check.
+description: Chỉ chạy khi người dùng tự gõ /pre-pr-check; không tự gọi sau /implement, /fix-bug hay khi thấy code đã xong. Chạy đủ kiểm tra trước khi mở Pull Request trong Xile Spa (format, lint, typecheck, test), tự soát checklist, rồi là nơi duy nhất hướng dẫn git - câu commit, push, mở PR, squash merge, dọn nhánh - để người dùng tự chạy.
 ---
 
-# /pre-pr-check: sẵn sàng mở PR
+# /pre-pr-check: sẵn sàng mở PR và hướng dẫn git
 
-Skill này **không** commit, push hay mở PR. Kết quả là một báo cáo và bản nháp PR để người dùng dán vào GitHub.
+- **Chỉ chạy khi người dùng gõ `/pre-pr-check`.** Không tự cho rằng code đã đúng và đã xong.
+- Đây là **nơi duy nhất** hướng dẫn git (AGENTS.md mục 8). Skill khác không đưa câu commit hay lệnh push.
+- Skill này không commit, push hay mở PR: chỉ soạn sẵn để người dùng tự chạy. Ngoại lệ: tạo nhánh ở bước 1.
 
-## 1. Xem phạm vi thay đổi
+## 1. Nhánh và phạm vi
 
 ```bash
 git branch --show-current
-git status
+git status --short
+git log --format='%h %s' origin/develop..HEAD
 git diff --stat origin/develop...HEAD
-git diff --stat
 ```
 
-Kiểm tra nhánh: phải là nhánh tách từ `develop`, tên đúng mẫu `feature|fix|docs|chore/<mã-card>-<mô-tả>`, hoặc
-`docs|chore/<mô-tả>` cho việc quy trình không có card (CONTRIBUTING.md mục 2). Đang ở `develop` hoặc `main` thì
-ghi lên đầu báo cáo, đưa lệnh `git switch -c <loại>/<mã-card>-<mô-tả>` (thay đổi chưa commit đi theo sang nhánh
-mới) và không báo sẵn sàng.
+- Đang ở `develop` hoặc `main`: tạo nhánh theo mục "Nhánh" của `.agents/rules/writer-role.md` rồi làm tiếp. Đang ở
+  nhánh của card khác: dừng và hỏi.
+- Liệt kê file đổi theo nhóm (backend, frontend, DB, tài liệu). Có file ngoài phạm vi card thì nêu ra.
+- **Kích thước** (CONTRIBUTING.md mục 4, "Nhỏ"): chỉ đếm code chính.
 
-Liệt kê file đổi theo nhóm (backend, frontend, DB, tài liệu). Có file ngoài phạm vi card thì nêu ra.
+  ```bash
+  git diff --numstat $(git merge-base origin/develop HEAD) -- backend/src/main frontend/src ':(exclude)frontend/src/**/*.test.ts' ':(exclude)frontend/src/**/*.test.tsx'
+  ```
 
-**Kích thước PR** (CONTRIBUTING.md mục 4, "Nhỏ"):
+  Cộng thêm file mới chưa add. Quá khoảng 400 dòng, hoặc diff có việc của hơn một card, hoặc việc không thuộc card:
+  ghi lên đầu báo cáo và đề xuất (tách việc ngoài card ra PR riêng; card quá lớn thì giữ một PR và ghi lý do trong
+  "Ghi chú cho người review"). Không tự tách; người dùng quyết.
+- **Test đi kèm code:** mỗi file code chính có đổi (`entity`, `service`, `controller`, `validator` ở backend;
+  `schemas.ts`, component, page, hook, `shared/lib` ở frontend) phải có file test của nó đổi hoặc được thêm. Còn
+  thiếu thì không báo sẵn sàng, đề xuất `/write-tests` cho đúng file đó. Chỉ đổi giao diện thuần (CSS, nhãn) thì ghi
+  "không cần test mới" kèm lý do.
 
-```bash
-git diff --numstat $(git merge-base origin/develop HEAD) -- . ':(exclude)frontend/package-lock.json' ':(exclude)docs/postman/*.json' ':(exclude)docs/design/diagrams/*'
-git status --short   # file mới chưa add cũng tính
-```
-
-Tổng số dòng thêm và xóa quá khoảng 400, hoặc diff có việc của hơn một card, hoặc có việc không thuộc card
-(sửa quy trình, AGENTS không liên quan) thì ghi lên đầu báo cáo và đề xuất cách tách: nhóm file nào vào PR nào, tên
-nhánh từng PR. Không tự tách; người dùng quyết.
-
-**Test đi kèm code:** với mỗi file code chính có đổi (`entity`, `service`, `controller`, `validator` ở backend;
-`schemas.ts`, component, page, hook, `shared/lib` ở frontend), phải có file test của nó cũng đổi hoặc được thêm
-(`XxxTest`, `XxxControllerIT`, `Xxx.test.tsx`, `schemas.test.ts`). Liệt kê các file thiếu test thành bảng; còn
-thiếu thì không báo sẵn sàng, đề xuất chạy `/write-tests` cho đúng file đó. Chỉ đổi giao diện thuần (CSS, nhãn)
-thì ghi "không cần test mới" kèm lý do.
-
-## 2. Chạy kiểm tra (phần nào có đổi thì chạy phần đó; đổi cả hai thì chạy cả hai)
+## 2. Chạy kiểm tra (phần nào có đổi thì chạy phần đó)
 
 ```bash
 cd backend && ./gradlew spotlessApply test
@@ -52,45 +47,51 @@ ghi là "đã qua". Có test đỏ thì dừng, phân tích bằng cách của `
 
 ## 3. Tự soát
 
-Đi qua từng ô trong mục "Checklist" của `.github/pull_request_template.md` và danh sách soát ở CONTRIBUTING.md
-mục 4 ("Review"). Thêm:
+Đi qua mục "Checklist" của `.github/pull_request_template.md` và danh sách soát ở CONTRIBUTING.md mục 4 ("Review").
+Thêm:
 
+- [ ] File luồng của tính năng có `Trạng thái: khớp code`, dòng lịch sử của card này, bảng "Hành vi và test" ghi tên
+      test thật (mở từng test để chắc nó có và kiểm tra đúng điều ghi). Không tick chỉ vì test đang xanh.
+- [ ] Mọi dòng ở mục "Ảnh hưởng" của file luồng đã làm; grep lại URL và tên method đã đổi (`AGENTS.md` mục 7).
 - [ ] Card trong `docs/backlog/` đã "Xong" (hoặc vẫn "Đang làm" nếu PR là Draft).
 - [ ] Endpoint mới hoặc sửa đã có trong Postman collection.
 - [ ] Không còn `console.log`, `System.out.println`, code bị comment bỏ, TODO không có mã card.
 - [ ] Không có bí mật, không sửa `.env`, không sửa migration cũ, không sửa file sinh tự động.
-- [ ] Test đủ các nhóm ca của `AGENTS.md` mục 10 cho mọi hành vi mới hoặc sửa: đọc bảng đối chiếu hành vi và
-      test mà `/implement` để lại (bước 7), mở từng test được ghi để chắc nó có thật và kiểm tra đúng điều ghi.
-      Không có bảng thì tự lập. Không tick ô này chỉ vì test đang xanh.
 - [ ] File frontend đã sửa không còn `style={{}}` (trừ giá trị tính lúc chạy); CSS ở `.module.css` cạnh component.
 - [ ] Đổi quy ước hay cấu trúc thì đã cập nhật `AGENTS.md` tương ứng.
-- [ ] Thêm hoặc đổi luồng có rẽ nhánh nghiệp vụ thì `docs/design/flows/<module>.md` khớp với code.
+- [ ] Câu commit đã có trên nhánh (bước 1) đúng CONTRIBUTING.md mục 3. Sai thì không viết lại lịch sử; ghi để sửa ở
+      bước squash (mục 5).
 
 Ô nào chưa đạt thì ghi rõ và đề xuất sửa; sửa xong thì chạy lại bước 2.
 
 ## 4. Soạn PR
 
-- **Tiêu đề:** `<loại>(<phạm vi>): <mô tả ngắn có dấu> [<mã thẻ>]` (CONTRIBUTING.md mục 3, 4). Ví dụ
-  `feat(catalog): quản lý nhóm dịch vụ [S2-06]`.
-- **Mô tả:** điền đúng các mục của `.github/pull_request_template.md` (Tóm tắt, Liên kết, Loại thay đổi, Thay đổi
-  chính, Kiểm thử với số liệu thật, Ảnh chụp màn hình, Rủi ro và cách quay lại, Ghi chú cho người review,
-  Checklist). Có sơ đồ từ `/plan-task` hoặc `/fix-bug` thì dán vào "Ghi chú cho người review".
-- **Câu squash merge:** tiêu đề PR + dòng `Refs: <mọi mã card>, <FR/BR>`.
+- **Tiêu đề:** `<loại>(<phạm vi>): <mô tả ngắn có dấu> [<mã thẻ>]` (CONTRIBUTING.md mục 3, 4). Việc của card là
+  `feat` (tính năng) hoặc `fix` (sửa lỗi đã có trên `develop`). Ví dụ `feat(catalog): quản lý nhóm dịch vụ [S2-06]`.
+- **Mô tả:** điền đúng các mục của `.github/pull_request_template.md`, "Kiểm thử" có số liệu thật. "Ghi chú cho
+  người review" có đường dẫn file luồng, giả định, và dòng "Đã tự review bằng /self-review ..." nếu người dùng đưa.
+- **Câu squash:** tiêu đề PR, thân chỉ một dòng `Refs: <mã card>, <FR/BR/OQ>`.
 
 Trả bản nháp trong một khối markdown để người dùng chép.
 
-## 5. Lệnh git cho người dùng
+## 5. Hướng dẫn git
 
-Agent không chạy git ghi. Sau bản nháp PR, in sẵn các lệnh để người dùng tự chạy, điền đúng tên nhánh, danh sách
-file và câu commit (Conventional Commits, CONTRIBUTING.md mục 3):
+In đúng các lệnh cho trạng thái hiện tại, điền sẵn tên nhánh, danh sách file, câu commit:
 
-```bash
-git status
-git add <các file của card>        # liệt kê cụ thể, không dùng "git add ." khi có file ngoài card
-git commit -m "<loại>(<phạm vi>): <mô tả>" -m "Refs: <mã card>, <FR/BR>"
-git push -u origin <nhánh>
-```
+1. **Commit** (bỏ qua nếu không còn gì chưa commit):
 
-Rồi mở PR vào `develop` trên GitHub bằng bản nháp ở bước 4. Sau khi squash merge (CONTRIBUTING.md mục 1):
-`git switch develop && git pull && git branch -D <nhánh>`. Dùng `-D` vì squash merge làm git không nhận ra nhánh
-đã gộp.
+   ```bash
+   git status
+   git add <các file của card>        # liệt kê cụ thể, không "git add ." khi có file ngoài card
+   git commit -m "<loại>(<phạm vi>): <mô tả tiếng Việt có dấu>" -m "Refs: <mã card>, <FR/BR/OQ>"
+   ```
+
+   Câu commit theo CONTRIBUTING.md mục 3: tiếng Việt có dấu, bắt đầu bằng động từ, không "update", "wip".
+2. **Push:** `git push -u origin <nhánh>` (lần đầu), sau đó `git push`.
+3. **Mở PR** vào `develop` trên GitHub, dán tiêu đề và mô tả ở bước 4. PR của Huy: gán Đình review. PR của Đình:
+   merge bằng bypass sau khi `/self-review` sạch (CONTRIBUTING.md mục 4).
+4. **Sửa sau review:** sửa bằng khối mà review đưa, commit theo bước 1, `git push`, bấm **Re-request review**.
+5. **Merge:** chọn **Squash and merge**, không chọn "Create a merge commit". Ô tiêu đề dán tiêu đề PR; ô nội dung xóa
+   phần GitHub tự ghép từ các commit, chỉ để dòng `Refs:` ở bước 4.
+6. **Sau khi merge:** `git switch develop && git pull && git branch -D <nhánh>` (dùng `-D` vì squash làm git không
+   nhận ra nhánh đã gộp).

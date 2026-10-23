@@ -208,7 +208,7 @@ class StaffControllerIT {
     void getUnknownStaffIs404() throws Exception {
         mockMvc.perform(get("/api/staff/999999").with(loggedIn))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.message").value("Không tìm thấy nhân viên."));
+                .andExpect(jsonPath("$.code").value("NOT_FOUND"));
     }
 
     @Test

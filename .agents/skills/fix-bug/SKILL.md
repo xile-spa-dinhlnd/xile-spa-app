@@ -1,6 +1,6 @@
 ---
 name: fix-bug
-description: Sửa lỗi có bằng chứng trong Xile Spa - tái hiện lỗi bằng test đỏ, chỉ ra nguyên nhân ở file và dòng cụ thể, vẽ luồng cũ và luồng mới nếu là lỗi luồng, đề xuất cách sửa rồi dừng chờ duyệt. Dùng khi người dùng báo lỗi, gõ /fix-bug, hoặc test đang đỏ mà chưa rõ vì sao.
+description: Sửa lỗi có bằng chứng trong Xile Spa - tái hiện lỗi bằng test đỏ, chỉ ra nguyên nhân ở file và dòng cụ thể, vẽ luồng cũ và luồng mới nếu là lỗi luồng, đề xuất cách sửa rồi dừng chờ duyệt. Dùng khi người dùng báo lỗi, gõ /fix-bug [<file luồng của tính năng>] <mô tả lỗi>, hoặc test đang đỏ mà chưa rõ vì sao.
 ---
 
 # /fix-bug: chứng minh trước, sửa sau
@@ -11,8 +11,8 @@ ghi nhãn.
 
 ## Giai đoạn 1: điều tra (không sửa code)
 
-0. **Kiểm tra nhánh** (`git branch --show-current`). Đang ở `develop` hoặc `main` thì ghi lên đầu báo cáo lệnh
-   `git switch -c fix/<mã-card>-<mô-tả>` (CONTRIBUTING.md mục 2) và nhắc người dùng chạy trước khi commit.
+0. **Tạo nhánh** `fix/<mã-card>-<mô-tả>` theo mục "Nhánh" của `.agents/rules/writer-role.md`, trước khi ghi test
+   đỏ. Lỗi trên bản đã phát hành (`hotfix/*`) thì không tự tạo nhánh: dừng và hỏi (CONTRIBUTING.md mục 6).
 1. **Mô tả lỗi** bằng ba dòng: các bước làm, kết quả mong đợi (trích FR/BR nếu có), kết quả thực tế. Thiếu bước
    tái hiện thì hỏi người dùng, đừng tự bịa.
 2. **Tái hiện bằng test đỏ.** Viết test nhỏ nhất cho thấy lỗi:
@@ -22,8 +22,9 @@ ghi nhãn.
      Chạy riêng test đó (lệnh ở `AGENTS.md` mục 3) và **dán đoạn output đỏ**. Test đỏ này là file mới duy nhất
      được tạo trong giai đoạn 1.
      Nếu không tái hiện được: dừng, báo những gì đã thử, hỏi thêm thông tin. Không sửa "phòng hờ".
-3. **Truy nguyên nhân.** Có `docs/design/flows/<module>.md` thì đọc trước để biết luồng đúng; thấy sơ đồ lệch
-   với code thì ghi vào báo cáo. Đi theo luồng gọi từ chỗ lỗi lộ ra tới chỗ sinh lỗi. Dùng `git log -p -- <file>` và
+3. **Truy nguyên nhân.** Đọc file luồng của tính năng trước (người dùng đưa đường dẫn, hoặc tìm trong
+   `docs/design/flows/<module>/` theo endpoint, tên lớp) để biết luồng đúng; thấy sơ đồ lệch với code thì ghi vào
+   báo cáo. Đi theo luồng gọi từ chỗ lỗi lộ ra tới chỗ sinh lỗi. Dùng `git log -p -- <file>` và
    `git blame` để biết dòng đó đổi từ card nào, vì sao. Chỉ ra **file:dòng** gây lỗi và giải thích cơ chế.
 4. **Đánh giá phạm vi.** Lỗi này còn ảnh hưởng chỗ nào khác (tìm cùng mẫu code bằng grep)? Có làm sai dữ liệu đã
    lưu không? Nếu dữ liệu ngày đã chốt bị sai: chỉ sửa bằng bút toán điều chỉnh (ADR-0003), không viết code sửa thẳng.
@@ -88,6 +89,8 @@ flowchart TD
 
 1. Sửa đúng phạm vi đã duyệt. Thấy thêm lỗi khác thì ghi lại để báo, không sửa lẫn vào.
 2. Chạy test đỏ: phải xanh. Chạy toàn bộ test của phần bị ảnh hưởng (backend, frontend hoặc cả hai).
-3. Cách sửa làm đổi luồng thì cập nhật `docs/design/flows/<module>.md` theo luồng mới (chỉ phần "Mới:", bỏ phần
-   "Cũ:" của sơ đồ so sánh).
-4. Báo cáo: file đã sửa, test trước/sau, cách thử tay, câu commit gợi ý `fix(<phạm vi>): <mô tả>`.
+3. Cập nhật file luồng của tính năng theo luồng mới (chỉ phần "Mới:", bỏ phần "Cũ:" của sơ đồ so sánh), thêm test
+   chống tái phát vào bảng "Hành vi và test" và dòng lịch sử `<dd/MM/yyyy> | <tên người dùng> (Antigravity) |
+   <card> | Sửa lỗi: <tóm tắt>`. Tính năng chưa có file luồng thì tạo theo `docs/design/flows/README.md`.
+4. Báo cáo: file đã sửa, test trước/sau, cách thử tay. Không hướng dẫn git; người dùng gõ `/pre-pr-check` khi sẵn
+   sàng.

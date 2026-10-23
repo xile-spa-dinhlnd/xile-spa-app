@@ -6,6 +6,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
+  currentBranch,
   emitDecision,
   existsOnDevelop,
   isGeneratedFile,
@@ -46,7 +47,13 @@ const GIT_READ_ONLY = new Set([
 const GIT_DENY_REASON =
   'Agent chỉ được chạy lệnh git chỉ đọc (status, log, diff, show, blame, branch để xem...). ' +
   'Đổi nhánh, commit, push, stash, restore... là việc của người làm card (CONTRIBUTING.md mục 8). ' +
+  'Ngoại lệ duy nhất của Antigravity: `git fetch origin` rồi ' +
+  '`git switch -c <loại>/<mã-card>-<mô-tả> origin/develop` khi đang ở develop hoặc main. ' +
   'Hãy dừng lại và ghi lệnh cần chạy vào báo cáo cho người dùng.'
+
+// Nhánh card mà Antigravity được tự tạo (AGENTS.md mục 5 bước 1, mẫu tên ở CONTRIBUTING.md mục 2).
+const CARD_BRANCH = /^(feature|fix|docs|chore)\/[A-Za-z0-9][A-Za-z0-9._-]*$/
+const BASE_BRANCHES = new Set(['develop', 'main'])
 
 const SHELLS = new Set(['sh', 'bash', 'zsh', 'pwsh', 'powershell', 'cmd', 'eval'])
 const WRAPPERS = new Set(['sudo', 'command', 'env', 'time', 'nohup', 'exec'])
@@ -54,7 +61,10 @@ const WRAPPERS = new Set(['sudo', 'command', 'env', 'time', 'nohup', 'exec'])
 // Trả về lý do chặn (chuỗi) hoặc null nếu cho phép.
 export function check(action, deps = {}) {
   const onDevelop = deps.existsOnDevelop ?? existsOnDevelop
-  if (action.kind === 'command') return checkCommand(action, action.command, onDevelop, 0)
+  if (action.kind === 'command') {
+    const withBranch = { ...action, branchOf: deps.currentBranch ?? currentBranch }
+    return checkCommand(withBranch, action.command, onDevelop, 0)
+  }
   if (action.kind === 'read') {
     for (const file of action.paths) {
       const repoPath = toRepoPath(action.root, file)
@@ -146,12 +156,13 @@ function checkSegment(action, tokens, onDevelop, depth) {
     }
     return null
   }
-  if (program === 'git') return checkGit(action.agent, args)
+  if (program === 'git') return checkGit(action, args)
   if (program === 'gh') return checkGh(action.agent, args)
   return null
 }
 
-function checkGit(agent, args) {
+function checkGit(action, args) {
+  const { agent } = action
   let i = 0
   while (i < args.length && args[i].startsWith('-')) {
     if (['-C', '-c', '--git-dir', '--work-tree', '--namespace'].includes(args[i])) i++
@@ -176,12 +187,37 @@ function checkGit(agent, args) {
     return rest.some((a) => ['--get', '--get-all', '--get-regexp', '--list', '-l'].includes(a))
       ? null
       : GIT_DENY_REASON
+  if (agent === 'antigravity') {
+    if (sub === 'fetch') return isPlainFetch(rest) ? null : GIT_DENY_REASON
+    if (sub === 'switch') return checkCreateCardBranch(action, rest)
+  }
   if (agent === 'claude') {
     // Review PR: lấy code PR về một worktree riêng, không đổi nhánh của thư mục đang làm.
     if (sub === 'fetch') return null
     if (sub === 'worktree' && ['add', 'list', 'remove', 'prune'].includes(rest[0])) return null
   }
   return GIT_DENY_REASON
+}
+
+// Chỉ cập nhật nhánh theo dõi từ origin, không lấy ref lạ về (refspec có dấu ":").
+function isPlainFetch(rest) {
+  return rest.every((a) => ['origin', 'develop', 'main', '-q', '--quiet', '--prune'].includes(a))
+}
+
+// Đúng một mẫu: git switch -c <loại>/<tên> origin/develop, và chỉ khi đang ở develop hoặc main. Tạo nhánh mới ở
+// máy không mất code: thay đổi chưa commit đi theo sang nhánh mới; git tự từ chối nếu xung đột.
+function checkCreateCardBranch(action, rest) {
+  const [flag, name, start, ...extra] = rest.filter((a) => a !== '-q' && a !== '--quiet')
+  const isCardBranch =
+    ['-c', '--create'].includes(flag) &&
+    CARD_BRANCH.test(name ?? '') &&
+    start === 'origin/develop' &&
+    extra.length === 0
+  if (!isCardBranch) return GIT_DENY_REASON
+  const branch = action.branchOf(action.root)
+  if (!BASE_BRANCHES.has(branch))
+    return `Đang ở nhánh ${branch ?? '(không rõ)'}, không phải develop hoặc main. Không tự tạo nhánh mới; dừng lại và hỏi người dùng.`
+  return null
 }
 
 function checkGitBranch(agent, rest) {

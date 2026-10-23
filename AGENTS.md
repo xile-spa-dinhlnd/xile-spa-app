@@ -25,7 +25,7 @@ Nhóm hai người: **Đình** và **Huy**, chia việc theo tính năng, Scrum 
 | Tiền, giảm giá, doanh thu, chốt sổ, bút toán điều chỉnh | `docs/srs/04-business-rules.md`, `docs/design/erd.md` (mục 5 và 6), `docs/adr/0003-closed-day-corrections-via-adjustments.md` |
 | Một API hoặc một màn hình mới                           | mục tương ứng trong `docs/srs/03-functional-requirements.md` (theo mã FR)                                                     |
 | Bảng, cột, index, migration                             | `docs/design/erd.md`, rồi `backend/src/main/resources/db/migration/`                                                          |
-| Sửa lỗi, đổi luồng xử lý của một module                 | `docs/design/flows/<module>.md` (sơ đồ luồng theo code đang chạy; quy ước ở `docs/design/flows/README.md`)                    |
+| Thiết kế, sửa lỗi, đổi luồng một tính năng              | `docs/design/flows/<module>/<tính-năng>.md` (thiết kế viết trước khi code, khớp code khi mở PR; khung ở `docs/design/flows/README.md`) |
 | Lựa chọn công nghệ, thư viện                            | `docs/adr/0001-tech-stack.md`                                                                                                 |
 | Google Sheets, nguồn dữ liệu gốc                        | `docs/adr/0002-source-of-truth-and-sheets-mirror.md`                                                                          |
 | Thuật ngữ, tên trường                                   | `docs/srs/06-data-dictionary.md`                                                                                              |
@@ -84,9 +84,9 @@ Database dev: `docker compose up -d` ở gốc repo. Windows dùng `gradlew.bat`
    đổi gốc (BR-18).
 9. **Không tự ý quyết định nghiệp vụ.** Thiếu thông tin thì tra `docs/srs/07-open-questions.md`; nếu vẫn
    chưa có câu trả lời thì dừng và hỏi, ghi giả định vào PR thay vì đoán.
-10. **Một card một PR, PR nhỏ.** Không sửa file nằm ngoài phạm vi card (nhất là SRS, ERD, migration cũ)
-    mà không nói trước. Card dự kiến quá khoảng 400 dòng thì kế hoạch phải có mục "Chia PR" (CONTRIBUTING.md
-    mục 2); việc không thuộc card đi PR riêng.
+10. **Một card một nhánh một PR.** Không sửa file nằm ngoài phạm vi card (nhất là SRS, ERD, migration cũ)
+    mà không nói trước. Code chính (không tính test, Postman, tài liệu) dự kiến quá khoảng 400 dòng thì nêu trong
+    thiết kế để tách card khi lập sprint (CONTRIBUTING.md mục 2); việc không thuộc card đi PR riêng.
 11. **Giữ các file AGENTS luôn đúng với code.** Khi đổi kiến trúc, cấu trúc thư mục, quy ước đặt tên, thư viện
     hay cách làm chung thì cập nhật `AGENTS.md`, `backend/AGENTS.md` hoặc `frontend/AGENTS.md` **trong cùng
     PR** (kèm ADR nếu là quyết định công nghệ), để cả nhóm và AI theo kịp.
@@ -96,23 +96,26 @@ Database dev: `docker compose up -d` ở gốc repo. Windows dùng `gradlew.bat`
 
 ## 5. Quy trình làm một card
 
-1. **Kiểm tra nhánh** (`git branch --show-current`). Được sửa file khi đang ở `develop`, nhưng commit và push chỉ
-   trên nhánh card: đang ở `develop` hoặc `main` thì nhắc người dùng tạo nhánh trước khi commit
-   (`git switch -c feature/S2-06-service-group`, mẫu tên ở CONTRIBUTING.md mục 2). Đọc card trong backlog của sprint
-   (`docs/backlog/`) và các mã FR / BR mà card trỏ tới. **Chuyển trạng thái card sang "Đang làm"** trong file
-   backlog (và trên Trello).
-2. **Nêu kế hoạch trước khi viết code**: sẽ sửa file nào, thêm bảng hay API nào, test gì. Chờ người duyệt.
-   Antigravity dùng skill `/plan-task` (tính năng) hoặc `/fix-bug` (sửa lỗi, phải tái hiện bằng test đỏ trước).
-3. Viết code theo quy tắc của `backend/AGENTS.md` hoặc `frontend/AGENTS.md`.
-4. Viết test cho logic nghiệp vụ. Chạy build và test tại máy trước khi commit.
-5. Tự đọc lại diff, nêu rõ phần nào còn chưa chắc.
-6. Cập nhật tài liệu trong **cùng PR** nếu hành vi đổi (SRS, ERD, README, sơ đồ luồng ở `docs/design/flows/` khi
-   luồng có rẽ nhánh nghiệp vụ được thêm hoặc đổi), và các file AGENTS nếu đổi kiến trúc hay quy ước (quy tắc 11).
+1. **Thiết kế trước khi code.** Đọc card trong backlog của sprint (`docs/backlog/`) và các mã FR / BR / OQ mà card
+   trỏ tới, rồi viết **file luồng** `docs/design/flows/<module>/<tính-năng>.md` theo khung ở
+   `docs/design/flows/README.md`: điểm vào, sơ đồ, quy tắc, lỗi, chỗ bị ảnh hưởng, bảng test. Huy dùng `/plan-task`
+   của Antigravity; Đình dùng `/plan-feature` của Claude Code. Sửa lỗi dùng `/fix-bug` (tái hiện bằng test đỏ trước).
+   Chờ người làm card duyệt. **Chuyển trạng thái card sang "Đang làm"** trong file backlog (và trên Trello).
+2. **Nhánh:** skill đầu tiên ghi file của card tự tạo nhánh `<loại>/<mã-card>-<mô-tả>` từ `origin/develop` khi đang
+   ở `develop` hoặc `main` (`.agents/rules/writer-role.md` mục "Nhánh"; mẫu tên ở CONTRIBUTING.md mục 2).
+3. Viết code theo đúng file luồng và quy tắc của `backend/AGENTS.md` hoặc `frontend/AGENTS.md` (`/implement <file
+   luồng>`). Thiết kế sai hoặc không làm được thì dừng, hỏi, sửa thiết kế trước.
+4. Viết test cho logic nghiệp vụ. Chạy build và test tại máy.
+5. Tự đọc lại diff, nêu rõ phần nào còn chưa chắc. Đình chạy `/self-review` (Claude Code) trước khi mở PR.
+6. **File luồng khớp code** trước khi mở PR: sơ đồ, lỗi, tên test thật, `Trạng thái: khớp code`, dòng lịch sử.
+   Cập nhật tài liệu khác trong **cùng PR** nếu hành vi đổi (SRS, ERD, README), và các file AGENTS nếu đổi kiến
+   trúc hay quy ước (quy tắc 11).
 7. **Thêm hoặc sửa endpoint thì cập nhật Postman collection** `docs/postman/xile-spa.postman_collection.json`
    trong cùng PR: mỗi endpoint một request, có ví dụ body và kiểm tra mã trạng thái mong đợi.
 8. **Card xong thì chuyển trạng thái sang "Xong"** trong file backlog ngay trong PR của card đó.
-9. Nhánh, commit, PR và review theo `CONTRIBUTING.md` (nhánh `feature/S1-01-...`, Conventional Commits,
-   squash merge). Cấu trúc thư mục theo `backend/AGENTS.md` / `frontend/AGENTS.md`, không tự đặt chỗ mới.
+9. **Git chỉ hướng dẫn ở một chỗ:** người làm card gõ `/pre-pr-check` (Antigravity) khi sẵn sàng; skill đó chạy kiểm
+   tra rồi đưa câu commit, lệnh push, bản nháp PR và cách squash merge theo `CONTRIBUTING.md`. Cấu trúc thư mục theo
+   `backend/AGENTS.md` / `frontend/AGENTS.md`, không tự đặt chỗ mới.
 
 ## 6. Khi AI lặp lại cùng một lỗi
 
@@ -133,19 +136,28 @@ Quy tắc sinh ra từ lỗi thật mới đáng giữ.
 - Quên cập nhật Postman collection và trạng thái card trong `docs/backlog/` (mục 5, bước 7 và 8).
 - Hai nhánh cùng lấy một số migration `V{n}`: báo số cho người kia trước (CONTRIBUTING.md mục 4).
 - Dùng `@Profile("!prod")` để chọn hành vi theo môi trường: thay bằng thuộc tính và `@ConditionalOnProperty` (backend/AGENTS.md mục Cấu hình).
+- Đổi hành vi một endpoint (tham số mặc định, trường trả về, mã lỗi) mà không tìm nơi gọi: grep URL trong
+  `frontend/src`, `backend/src/test`, `docs/postman` và sửa theo trong cùng PR (S2-06: ô chọn nhóm hiện nhóm đã ngừng dùng).
+- Chuyển method sang lớp khác mà để lại bản cũ không ai gọi, hoặc hai method repository làm cùng một việc: grep tên cũ, xóa.
+- Thêm ràng buộc trạng thái (ngừng dùng, đã chốt...) mà chỉ chặn ở một chỗ: liệt kê mọi method đưa bản ghi vào hoặc ra
+  khỏi trạng thái đó, xét cả bản ghi tham chiếu tới (OQ-21: ngừng dùng nhóm, bán lại dịch vụ trong nhóm đã ngừng).
+- Câu commit tiếng Anh hoặc dùng `fix` cho việc mới của card: theo CONTRIBUTING.md mục 3, do `/pre-pr-check` soạn.
 - Editor (Antigravity IDE, VS Code) mặc định dùng TypeScript 5.x đi kèm, chưa bật `strict` như TypeScript 6 của dự án, nên báo đỏ khác `npm run typecheck`: giữ `"strict": true` trong `frontend/tsconfig.app.json`, chọn "Use Workspace Version" trong editor, lấy `npm run typecheck` làm chuẩn.
 
 ## 8. Vai trò từng agent
 
 | Agent                             | Ai dùng   | Làm gì                                                       | Cấu hình riêng                           |
 | --------------------------------- | --------- | ------------------------------------------------------------ | ---------------------------------------- |
-| Antigravity                       | Đình, Huy | Viết code, test, tài liệu của card; git chỉ được đọc         | `.agents/` (rules, skills, `hooks.json`) |
-| Claude Code (máy Đình)            | Đình      | Review PR của thành viên, tự soát code của Đình trước khi PR | `.claude/` chỉ ở máy Đình, không commit  |
+| Antigravity                       | Đình, Huy | Thiết kế (Huy), code, test, tài liệu; tạo nhánh card; hướng dẫn git ở `/pre-pr-check` | `.agents/` (rules, skills, `hooks.json`) |
+| Claude Code (máy Đình)            | Đình      | Thiết kế tính năng cho Đình, tự soát code của Đình, review PR của Huy (chấm điểm)     | `.claude/` chỉ ở máy Đình, không commit  |
 | Claude app (dự án trên claude.ai) | Đình      | Lập kế hoạch sprint, chia card, release, tài liệu lớn        | bộ nhớ dự án trên claude.ai              |
 
-- Hook dùng chung `tools/agent-hooks/` chặn: lệnh git làm đổi nhánh, commit, push; xóa hàng loạt; đọc, sửa file bí
-  mật; sửa migration đã có trên `develop`; sửa file sinh tự động; tự sửa cấu hình hook. Bị chặn thì dừng và báo
-  người dùng, không tìm cách lách. Hook Stop của Antigravity nhắc tạo nhánh khi đang ở `develop` hoặc `main`.
+- Hook dùng chung `tools/agent-hooks/` chặn: lệnh git làm đổi nhánh, commit, push (ngoại lệ duy nhất: Antigravity
+  `git fetch origin` và `git switch -c <loại>/<tên> origin/develop` khi đang ở `develop` hoặc `main`); xóa hàng loạt;
+  đọc, sửa file bí mật; sửa migration đã có trên `develop`; sửa file sinh tự động; tự sửa cấu hình hook. Bị chặn thì
+  dừng và báo người dùng, không tìm cách lách.
+- **Chỉ `/pre-pr-check` hướng dẫn git** (câu commit, push, PR, squash), và chỉ chạy khi người dùng gõ. Skill khác,
+  hook và Claude không đưa lệnh git.
 - **Nạp quy tắc của thư mục con:** nội dung chỉ viết ở `backend/AGENTS.md`, `frontend/AGENTS.md`. Antigravity nạp
   qua rule glob `.agents/rules/backend.md`, `frontend.md`; Claude Code nạp qua `backend/CLAUDE.md`,
   `frontend/CLAUDE.md` (một dòng `@AGENTS.md`). Thêm thư mục có `AGENTS.md` riêng thì thêm cả hai lớp trỏ này.
