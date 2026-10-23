@@ -701,7 +701,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/catalog/service-groups",
+              "raw": "{{baseUrl}}/api/catalog/service-groups?active=true",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -709,6 +709,12 @@
                 "api",
                 "catalog",
                 "service-groups"
+              ],
+              "query": [
+                {
+                  "key": "active",
+                  "value": "true"
+                }
               ]
             },
             "description": "Nhóm đang dùng, xếp theo thứ tự. Lưu id nhóm đầu và nhóm thứ hai vào biến để các request sau dùng."
@@ -2297,7 +2303,7 @@
       ]
     },
     {
-      "name": "6. Đăng xuất",
+      "name": "7. Đăng xuất",
       "item": [
         {
           "name": "Đăng xuất",
