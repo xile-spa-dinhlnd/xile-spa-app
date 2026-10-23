@@ -6,7 +6,6 @@ import com.xilespa.common.exception.BusinessException;
 import com.xilespa.common.exception.ErrorCode;
 import com.xilespa.common.response.PageResponse;
 import com.xilespa.module.catalog.dto.request.ServiceItemRequest;
-import com.xilespa.module.catalog.dto.response.ServiceGroupResponse;
 import com.xilespa.module.catalog.dto.response.ServiceItemResponse;
 import com.xilespa.module.catalog.entity.ServiceGroup;
 import com.xilespa.module.catalog.entity.ServiceItem;
@@ -17,7 +16,6 @@ import com.xilespa.module.catalog.repository.ServicePriceHistoryRepository;
 import com.xilespa.security.CurrentUser;
 import java.time.Clock;
 import java.time.Instant;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
@@ -63,14 +61,6 @@ public class ServiceItemService {
     @Transactional(readOnly = true)
     public ServiceItemResponse get(Long id) {
         return mapper.toResponse(findService(id));
-    }
-
-    /** Nhóm dịch vụ đang dùng, cho ô chọn ở giao diện. */
-    @Transactional(readOnly = true)
-    public List<ServiceGroupResponse> listGroups() {
-        return groupRepository.findByActiveTrueOrderBySortOrderAscNameAsc().stream()
-                .map(mapper::toResponse)
-                .toList();
     }
 
     /** Tạo dịch vụ (FR-SVC-02). */
@@ -132,10 +122,16 @@ public class ServiceItemService {
         return before;
     }
 
-    /** Bán lại (FR-SVC-04). Gọi lại khi đang bán thì không đổi gì. */
+    /**
+     * Bán lại (FR-SVC-04). Gọi lại khi đang bán thì không đổi gì. Nhóm đã ngừng dùng thì không cho
+     * bán lại (OQ-21).
+     */
     @Transactional
     public ServiceItemResponse activate(Long id) {
         ServiceItem service = findService(id);
+        if (!service.isActive() && !service.getGroup().isActive()) {
+            throw new BusinessException(ErrorCode.SERVICE_GROUP_NOT_FOUND);
+        }
         ServiceItemResponse before = mapper.toResponse(service);
         if (service.activate(clock.instant())) {
             ServiceItemResponse after = mapper.toResponse(service);

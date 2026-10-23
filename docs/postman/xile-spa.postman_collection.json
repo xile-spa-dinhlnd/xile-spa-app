@@ -701,7 +701,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/catalog/service-groups",
+              "raw": "{{baseUrl}}/api/catalog/service-groups?active=true",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -709,6 +709,12 @@
                 "api",
                 "catalog",
                 "service-groups"
+              ],
+              "query": [
+                {
+                  "key": "active",
+                  "value": "true"
+                }
               ]
             },
             "description": "Nhóm đang dùng, xếp theo thứ tự. Lưu id nhóm đầu và nhóm thứ hai vào biến để các request sau dùng."
@@ -1447,7 +1453,282 @@
       ]
     },
     {
-      "name": "5. Trường hợp lỗi (thử phá)",
+      "name": "5. Nhóm dịch vụ (S2-06)",
+      "item": [
+        {
+          "name": "Thêm nhóm dịch vụ",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/catalog/service-groups",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "catalog",
+                "service-groups"
+              ]
+            },
+            "description": "FR-SVC-05. Trả 201 và header Location. Tên không trùng (ux_service_group_name).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Nhóm thử {{groupRunId}}\",\n  \"sortOrder\": 50\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"groupRunId\", Date.now());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 201\", () => pm.response.to.have.status(201));",
+                  "const g = pm.response.json();",
+                  "pm.collectionVariables.set(\"testGroupId\", g.id);",
+                  "pm.test(\"Đúng dữ liệu\", () => { pm.expect(g.name).to.include(\"Nhóm thử\"); pm.expect(g.sortOrder).to.eql(50); pm.expect(g.active).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Danh sách nhóm dịch vụ (tất cả)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/catalog/service-groups",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "catalog",
+                "service-groups"
+              ]
+            },
+            "description": "Lấy tất cả nhóm (cả đang dùng và ngừng dùng), xếp theo thứ tự."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 200\", () => pm.response.to.have.status(200));",
+                  "const g = pm.response.json();",
+                  "pm.test(\"Có danh sách nhóm\", () => pm.expect(g.length).to.be.at.least(1));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Lọc nhóm đang dùng",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/catalog/service-groups?active=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "catalog",
+                "service-groups"
+              ],
+              "query": [
+                {
+                  "key": "active",
+                  "value": "true"
+                }
+              ]
+            },
+            "description": "Chỉ lấy các nhóm đang dùng để chọn khi tạo/sửa dịch vụ."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 200\", () => pm.response.to.have.status(200));",
+                  "const list = pm.response.json();",
+                  "pm.test(\"Tất cả đều đang dùng\", () => pm.expect(list.every(g => g.active)).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Xem một nhóm dịch vụ",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/catalog/service-groups/{{testGroupId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "catalog",
+                "service-groups",
+                "{{testGroupId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Đúng nhóm\", () => pm.expect(pm.response.json().id).to.eql(pm.collectionVariables.get(\"testGroupId\")));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sửa nhóm dịch vụ",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/catalog/service-groups/{{testGroupId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "catalog",
+                "service-groups",
+                "{{testGroupId}}"
+              ]
+            },
+            "description": "Sửa tên và thứ tự.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Nhóm sửa {{groupRunId}}\",\n  \"sortOrder\": 55\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 200\", () => pm.response.to.have.status(200));",
+                  "const g = pm.response.json();",
+                  "pm.test(\"Tên và thứ tự đã đổi\", () => { pm.expect(g.name).to.include(\"Nhóm sửa\"); pm.expect(g.sortOrder).to.eql(55); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Dùng lại nhóm",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/catalog/service-groups/{{testGroupId}}/activate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "catalog",
+                "service-groups",
+                "{{testGroupId}}",
+                "activate"
+              ]
+            },
+            "description": "Chuyển active = true."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Đang dùng lại\", () => pm.expect(pm.response.json().active).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ngừng dùng nhóm",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/catalog/service-groups/{{testGroupId}}/deactivate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "catalog",
+                "service-groups",
+                "{{testGroupId}}",
+                "deactivate"
+              ]
+            },
+            "description": "Chuyển active = false (BR-19)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Đã ngừng dùng\", () => pm.expect(pm.response.json().active).to.eql(false));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "6. Trường hợp lỗi (thử phá)",
       "item": [
         {
           "name": "Đăng nhập sai mật khẩu",
@@ -2022,7 +2303,7 @@
       ]
     },
     {
-      "name": "6. Đăng xuất",
+      "name": "7. Đăng xuất",
       "item": [
         {
           "name": "Đăng xuất",
@@ -2110,6 +2391,14 @@
     },
     {
       "key": "staffId",
+      "value": ""
+    },
+    {
+      "key": "groupRunId",
+      "value": ""
+    },
+    {
+      "key": "testGroupId",
       "value": ""
     }
   ]

@@ -23,11 +23,12 @@ export function useServices(params: ServiceSearchParams) {
   })
 }
 
-/** Nhóm dịch vụ đang dùng, cho ô chọn. */
+/** Nhóm dịch vụ đang dùng, cho ô chọn. Màn quản lý nhóm (S2-06) lấy cả nhóm ngừng dùng bằng key khác. */
 export function useServiceGroups() {
   return useQuery({
-    queryKey: catalogKeys.groups,
-    queryFn: ({ signal }) => api.get<ServiceGroup[]>('/api/catalog/service-groups', { signal }),
+    queryKey: [...catalogKeys.groups, { active: true }] as const,
+    queryFn: ({ signal }) =>
+      api.get<ServiceGroup[]>('/api/catalog/service-groups', { signal, query: { active: true } }),
     staleTime: 5 * 60 * 1000,
   })
 }
