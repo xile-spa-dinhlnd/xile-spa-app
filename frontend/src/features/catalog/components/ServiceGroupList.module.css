@@ -1,0 +1,28 @@
+.listItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--xl-space-sm) 0;
+  width: 100%;
+}
+
+.listMeta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--xl-space-xs);
+}
+
+.listSubtext {
+  font-size: 13px;
+  color: var(--xl-color-text-secondary);
+}
+
+.listActions {
+  display: flex;
+  align-items: center;
+  gap: var(--xl-space-sm);
+}
+
+.errorAlert {
+  margin-bottom: var(--xl-space-md);
+}

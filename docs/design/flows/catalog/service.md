@@ -4,7 +4,8 @@ Trạng thái: khớp code · Card: S1-05, S1-06 · Yêu cầu: FR-SVC-01 đến
 
 | Ngày       | Người         | Card / PR            | Thay đổi                                                                         |
 | ---------- | ------------- | -------------------- | -------------------------------------------------------------------------------- |
-| 23/10/2026 | Đình (Claude) | chore/agent-workflow | Viết bù theo code đang chạy (S1-05 04dd2f7, sửa 46ef8b0; OQ-21 ở S2-06, #41)     |
+| 23/10/2026 | Đình (Claude)      | chore/agent-workflow | Viết bù theo code đang chạy (S1-05 04dd2f7, sửa 46ef8b0; OQ-21 ở S2-06, #41)     |
+| 23/10/2026 | Đình (Antigravity) | S2-06                | Ô lọc nhóm lấy tất cả nhóm; nhóm ngừng dùng có nhãn "(ngừng dùng)"               |
 
 Phần chung của module (tên không trùng, không xóa cứng, nhật ký, OQ-21): `README.md` cùng thư mục.
 
@@ -62,7 +63,7 @@ flowchart TD
 - Tìm theo tên: không phân biệt hoa thường; ký tự `%`, `_`, `\` người dùng gõ được coi là chữ thường, không phải ký
   tự đại diện (`likePattern`). Từ khóa trống là lấy tất cả.
 - Giao diện: mặc định lọc "Đang bán"; đang lọc thì có nút "Xóa bộ lọc"; danh sách trống nói rõ không có kết quả khớp
-  bộ lọc; lỗi tải hiện `Alert` có "Thử lại". Ô chọn nhóm trong form và ô lọc nhóm chỉ lấy nhóm đang dùng.
+  bộ lọc; lỗi tải hiện `Alert` có "Thử lại". Ô chọn nhóm trong form chỉ lấy nhóm đang dùng; ô lọc nhóm của bảng giá lấy tất cả nhóm, nhóm ngừng dùng có nhãn "(ngừng dùng)".
 
 ## Lỗi trả về
 
@@ -86,10 +87,10 @@ Tên test thật. Module chưa có test đơn vị cho `ServiceItemService`; cá
 
 | Hành vi | Tầng | Chuẩn | Dữ liệu sai | Biên | Lỗi nghiệp vụ | Quyền | Không tác dụng phụ |
 | ------- | ---- | ----- | ----------- | ---- | ------------- | ----- | ------------------ |
-| Tìm, lọc, phân trang | IT, Vitest | `searchFiltersByNameGroupAndStatus`, `listWithoutSearchTermWorks`, `filtersWithoutSearchTermUseTheSameParamsAsTheUi`; `mặc định chỉ hiện dịch vụ đang bán, không gửi q và groupId`, `tổ hợp tìm + nhóm + trạng thái, rồi xóa lọc thì hiện lại đầy đủ` | không áp dụng: tham số tùy chọn | `wildcardCharactersInSearchAreLiteral`; `xóa chữ trong ô tìm thì bỏ hẳn tham số q` | không áp dụng | `requiresLogin` | không áp dụng: chỉ đọc; lỗi tải: `lỗi tải danh sách hiện thông báo rõ ràng và nút thử lại` |
+| Tìm, lọc, phân trang | IT, Vitest | `searchFiltersByNameGroupAndStatus`, `listWithoutSearchTermWorks`, `filtersWithoutSearchTermUseTheSameParamsAsTheUi`; `mặc định chỉ hiện dịch vụ đang bán, không gửi q và groupId`, `tổ hợp tìm + nhóm + trạng thái, rồi xóa lọc thì hiện lại đầy đủ`, `ô lọc nhóm lấy tất cả nhóm, nhóm ngừng dùng có nhãn (ngừng dùng)` | không áp dụng: tham số tùy chọn | `wildcardCharactersInSearchAreLiteral`; `xóa chữ trong ô tìm thì bỏ hẳn tham số q` | không áp dụng | `requiresLogin` | không áp dụng: chỉ đọc; lỗi tải: `lỗi tải danh sách hiện thông báo rõ ràng và nút thử lại` |
 | Xem một dịch vụ | IT | thiếu | không áp dụng | không áp dụng | `getUnknownServiceIs404` | `requiresLogin` | không áp dụng |
 | Tạo dịch vụ | IT, Vitest | `createReturns201AndAuditLog`; `hiển thị dịch vụ với tiền đã định dạng, mặc định lọc đang bán` | `invalidInputReturnsFieldErrors`; `serviceFormSchema` `báo lỗi tiếng Việt theo từng ô` | `priceZeroAndMissingTourFeeAreAllowed`, `namesDifferingOnlyByCaseOrSpacesAreDuplicates`; `chấp nhận dữ liệu hợp lệ, giá 0 và tiền tour trống` | `unknownGroupIsRejected`; `lỗi trùng tên từ backend hiển thị ngay dưới ô tên` | `requiresLogin` | thiếu (chưa kiểm không lưu, không audit khi lỗi) |
-| Sửa, đổi giá | entity, IT | `changingPriceCreatesHistoryWithOldAndNewPrice`, `updatingPriceWritesPriceHistory` | `invalidInputReturnsFieldErrors` | `samePriceCreatesNoHistory`, `unchangedDetailsDoNotTouchUpdatedAt`, `updateWithoutPriceChangeWritesNoHistory` | `renamingToAnotherServicesNameIsDuplicate` | `requiresLogin` | thiếu |
+| Sửa, đổi giá | entity, IT, Vitest | `changingPriceCreatesHistoryWithOldAndNewPrice`, `updatingPriceWritesPriceHistory`; `đổi tên nhóm thì danh sách dịch vụ hiện tên mới` | `invalidInputReturnsFieldErrors` | `samePriceCreatesNoHistory`, `unchangedDetailsDoNotTouchUpdatedAt`, `updateWithoutPriceChangeWritesNoHistory` | `renamingToAnotherServicesNameIsDuplicate`; `sửa dịch vụ thuộc nhóm đã ngừng dùng: hiện lựa chọn bị khóa và báo lỗi nếu giữ nguyên` | `requiresLogin` | thiếu |
 | Ngừng bán, bán lại | entity, IT | `deactivateThenActivate` | không áp dụng: không có body | `deactivateAndActivateAreIdempotent` | `activatingServiceInInactiveGroupIsRejected` (ở `ServiceGroupControllerIT`) | `requiresLogin` | `activatingServiceInInactiveGroupIsRejected` |
 | Không xóa cứng | IT | không áp dụng | không áp dụng | không áp dụng | `deleteIsNotSupported` | `requiresLogin` | không áp dụng |
 

@@ -53,6 +53,18 @@ export function ServiceFormDrawer({ open, service, onClose }: ServiceFormDrawerP
   const updateService = useUpdateService()
   const saving = createService.isPending || updateService.isPending
 
+  // Dịch vụ đã ngừng bán có thể thuộc nhóm đã ngừng dùng (OQ-21): hiện tên nhóm thay cho số id, khóa không cho chọn.
+  const groupOptions: { value: number; label: string; disabled?: boolean }[] = (
+    groups.data ?? []
+  ).map((g) => ({ value: g.id, label: g.name }))
+  if (service && groups.data && !groups.data.some((g) => g.id === service.groupId)) {
+    groupOptions.push({
+      value: service.groupId,
+      label: `${service.groupName} (ngừng dùng)`,
+      disabled: true,
+    })
+  }
+
   const {
     control,
     handleSubmit,
@@ -155,7 +167,7 @@ export function ServiceFormDrawer({ open, service, onClose }: ServiceFormDrawerP
                 id="service-group"
                 placeholder="Chọn nhóm"
                 loading={groups.isPending}
-                options={(groups.data ?? []).map((g) => ({ value: g.id, label: g.name }))}
+                options={groupOptions}
               />
             )}
           />

@@ -4,6 +4,13 @@ export interface ServiceGroup {
   id: number
   name: string
   sortOrder: number
+  active: boolean
+}
+
+/** Thân request tạo và sửa nhóm dịch vụ (S2-06). */
+export interface ServiceGroupRequest {
+  name: string
+  sortOrder: number
 }
 
 export interface ServiceItem {
