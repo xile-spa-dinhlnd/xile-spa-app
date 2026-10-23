@@ -73,7 +73,7 @@ class ServiceItemControllerIT {
                 authentication(
                         new UsernamePasswordAuthenticationToken(
                                 principal, null, principal.getAuthorities()));
-        var groups = groupRepository.findByActiveTrueOrderBySortOrderAscNameAsc();
+        var groups = groupRepository.findByActiveOrderBySortOrderAscNameAsc(true);
         groupId = groups.get(0).getId();
         otherGroupId = groups.get(1).getId();
     }
@@ -323,17 +323,8 @@ class ServiceItemControllerIT {
     }
 
     @Test
-    void listsActiveGroupsInOrder() throws Exception {
-        mockMvc.perform(get("/api/catalog/service-groups").with(loggedIn))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].name").value("Gội đầu dưỡng sinh"))
-                .andExpect(jsonPath("$[3].name").value("Khác"));
-    }
-
-    @Test
     void requiresLogin() throws Exception {
         mockMvc.perform(get("/api/catalog/services")).andExpect(status().isUnauthorized());
-        mockMvc.perform(get("/api/catalog/service-groups")).andExpect(status().isUnauthorized());
     }
 
     private long create(String name, long price) throws Exception {

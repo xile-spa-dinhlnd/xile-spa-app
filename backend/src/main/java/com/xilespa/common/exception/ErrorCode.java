@@ -24,8 +24,12 @@ public enum ErrorCode {
 
     // Danh mục dịch vụ (module catalog)
     SERVICE_NAME_DUPLICATE(HttpStatus.CONFLICT, "Tên dịch vụ đã tồn tại."),
+    SERVICE_GROUP_NAME_DUPLICATE(HttpStatus.CONFLICT, "Tên nhóm dịch vụ đã tồn tại."),
     SERVICE_GROUP_NOT_FOUND(
             HttpStatus.BAD_REQUEST, "Nhóm dịch vụ không tồn tại hoặc đã ngừng sử dụng."),
+    SERVICE_GROUP_IN_USE(
+            HttpStatus.CONFLICT,
+            "Nhóm còn dịch vụ đang bán. Hãy ngừng bán hoặc chuyển các dịch vụ sang nhóm khác trước."),
 
     // Nhân viên (module staff)
     STAFF_NAME_DUPLICATE(HttpStatus.CONFLICT, "Đã có nhân viên đang làm trùng tên."),

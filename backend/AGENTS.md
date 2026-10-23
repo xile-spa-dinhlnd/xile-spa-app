@@ -63,6 +63,7 @@ catalog/
 │  └─ ServiceGroupController.java
 ├─ service/
 │  ├─ ServiceItemService.java         # nghiệp vụ + @Transactional + ghi audit; module khác chỉ gọi vào đây
+│  ├─ ServiceGroupService.java
 │  └─ model/                          # kiểu dữ liệu nội bộ của service (record), không trả ra API
 ├─ repository/
 │  ├─ ServiceItemRepository.java      # Spring Data JPA
@@ -75,7 +76,8 @@ catalog/
 ├─ enums/                             # enum dùng cho cột của entity, mỗi enum một file
 ├─ dto/
 │  ├─ request/
-│  │  └─ ServiceItemRequest.java      # record + annotation kiểm tra (@NotBlank, @PositiveOrZero...)
+│  │  ├─ ServiceItemRequest.java      # record + annotation kiểm tra (@NotBlank, @PositiveOrZero...)
+│  │  └─ ServiceGroupRequest.java
 │  └─ response/
 │     ├─ ServiceItemResponse.java     # record
 │     └─ ServiceGroupResponse.java

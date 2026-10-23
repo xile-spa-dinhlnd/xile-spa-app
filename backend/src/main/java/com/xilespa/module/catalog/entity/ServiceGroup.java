@@ -11,8 +11,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * Nhóm dịch vụ, ánh xạ bảng {@code service_group} (V1, dữ liệu mẫu ở V2). Quản lý nhóm (thêm, sửa)
- * làm ở FR-SVC-05; hiện chỉ đọc.
+ * Nhóm dịch vụ (FR-SVC-05), ánh xạ bảng {@code service_group}. Không có xóa cứng: ngừng dùng thì
+ * chỉ đánh dấu active = false (BR-19).
  */
 @Entity
 @Table(name = "service_group")
@@ -32,4 +32,33 @@ public class ServiceGroup {
 
     @Column(name = "active", nullable = false)
     private boolean active;
+
+    public ServiceGroup(String name, int sortOrder) {
+        this.name = name;
+        this.sortOrder = sortOrder;
+        this.active = true;
+    }
+
+    public void update(String name, int sortOrder) {
+        this.name = name;
+        this.sortOrder = sortOrder;
+    }
+
+    /** Ngừng dùng nhóm. Trả về true nếu trạng thái thay đổi, false nếu đã ngừng dùng từ trước. */
+    public boolean deactivate() {
+        if (!this.active) {
+            return false;
+        }
+        this.active = false;
+        return true;
+    }
+
+    /** Dùng lại nhóm. Trả về true nếu trạng thái thay đổi, false nếu đang dùng từ trước. */
+    public boolean activate() {
+        if (this.active) {
+            return false;
+        }
+        this.active = true;
+        return true;
+    }
 }

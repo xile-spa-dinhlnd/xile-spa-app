@@ -35,15 +35,20 @@ function json(body: unknown, status = 200) {
 
 let failList = false
 let listUrls: URL[] = []
+let groupUrls: URL[] = []
 
 beforeEach(() => {
   failList = false
   listUrls = []
+  groupUrls = []
   vi.stubGlobal(
     'fetch',
     vi.fn(async (input: string) => {
       const url = new URL(input, 'http://localhost')
-      if (url.pathname === '/api/catalog/service-groups') return json(GROUPS)
+      if (url.pathname === '/api/catalog/service-groups') {
+        groupUrls.push(url)
+        return json(GROUPS)
+      }
       if (url.pathname === '/api/catalog/services') {
         listUrls.push(url)
         if (failList) {
@@ -161,5 +166,13 @@ describe('ServiceListPage: tìm và lọc', () => {
     failList = false
     fireEvent.click(within(alert).getByRole('button', { name: 'Thử lại' }))
     expect(await screen.findByText('Gội thử')).toBeInTheDocument()
+  })
+
+  it('ô lọc nhóm chỉ lấy nhóm đang dùng', async () => {
+    renderPage()
+
+    await screen.findByText('Gội thử')
+
+    expect(groupUrls.map((u) => u.searchParams.get('active'))).toEqual(['true'])
   })
 })

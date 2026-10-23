@@ -40,4 +40,6 @@ public interface ServiceItemRepository extends JpaRepository<ServiceItem, Long> 
                             + " AND id <> :excludeId)",
             nativeQuery = true)
     boolean existsByNormalizedName(@Param("name") String name, @Param("excludeId") long excludeId);
+
+    boolean existsByGroupIdAndActiveTrue(Long groupId);
 }
