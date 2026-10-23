@@ -13,6 +13,7 @@ người nhận một tính năng làm cả hai đầu mà ít đụng file củ
 frontend/
 ├─ index.html, package.json, vite.config.ts (alias @/, proxy /api tới backend), tsconfig*.json
 ├─ .oxlintrc.json, .prettierrc.json
+├─ scripts/check-lint-suppressions.mjs  # chạy trong `npm run lint`: chặn comment eslint-disable, oxlint-disable
 ├─ .env.example                  # chỉ VITE_API_BASE_URL..., không có bí mật
 ├─ playwright.config.ts          # thêm khi viết test luồng đầu tiên (S1-03)
 ├─ Dockerfile                    # thêm ở giai đoạn DevOps (D-02)
@@ -107,6 +108,8 @@ Quy tắc:
   Kiểu props đặt tên `<Tên>Props`, khai báo ngay trên component.
 - **Không `any`**, không `as` để ép kiểu cho qua lỗi, không `// @ts-ignore`. Dữ liệu chưa rõ kiểu dùng `unknown`
   rồi thu hẹp (Zod `parse`, type guard). Không tắt chế độ strict của TypeScript. Import kiểu bằng `import type`.
+  `npm run lint` tự chặn `any` (`typescript/no-explicit-any`), `@ts-ignore`, `@ts-nocheck` (`typescript/ban-ts-comment`)
+  và comment `eslint-disable`, `oxlint-disable`: lint đỏ thì sửa code, không tắt quy tắc.
 - Hằng số và kiểu dữ liệu nghiệp vụ dùng union của chuỗi khớp enum backend (`type StaffRole = 'OWNER' |
 'THERAPIST'`), nhãn tiếng Việt trong một `Record<StaffRole, string>` (mẫu: `features/staff/types.ts`).
 - **State tối thiểu**: giá trị tính được từ props hoặc dữ liệu query thì tính trong lúc render, không `useState` +
