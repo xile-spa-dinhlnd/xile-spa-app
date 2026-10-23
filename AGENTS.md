@@ -24,6 +24,7 @@ Nhóm hai người: **Đình** và **Huy**, chia việc theo tính năng, Scrum 
 | Bất cứ việc gì                                          | file này, `README.md`                                                                                                         |
 | Tiền, giảm giá, doanh thu, chốt sổ, bút toán điều chỉnh | `docs/srs/04-business-rules.md`, `docs/design/erd.md` (mục 5 và 6), `docs/adr/0003-closed-day-corrections-via-adjustments.md` |
 | Một API hoặc một màn hình mới                           | mục tương ứng trong `docs/srs/03-functional-requirements.md` (theo mã FR)                                                     |
+| Bố cục, câu chữ, trạng thái của màn hình                | `docs/design/ux-guidelines.md`                                                                                                |
 | Bảng, cột, index, migration                             | `docs/design/erd.md`, rồi `backend/src/main/resources/db/migration/`                                                          |
 | Thiết kế, sửa lỗi, đổi luồng một tính năng              | `docs/design/flows/<module>/<tính-năng>.md` (thiết kế viết trước khi code, khớp code khi mở PR; khung ở `docs/design/flows/README.md`) |
 | Lựa chọn công nghệ, thư viện                            | `docs/adr/0001-tech-stack.md`                                                                                                 |

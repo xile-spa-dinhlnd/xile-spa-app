@@ -37,7 +37,8 @@ test" của file luồng: viết test, thử làm đỏ, chạy xanh. Test của
       `/write-tests`. Xem `endpoint-checklist.md` trong thư mục skill này cho từng endpoint.
 4. **Frontend**, theo `frontend/AGENTS.md`: `types.ts` → `api.ts` (query key, hook) → `schemas.ts` (Zod khớp
    backend) → component, page → `routes.tsx` → `index.ts`. **Test schema Zod và component, page** (Vitest, Testing
-   Library) bằng `/write-tests`. Kiểm tra cỡ điện thoại, iPad, máy tính. Style bằng CSS Modules cạnh component,
+   Library) bằng `/write-tests`. Màn hình theo mục "Màn hình" của file luồng và `docs/design/ux-guidelines.md` (bố
+   cục, bốn trạng thái, câu chữ đúng từng chữ). Kiểm tra cỡ điện thoại, iPad, máy tính. Style bằng CSS Modules cạnh component,
    không `style={{}}` (`frontend/AGENTS.md` mục CSS).
 5. **Ảnh hưởng:** làm hết các dòng ở mục "Ảnh hưởng" của file luồng (nơi gọi ở frontend, test cũ, Postman, method
    khác chạm cùng trạng thái). Trước khi coi là xong, grep lại URL và tên method đã đổi để chắc không còn chỗ sót
@@ -61,6 +62,7 @@ Một lần, không lặp lại:
 - Nhánh đang làm (và đã tạo mới hay chưa).
 - Mỗi bước của file luồng hoặc của khối sửa: đã làm hay chưa, khác kế hoạch chỗ nào và vì sao.
 - File đã sửa.
-- Lệnh test đã chạy, kết quả thật (số test qua, đỏ). Thử làm đỏ test nào, kết quả ra sao.
+- Lệnh test đã chạy, kết quả thật (số test qua, đỏ).
+- Bảng thử làm đỏ của `/write-tests` bước 4 (code đã sửa sai, test đỏ, lỗi in ra). Không có bảng thì không báo xong.
 - Cách thử bằng Postman hoặc giao diện, kết quả mong đợi.
 - Bước tiếp theo: Đình chạy `/self-review` bằng Claude Code; Huy đọc diff rồi gõ `/pre-pr-check` khi sẵn sàng.

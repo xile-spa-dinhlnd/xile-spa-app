@@ -122,6 +122,8 @@ Quy tắc:
 
 ## Giao diện
 
+- Bố cục theo cỡ màn hình, bốn trạng thái, câu chữ (báo thành công, báo lỗi, xác nhận), số và ngày: theo
+  `docs/design/ux-guidelines.md`. File này chỉ ghi phần kỹ thuật.
 - Dùng tốt trên điện thoại, iPad và máy tính (chủ tiệm dùng cả ba). Kiểm tra cả ba cỡ màn hình.
 - Ưu tiên component có sẵn của Ant Design; bật tree-shaking; không thêm thư viện UI khác (ADR-0001).
 - Bố cục ưu tiên component của Ant Design (`Flex`, `Space`, `Row`/`Col`, `Grid.useBreakpoint()`) trước khi viết CSS.

@@ -39,13 +39,32 @@ bảo mật, JSON ở test tích hợp.
 - Ba đoạn chuẩn bị / thực hiện / kiểm tra, cách nhau một dòng trống.
 - Assert giá trị cụ thể; lỗi kiểm tra bằng mã (`ErrorCode`, `code` trong JSON).
 - Thời gian qua `Clock.fixed(...)`; dữ liệu IT có tiền tố ngẫu nhiên; không `deleteAll()` bảng dùng chung.
-- Frontend: tìm phần tử theo vai trò và chữ hiển thị; giả API bằng `vi.fn()` cho `fetch`.
+- Frontend: tìm phần tử theo vai trò và chữ hiển thị; giả API bằng `vi.fn()` cho `fetch`. Màn hình có dữ liệu có ít
+  nhất ca lỗi tải (có "Thử lại") và ca trống (`docs/design/ux-guidelines.md` mục 2).
+
+### Lỗi hay gặp (đã xảy ra thật, review sẽ trả lại)
+
+- **Assert chữ xuất hiện ở nhiều chỗ**: chữ cần kiểm tra cũng hiện ở chỗ khác (drawer, ô chọn, form) nên test xanh cả
+  khi phần cần kiểm tra không đổi. Giới hạn vùng tìm (`within(...)`, hoặc lọc phần tử nằm ngoài drawer).
+- **Tên test không khớp điều nó kiểm tra**: test tên "gọi deactivate" nhưng chỉ bấm Hủy. Đổi tên, rồi viết thêm test
+  cho đúng hành vi còn thiếu.
+- **Mock không giống backend**: dữ liệu mà nghiệp vụ không cho phép (dịch vụ đang bán trong nhóm đã ngừng dùng), lỗi
+  có `fieldErrors` trong khi backend trả rỗng, nhánh mock không test nào dùng. Mock lấy theo đúng hành vi backend.
+- **Kiểm tra hàm mock thay cho màn hình**: spy `App.useApp`, `message.error` thay vì tìm chữ người dùng thấy.
+- **`any`, `as`, `!`, chọn theo class CSS** (`.ant-popover`): popover của Ant Design có `role="tooltip"`.
 
 ## 4. Chứng minh test đỏ được
 
-Với mỗi ca quan trọng (ít nhất ca lỗi nghiệp vụ và ca biên): tạm sửa sai code (đảo điều kiện, bỏ một dòng
-kiểm tra), chạy riêng test đó, thấy đỏ, rồi **trả code về như cũ** và chạy lại thấy xanh. Ghi lại trong báo cáo
-ca nào đã thử. Test không đỏ được thì viết lại assert.
+Với mỗi hành vi mới (ít nhất ca chuẩn, ca lỗi nghiệp vụ và mỗi chỗ làm mới dữ liệu sau khi sửa): tạm sửa sai đúng
+**dòng code** mà test bảo vệ (đảo điều kiện, bỏ một dòng kiểm tra, bỏ `invalidateQueries`), chạy riêng test đó, thấy
+đỏ, rồi **trả code về như cũ** và chạy lại thấy xanh. Test không đỏ được thì viết lại assert.
+
+Báo cáo mỗi lần thử bằng một dòng đủ để người khác làm lại được:
+
+| Code đã sửa sai (file:dòng, sửa gì) | Test đỏ | Lỗi in ra (một dòng) |
+| ----------------------------------- | ------- | -------------------- |
+
+"Đã thử làm đỏ" mà không có bảng này thì coi như chưa thử.
 
 ## 5. Chạy và báo
 

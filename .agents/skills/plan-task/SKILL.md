@@ -17,7 +17,7 @@ Luồng của Đình dùng Claude `/plan-feature` thay cho skill này; Đình đ
 2. **Tạo nhánh** theo mục "Nhánh" của `.agents/rules/writer-role.md`, trước khi ghi file nào.
 3. **Đọc yêu cầu.** Đúng mục FR trong `docs/srs/03-functional-requirements.md`, BR liên quan trong
    `docs/srs/04-business-rules.md`, OQ trong `docs/srs/07-open-questions.md`. Đụng tiền hay chốt sổ thì đọc thêm
-   theo bảng ở `AGENTS.md` mục 2.
+   theo bảng ở `AGENTS.md` mục 2. Card có giao diện thì đọc `docs/design/ux-guidelines.md` và viết đủ mục "Màn hình".
 4. **Đọc code và file luồng hiện có.** Module gần giống nhất để làm theo (`module/staff` cho danh mục đơn giản,
    `module/catalog` cho danh mục có giá); migration nếu cần bảng; `git log` để xem card trước làm thế nào; các file
    trong `docs/design/flows/<module>/`. Tính năng đã có file luồng thì sửa file đó, không tạo file mới.

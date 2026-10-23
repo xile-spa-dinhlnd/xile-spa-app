@@ -20,7 +20,8 @@ docs/design/flows/
 
 - Một file một **tính năng người dùng thấy**, tên tiếng Anh kebab-case (`service-group.md`, `close-day.md`). Card có
   nhiều tính năng thì mỗi tính năng một file; tính năng đã có file thì sửa file đó.
-- Card nào cũng có file luồng, kể cả CRUD đơn giản (file ngắn: điểm vào, quy tắc, lỗi, bảng test).
+- Card nào cũng có file luồng, kể cả CRUD đơn giản (file ngắn: điểm vào, quy tắc, lỗi, bảng test). Card có giao diện
+  thì luôn có mục "Màn hình" theo `docs/design/ux-guidelines.md`.
 - Phần chung của module viết một lần ở `<module>/README.md`, file tính năng không chép lại.
 
 ## Vòng đời
@@ -72,6 +73,24 @@ Trạng thái: <thiết kế (chờ duyệt) | thiết kế (đã duyệt) | kh�
 ## Luồng
 
 <Sơ đồ Mermaid.>
+
+## Màn hình
+
+<Bỏ mục này nếu card chỉ có backend. Theo `docs/design/ux-guidelines.md`.>
+
+| Phần                       | Điện thoại (dưới 768 px)            | iPad, máy tính                     |
+| -------------------------- | ----------------------------------- | ---------------------------------- |
+| Bố cục                     | <thẻ, drawer toàn màn hình...>      | <bảng, drawer 480 px...>           |
+| Thứ tự thông tin trên thẻ  | <tên, số tiền, trạng thái...>       | <các cột của bảng>                 |
+
+| Trạng thái | Hiển thị và câu chữ chính xác                              |
+| ---------- | ---------------------------------------------------------- |
+| Đang tải   |                                                            |
+| Lỗi tải    | "Không tải được <...>" + "Thử lại"                         |
+| Trống      | "Chưa có <...> nào" / "Không có kết quả khớp bộ lọc"      |
+| Có dữ liệu |                                                            |
+
+Hành động: <mỗi nút: nhãn, có xác nhận không (tiêu đề, mô tả hệ quả, nút đồng ý), câu báo thành công, lỗi hiện ở đâu>.
 
 ## Quy tắc nghiệp vụ
 
