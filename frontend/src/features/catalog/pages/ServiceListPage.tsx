@@ -22,8 +22,9 @@ import { useState } from 'react'
 import { ApiError } from '@/shared/api/errors'
 import { useDebounce } from '@/shared/hooks/useDebounce'
 import { formatMoney } from '@/shared/lib/money'
-import { useServiceGroups, useServices, useSetServiceActive } from '../api'
+import { useAllServiceGroups, useServices, useSetServiceActive } from '../api'
 import { ServiceFormDrawer } from '../components/ServiceFormDrawer'
+import { ServiceGroupDrawer } from '../components/ServiceGroupDrawer'
 import type { ServiceItem } from '../types'
 import styles from './ServiceListPage.module.css'
 
@@ -42,9 +43,10 @@ export function ServiceListPage() {
   const [page, setPage] = useState(0)
   const [editing, setEditing] = useState<ServiceItem | null>(null)
   const [formOpen, setFormOpen] = useState(false)
+  const [groupDrawerOpen, setGroupDrawerOpen] = useState(false)
   const q = useDebounce(search.trim(), 300)
 
-  const groups = useServiceGroups()
+  const groups = useAllServiceGroups()
   const services = useServices({
     q: q || undefined,
     groupId,
@@ -150,9 +152,14 @@ export function ServiceListPage() {
         <Typography.Title level={3} className={styles.title}>
           Dịch vụ
         </Typography.Title>
-        <Button type="primary" size="large" icon={<PlusOutlined />} onClick={openCreate}>
-          Thêm dịch vụ
-        </Button>
+        <Space wrap>
+          <Button size="large" onClick={() => setGroupDrawerOpen(true)}>
+            Nhóm dịch vụ
+          </Button>
+          <Button type="primary" size="large" icon={<PlusOutlined />} onClick={openCreate}>
+            Thêm dịch vụ
+          </Button>
+        </Space>
       </Flex>
 
       <Flex wrap gap={8} className={styles.filterBar}>
@@ -179,7 +186,10 @@ export function ServiceListPage() {
             setGroupId(v)
             setPage(0)
           }}
-          options={(groups.data ?? []).map((g) => ({ value: g.id, label: g.name }))}
+          options={(groups.data ?? []).map((g) => ({
+            value: g.id,
+            label: g.active ? g.name : `${g.name} (ngừng dùng)`,
+          }))}
           className={styles.groupSelect}
         />
         <Select
@@ -270,6 +280,7 @@ export function ServiceListPage() {
       )}
 
       <ServiceFormDrawer open={formOpen} service={editing} onClose={() => setFormOpen(false)} />
+      <ServiceGroupDrawer open={groupDrawerOpen} onClose={() => setGroupDrawerOpen(false)} />
     </>
   )
 }

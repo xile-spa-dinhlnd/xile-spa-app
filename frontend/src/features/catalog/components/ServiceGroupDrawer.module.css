@@ -1,0 +1,35 @@
+.fullWidth {
+  width: 100%;
+}
+
+.formCard {
+  background-color: var(--xl-color-bg-subtle);
+  border: 1px solid var(--xl-color-border);
+  border-radius: var(--xl-radius-md);
+  padding: var(--xl-space-md);
+  margin-bottom: var(--xl-space-lg);
+}
+
+.formTitle {
+  font-weight: 600;
+  margin-bottom: var(--xl-space-md);
+  color: var(--xl-color-heading);
+}
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--xl-space-sm);
+}
+
+.listHeader {
+  margin-bottom: var(--xl-space-sm);
+  font-weight: 600;
+  color: var(--xl-color-heading);
+}
+
+.footerActions {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+}

@@ -9,9 +9,10 @@ import { ServiceListPage } from './ServiceListPage'
  * theo đúng tham số giao diện gửi, rồi kiểm tra tổ hợp tìm + nhóm + trạng thái + xóa lọc.
  */
 const SERVICES = [
-  { id: 1, name: 'Gội thử', groupId: 2, groupName: 'Chăm sóc da', active: true },
+  { id: 1, name: 'Gội thử', groupId: 3, groupName: 'Massage trị liệu', active: true },
   { id: 2, name: 'Gội 60 phút', groupId: 1, groupName: 'Gội đầu dưỡng sinh', active: false },
   { id: 3, name: 'Massage cổ vai', groupId: 1, groupName: 'Gội đầu dưỡng sinh', active: true },
+  { id: 4, name: 'Tẩy da chết', groupId: 2, groupName: 'Chăm sóc da', active: false },
 ].map((s) => ({
   ...s,
   durationMinutes: 30,
@@ -22,8 +23,9 @@ const SERVICES = [
 }))
 
 const GROUPS = [
-  { id: 1, name: 'Gội đầu dưỡng sinh', sortOrder: 10 },
-  { id: 2, name: 'Chăm sóc da', sortOrder: 20 },
+  { id: 1, name: 'Gội đầu dưỡng sinh', sortOrder: 10, active: true },
+  { id: 2, name: 'Chăm sóc da', sortOrder: 20, active: false },
+  { id: 3, name: 'Massage trị liệu', sortOrder: 30, active: true },
 ]
 
 function json(body: unknown, status = 200) {
@@ -104,7 +106,9 @@ async function choose(selectLabel: string, optionText: string) {
 }
 
 const names = () =>
-  screen.queryAllByText(/Gội thử|Gội 60 phút|Massage cổ vai/).map((el) => el.textContent)
+  screen
+    .queryAllByText(/Gội thử|Gội 60 phút|Massage cổ vai|Tẩy da chết/)
+    .map((el) => el.textContent)
 
 describe('ServiceListPage: tìm và lọc', () => {
   it('mặc định chỉ hiện dịch vụ đang bán, không gửi q và groupId', async () => {
@@ -168,11 +172,18 @@ describe('ServiceListPage: tìm và lọc', () => {
     expect(await screen.findByText('Gội thử')).toBeInTheDocument()
   })
 
-  it('ô lọc nhóm chỉ lấy nhóm đang dùng', async () => {
+  it('ô lọc nhóm lấy tất cả nhóm, nhóm ngừng dùng có nhãn (ngừng dùng)', async () => {
     renderPage()
 
     await screen.findByText('Gội thử')
 
-    expect(groupUrls.map((u) => u.searchParams.get('active'))).toEqual(['true'])
+    // Ô lọc dùng useAllServiceGroups (không gửi param active)
+    expect(groupUrls.some((u) => u.searchParams.get('active') === null)).toBe(true)
+
+    // Lọc theo nhóm ngừng dùng và trạng thái "Tất cả": ra đúng dịch vụ của nhóm đó
+    await choose('Lọc theo nhóm', 'Chăm sóc da (ngừng dùng)')
+    await choose('Lọc theo trạng thái', 'Tất cả')
+    await waitFor(() => expect(lastParams()).toMatchObject({ groupId: '2' }))
+    await waitFor(() => expect(names()).toEqual(['Tẩy da chết']))
   })
 })

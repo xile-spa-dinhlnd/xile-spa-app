@@ -30,3 +30,18 @@ export const serviceFormSchema = z.object({
 })
 
 export type ServiceFormValues = z.infer<typeof serviceFormSchema>
+
+/** Kiểm tra form nhóm dịch vụ ở giao diện, khớp với ServiceGroupRequest (S2-06). */
+export const serviceGroupSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(1, 'Tên nhóm không được để trống')
+    .max(100, 'Tên nhóm tối đa 100 ký tự'),
+  sortOrder: z
+    .number({ error: 'Vui lòng nhập thứ tự hiển thị' })
+    .int('Thứ tự hiển thị phải là số nguyên')
+    .min(0, 'Thứ tự hiển thị không được âm'),
+})
+
+export type ServiceGroupFormValues = z.infer<typeof serviceGroupSchema>

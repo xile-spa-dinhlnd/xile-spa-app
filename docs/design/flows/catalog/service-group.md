@@ -1,13 +1,14 @@
 # Quản lý nhóm dịch vụ
 
-Trạng thái: khớp code (backend, PR #41) · thiết kế (đã duyệt) (giao diện) · Card: S2-06 · Yêu cầu: FR-SVC-05,
-BR-18, BR-19, OQ-21
+Trạng thái: khớp code · Card: S2-06 · Yêu cầu: FR-SVC-05, BR-18, BR-19, OQ-21
 
 | Ngày       | Người              | Card / PR            | Thay đổi                                                         |
 | ---------- | ------------------ | -------------------- | ---------------------------------------------------------------- |
 | 23/10/2026 | Đình (Antigravity) | S2-06, #41           | Backend: API thêm, sửa, ngừng dùng, dùng lại nhóm; OQ-21         |
 | 23/10/2026 | Đình (Claude)      | chore/agent-workflow | Viết file theo code backend; thiết kế giao diện từ kế hoạch S2-06 |
 | 23/10/2026 | Đình (Claude)      | chore/agent-workflow | Đình duyệt giao diện: drawer; ô lọc bảng giá hiện cả nhóm ngừng dùng |
+| 23/10/2026 | Đình (Antigravity) | S2-06                | Giao diện: ServiceGroupDrawer, nút Nhóm dịch vụ, cập nhật ô lọc  |
+| 23/10/2026 | Đình (Claude)      | S2-06                | Tự soát lần 1: bảng test theo tên thật; tách `ServiceGroupList`  |
 
 Phần chung của module (tên không trùng, không xóa cứng, nhật ký, OQ-21): `README.md` cùng thư mục.
 
@@ -25,7 +26,7 @@ Chủ tiệm tự thêm nhóm dịch vụ, đổi tên và thứ tự hiển th�
 | API      | `POST /api/catalog/service-groups` → `create`                                                              | body `{name, sortOrder}`, 201 kèm `Location`                  |
 | API      | `PUT /api/catalog/service-groups/{id}` → `update`                                                          | thay toàn bộ `{name, sortOrder}`, 200                          |
 | API      | `POST /api/catalog/service-groups/{id}/deactivate`, `/activate` → `deactivate`, `activate`                 | 200                                                            |
-| Màn hình | Nút **"Nhóm dịch vụ"** ở đầu `ServiceListPage` (`/services`) mở `components/ServiceGroupDrawer` (thiết kế) | không thêm route, không thêm mục menu                         |
+| Màn hình | Nút **"Nhóm dịch vụ"** ở đầu `ServiceListPage` (`/services`) mở `components/ServiceGroupDrawer` (form) chứa `ServiceGroupList` (danh sách) | không thêm route, không thêm mục menu                         |
 
 Kiểm tra dữ liệu (`ServiceGroupRequest`): `name` bắt buộc, tối đa 100 ký tự; `sortOrder` bắt buộc, số nguyên ≥ 0.
 
@@ -113,7 +114,7 @@ Backend (đã làm ở PR #41): `GET` không tham số đổi từ "chỉ nhóm 
 gửi `active=true`; bỏ `ServiceItemService.listGroups()`; `ServiceItemService.activate` chặn nhóm đã ngừng dùng;
 Postman request "Danh sách nhóm dịch vụ" của thư mục Dịch vụ gửi `?active=true`.
 
-Giao diện (cần làm):
+Giao diện (đã làm ở S2-06):
 
 | Chỗ                                         | Đổi gì                                                                                                                                                                                                                 |
 | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -139,17 +140,17 @@ Backend (tên test thật):
 | Bán lại dịch vụ trong nhóm đã ngừng dùng (OQ-21) | IT | không áp dụng | không áp dụng | không áp dụng | `activatingServiceInInactiveGroupIsRejected` | `requiresLogin` (dịch vụ) | `activatingServiceInInactiveGroupIsRejected` (dịch vụ vẫn ngừng bán) |
 | Không xóa cứng | IT | không áp dụng | không áp dụng | không áp dụng | `deleteIsNotSupported` | `requiresLogin` | không áp dụng |
 
-Giao diện (ca cần có, Vitest):
+Giao diện (tên test thật, Vitest):
 
 | Hành vi | Tầng | Chuẩn | Dữ liệu sai | Biên | Lỗi nghiệp vụ | Quyền | Không tác dụng phụ |
 | ------- | ---- | ----- | ----------- | ---- | ------------- | ----- | ------------------ |
-| `serviceGroupSchema` | `schemas.test.ts` | hợp lệ | tên trống, 101 ký tự, thứ tự âm, thứ tự trống | tên chỉ có khoảng trắng; thứ tự 0 | không áp dụng | không áp dụng | không áp dụng |
-| Drawer: danh sách | `ServiceGroupDrawer.test.tsx` | hiện tên, thứ tự, tag trạng thái | không áp dụng | danh sách trống | lỗi tải có "Thử lại" | không áp dụng: route đã bảo vệ | không áp dụng |
-| Drawer: thêm, sửa | `ServiceGroupDrawer.test.tsx` | thêm gọi POST đúng body; sửa nạp giá trị cũ, gọi PUT | lỗi Zod hiện dưới ô | Hủy sửa thì form về thêm mới | 409 trùng tên gắn vào ô Tên | không áp dụng | lỗi thì form giữ nguyên dữ liệu đã nhập |
-| Drawer: ngừng dùng, dùng lại | `ServiceGroupDrawer.test.tsx` | xác nhận rồi gọi đúng `/deactivate`, `/activate` | không áp dụng | hủy xác nhận thì không gọi API | 409 `SERVICE_GROUP_IN_USE` hiện thông báo của backend | không áp dụng | lỗi thì tag giữ nguyên |
-| Làm mới sau khi sửa | `ServiceListPage.test.tsx` | đổi tên nhóm thì danh sách dịch vụ hiện tên mới | không áp dụng | không áp dụng | không áp dụng | không áp dụng | không áp dụng |
-| Ô lọc nhóm của bảng giá | `ServiceListPage.filters.test.tsx` | gọi danh sách nhóm không lọc; nhóm ngừng dùng có nhãn "(ngừng dùng)" | không áp dụng | lọc theo nhóm ngừng dùng ra đúng dịch vụ đã ngừng bán của nhóm đó | không áp dụng | không áp dụng | không áp dụng |
-| Form dịch vụ, nhóm đã ngừng dùng | `ServiceListPage.test.tsx` | lựa chọn bị khóa `<tên> (ngừng dùng)` thay cho số id | không áp dụng | không áp dụng | lưu không đổi nhóm thì lỗi ở ô Nhóm | không áp dụng | không áp dụng |
+| `serviceGroupSchema` | `schemas.test.ts` | `chấp nhận dữ liệu hợp lệ và thứ tự 0` | `báo lỗi khi tên trống, quá 100 ký tự, thứ tự âm hoặc trống` | `chấp nhận dữ liệu hợp lệ và thứ tự 0` (cắt khoảng trắng, thứ tự 0) | không áp dụng | không áp dụng | không áp dụng |
+| Drawer: danh sách | `ServiceGroupDrawer.test.tsx` | `hiển thị tên, thứ tự và tag trạng thái của các nhóm` | không áp dụng | `hiển thị trạng thái trống khi không có nhóm nào` | `lỗi tải danh sách hiện thông báo và nút thử lại` | không áp dụng: route đã bảo vệ | `lỗi tải danh sách hiện thông báo và nút thử lại` (không hiện "Chưa có nhóm") |
+| Drawer: thêm, sửa | `ServiceGroupDrawer.test.tsx` | `thêm nhóm gọi POST đúng body và làm mới danh sách`, `sửa nhóm nạp giá trị cũ, gọi PUT và có nút hủy sửa` | `báo lỗi validation khi để trống tên hoặc thứ tự âm` | `sửa nhóm nạp giá trị cũ, gọi PUT và có nút hủy sửa` (Hủy sửa về thêm mới) | `409 trùng tên hiển thị lỗi dưới ô tên và giữ nguyên dữ liệu` | không áp dụng | `409 trùng tên hiển thị lỗi dưới ô tên và giữ nguyên dữ liệu` (giữ nguyên dữ liệu) |
+| Drawer: ngừng dùng, dùng lại | `ServiceGroupDrawer.test.tsx` | `ngừng dùng nhóm không còn dịch vụ đang bán: gọi deactivate, tag chuyển sang Ngừng dùng`, `dùng lại nhóm: xác nhận rồi gọi POST activate` | không áp dụng | `hủy xác nhận ngừng dùng thì không gọi API` | `ngừng dùng nhóm còn dịch vụ đang bán: hiện thông báo của backend, nhóm vẫn đang dùng` | không áp dụng | `ngừng dùng nhóm còn dịch vụ đang bán: hiện thông báo của backend, nhóm vẫn đang dùng` |
+| Làm mới sau khi sửa | `ServiceListPage.test.tsx` | `đổi tên nhóm thì danh sách dịch vụ hiện tên mới` | không áp dụng | không áp dụng | không áp dụng | không áp dụng | không áp dụng |
+| Ô lọc nhóm của bảng giá | `ServiceListPage.filters.test.tsx` | `ô lọc nhóm lấy tất cả nhóm, nhóm ngừng dùng có nhãn (ngừng dùng)` | không áp dụng | `ô lọc nhóm lấy tất cả nhóm, nhóm ngừng dùng có nhãn (ngừng dùng)` (lọc ra dịch vụ của nhóm ngừng dùng) | không áp dụng | không áp dụng | không áp dụng |
+| Form dịch vụ, nhóm đã ngừng dùng | `ServiceListPage.test.tsx` | `sửa dịch vụ thuộc nhóm đã ngừng dùng: hiện lựa chọn bị khóa và báo lỗi nếu giữ nguyên` | không áp dụng | không áp dụng | `sửa dịch vụ thuộc nhóm đã ngừng dùng: hiện lựa chọn bị khóa và báo lỗi nếu giữ nguyên` (400 báo tại ô nhóm) | không áp dụng | không áp dụng |
 
 Thử tay: mở `/services`, bấm "Nhóm dịch vụ"; thêm "Massage trị liệu" thứ tự 25, thấy trong danh sách và trong ô chọn
 nhóm của form dịch vụ; sửa tên, danh sách dịch vụ hiện tên mới; ngừng dùng "Khác" khi còn dịch vụ đang bán thì báo
