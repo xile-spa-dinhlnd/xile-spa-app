@@ -321,6 +321,37 @@ class ServiceGroupControllerIT {
     }
 
     @Test
+    void activatingServiceInInactiveGroupIsRejected() throws Exception {
+        long groupId = create(prefix + "Nhóm Sẽ Ngừng", 116);
+        String created =
+                mockMvc.perform(
+                                send(
+                                        post("/api/catalog/services"),
+                                        """
+                                        {"name": "%s", "groupId": %d, "listPrice": 100000}
+                                        """
+                                                .formatted(prefix + "Dịch vụ sẽ ngừng", groupId)))
+                        .andExpect(status().isCreated())
+                        .andReturn()
+                        .getResponse()
+                        .getContentAsString();
+        long serviceId = ((Number) JsonPath.read(created, "$.id")).longValue();
+        mockMvc.perform(post("/api/catalog/services/" + serviceId + "/deactivate").with(loggedIn))
+                .andExpect(status().isOk());
+        mockMvc.perform(
+                        post("/api/catalog/service-groups/" + groupId + "/deactivate")
+                                .with(loggedIn))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/catalog/services/" + serviceId + "/activate").with(loggedIn))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("SERVICE_GROUP_NOT_FOUND"));
+
+        mockMvc.perform(get("/api/catalog/services/" + serviceId).with(loggedIn))
+                .andExpect(jsonPath("$.active").value(false));
+    }
+
+    @Test
     void deleteIsNotSupported() throws Exception {
         long id = create(prefix + "Không Xóa", 120);
 

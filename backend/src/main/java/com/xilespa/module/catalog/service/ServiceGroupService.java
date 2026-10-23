@@ -84,7 +84,7 @@ public class ServiceGroupService {
     /**
      * Ngừng dùng nhóm dịch vụ. Gọi lại khi đã ngừng dùng thì không đổi gì và không ghi audit. Nhóm
      * còn dịch vụ đang bán thì không cho ngừng dùng, vì sửa dịch vụ đó sẽ bị từ chối do nhóm đã
-     * ngừng dùng (giả định của S2-06, ghi trong PR).
+     * ngừng dùng (OQ-21).
      */
     @Transactional
     public ServiceGroupResponse deactivate(Long id) {
