@@ -9,8 +9,9 @@ commit, Pull Request và nhịp làm việc**.
 Mọi card đi qua **một vòng lặp**:
 
 ```
-Trello "Đang làm" → nhánh từ develop → code + commit → test ở máy → push → PR vào develop
-→ review → Squash and merge → git switch develop && git pull → Trello "Xong"
+Trello "Đang làm" → thiết kế (file luồng) → agent tự tạo nhánh từ origin/develop → code + test ở máy
+→ /pre-pr-check → commit, push → PR vào develop → review → Squash and merge
+→ git switch develop && git pull → Trello "Xong"
 ```
 
 - `develop` là code chung, **chỉ đổi qua PR**. Push lên nhánh của mình chưa ảnh hưởng ai; chỉ khi merge mới tính là xong.
@@ -22,7 +23,8 @@ Trello "Đang làm" → nhánh từ develop → code + commit → test ở máy 
 ## 1. Luồng một card, từ đầu đến cuối
 
 1. Kéo card từ `Sprint Backlog` sang `Đang làm`, gán tên mình. Mỗi người **tối đa 2 card** ở `Đang làm`.
-2. Cập nhật `develop` rồi tạo nhánh cho card từ `develop` (mục 2).
+2. Thiết kế tính năng thành file luồng `docs/design/flows/<module>/<tính-năng>.md` và duyệt (mục 8). Skill đầu tiên
+   ghi file của card tự tạo nhánh từ `origin/develop` (mục 2).
 3. Làm từng bước nhỏ, commit theo mục 3, đẩy nhánh lên GitHub ít nhất cuối mỗi buổi làm.
 4. Mở Pull Request **vào `develop`** (mục 4). Chưa xong thì mở dạng **Draft** để Đình xem sớm.
 5. Kéo card sang `Review (PR)`. PR của Huy: gán Đình review và nhắn. PR của Đình: tự review theo danh sách soát ở mục 4.
@@ -70,19 +72,19 @@ Quy tắc:
   | Quy trình, không có card | `docs/<mô-tả>`, `chore/<mô-tả>` | `docs/quy-trinh-agent` |
 
 - Mô tả viết thường, không dấu, nối bằng `-`, tối đa khoảng 5 từ.
-- Nhánh card sống **ngắn** (lý tưởng 1 đến 3 ngày). Card lớn hơn khoảng 400 dòng thì chia nhiều PR nhỏ trên nhiều
-  nhánh, theo mục "Chia PR" trong kế hoạch của card:
-  - Card có cả backend và frontend: PR 1 là migration, backend, test, Postman (`feature/S2-07-combo-api`); PR 2
-    là frontend (`feature/S2-07-combo-ui`), tạo nhánh từ `develop` sau khi PR 1 đã merge.
-  - Card backend lớn: chia theo nhóm endpoint (`feature/S1-01-login`, `feature/S1-01-refresh`).
-  - Card chuyển sang "Xong" trong backlog ở PR cuối cùng của card.
+- Nhánh card sống **ngắn** (lý tưởng 1 đến 3 ngày). **Một card, một nhánh, một PR**, gồm cả backend lẫn frontend
+  của card, để người review thấy trọn tính năng.
+- Code chính (không tính test, Postman, tài liệu, lock file) dự kiến quá khoảng 400 dòng thì **tách card khi lập
+  sprint** (như combo: S2-07 backend, S2-08 giao diện), không chia PR giữa chừng. Card đã làm mà vẫn vượt thì giữ một
+  PR và ghi lý do trong "Ghi chú cho người review".
 - Việc không thuộc card (sửa quy trình, AGENTS, hook, tài liệu chung) đi PR riêng, **không gộp vào PR của card**.
-- Bắt đầu một card:
+- Bắt đầu một card: Antigravity tự tạo nhánh ở skill đầu tiên ghi file (`/plan-task`, `/implement`, `/fix-bug`),
+  bằng đúng hai lệnh dưới, chỉ khi đang ở `develop` hoặc `main` (`.agents/rules/writer-role.md` mục "Nhánh"). Làm tay
+  thì cũng chạy đúng hai lệnh này:
 
   ```bash
-  git switch develop
-  git pull
-  git switch -c feature/S1-05-service-crud
+  git fetch origin
+  git switch -c feature/S1-05-service-crud origin/develop
   ```
 
 - Cập nhật nhánh card theo `develop` mỗi ngày bằng rebase:
@@ -185,8 +187,8 @@ cd frontend && npm run lint && npm run typecheck && npm test
   trên `develop`: `feat(catalog): quản lý dịch vụ [S1-05]`.
 - **Nội dung** theo `.github/pull_request_template.md`: card Trello, mã FR/BR, đã làm gì, cách thử,
   giả định còn chưa chắc, ảnh chụp màn hình (nếu có giao diện, chụp cả cỡ điện thoại).
-- **Nhỏ, một việc:** một PR thuộc đúng một card (hoặc một việc quy trình không có card), dưới khoảng 400 dòng
-  thay đổi, không tính file sinh tự động, lock file, Postman collection. Lớn hơn thì chia theo mục 2; không gom
+- **Nhỏ, một việc:** một PR thuộc đúng một card (hoặc một việc quy trình không có card); code chính khoảng dưới 400
+  dòng, không tính test, Postman, tài liệu, lock file, file sinh tự động. Lớn hơn thì tách card theo mục 2; không gom
   nhiều card vào một PR. Ngoại lệ phải ghi lý do trong "Ghi chú cho người review".
 - **Tự review trước:** đọc lại toàn bộ diff trên GitHub trước khi gán người review.
 - **Người duyệt: Đình là người duyệt duy nhất** (code owner, file `.github/CODEOWNERS`).
@@ -227,6 +229,8 @@ cd frontend && npm run lint && npm run typecheck && npm test
   bình luận đó. Chạm quy tắc nghiệp vụ chưa rõ thì ghi mã OQ, không tự quyết (`AGENTS.md` quy tắc 9).
 - **Review bằng AI:** AI (skill `/review-pr`, `/self-review`) chỉ đọc lượt đầu. Đình đọc từng nhận xét, bỏ hoặc
   sửa cái sai, rồi mới đăng; người viết trả lời như với bình luận của người. AI không approve, không merge.
+  `/review-pr` soát cả code, file luồng và nghiệp vụ (có thực tế không), chấm điểm sáu nhóm, kết luận merge hay sửa
+  theo số mục `bắt buộc:` còn lại, trả lời câu hỏi đang chặn người viết và kèm khối sửa để dán vào Antigravity.
 - Danh sách soát khi review:
   - [ ] Tiền là số nguyên, không tự tính tiền ở giao diện.
   - [ ] Không sửa dữ liệu ngày đã chốt; sửa sai bằng bút toán điều chỉnh.
@@ -350,17 +354,17 @@ từng agent: `AGENTS.md` mục 8. Cách dùng skill, hook và luồng chi tiế
 
 **Cách mặc định cho một card:**
 
-1. Người làm card tạo nhánh: `git switch develop && git pull && git switch -c feature/<mã-card>-<mô-tả>`,
-   rồi mở Antigravity trên thư mục repo.
-2. Antigravity chạy `/plan-task <tên task>` (tính năng) hoặc `/fix-bug` (sửa lỗi): kế hoạch có sơ đồ luồng, lỗi phải được tái
-   hiện bằng test đỏ. Người làm card duyệt (AGENTS.md mục 5).
-3. Antigravity chạy `/implement`: **chỉ sửa file và chạy test** trên nhánh đó. Git chỉ được đọc (`status`, `log`,
-   `diff`...); hook chặn commit, push, đổi nhánh. Xong mỗi bước thì báo file đã sửa, kết quả test, gợi ý câu commit.
-4. **Trong lúc AI đang sửa file, không đổi nhánh.** Chờ AI báo xong rồi mới commit hoặc làm việc khác.
-5. Người làm card đọc thay đổi, `git add`, `git commit`. Xong card thì Antigravity chạy `/pre-pr-check`, rồi người
-   làm card `git push` và mở PR bằng bản nháp nó soạn.
-6. Review: PR của Huy thì Đình chạy `/review-pr <số>` bằng Claude Code, xem lại rồi đăng nhận xét lên GitHub. PR
-   của Đình thì chạy `/self-review` ở máy trước khi mở PR, rồi merge theo mục 4.
+1. **Thiết kế.** Huy: Antigravity `/plan-task <card>` viết file luồng `docs/design/flows/<module>/<tính-năng>.md`.
+   Đình: Claude Code `/plan-feature <card>` viết file đó. Sửa lỗi: Antigravity `/fix-bug` (tái hiện bằng test đỏ).
+   Người làm card duyệt (AGENTS.md mục 5). Skill đầu tiên ghi file tự tạo nhánh card từ `origin/develop`.
+2. **Code.** Antigravity `/implement <file luồng>`: sửa file, chạy test, cập nhật file luồng cho khớp code. Git chỉ
+   được đọc, trừ việc tạo nhánh; hook chặn commit, push, đổi sang nhánh đã có.
+3. **Trong lúc AI đang sửa file, không đổi nhánh.** Chờ AI báo xong rồi mới commit hoặc làm việc khác.
+4. **Soát.** Đình: Claude Code `/self-review`, dán khối "lần N" vào Antigravity cho tới khi sạch. Huy: đọc diff.
+5. **Git.** Người làm card gõ `/pre-pr-check` (Antigravity): chạy kiểm tra, rồi đưa câu commit, lệnh push, bản nháp
+   PR và cách squash merge. Đây là nơi duy nhất hướng dẫn git; skill khác không đưa câu commit.
+6. **Review.** PR của Huy: Đình chạy `/review-pr <số>` bằng Claude Code, xem lại rồi đăng; Huy dán khối sửa trong
+   review vào Antigravity, commit, push, Re-request review. PR của Đình: merge theo mục 4 sau khi `/self-review` sạch.
 
 **Khi giao trọn cho AI** (việc nhỏ, tài liệu, lúc bận): Claude app làm trong **thư mục riêng** (`git worktree` hoặc
 máy trên cloud), tự tạo nhánh, commit, push và gửi link mở PR; người duyệt chỉ review rồi merge. AI không bao giờ

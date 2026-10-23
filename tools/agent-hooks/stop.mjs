@@ -4,22 +4,21 @@
 // 2. Có code đổi mà chưa nhắc với đúng trạng thái này thì giữ agent lại một lượt để tự soát
 //    (test, Postman, trạng thái card, báo cáo). Mỗi trạng thái chỉ nhắc một lần nên không lặp vô hạn.
 // 3. Lời nhắc liệt kê file code chính đã đổi mà file test của nó chưa đổi, để agent chạy /write-tests.
-// 4. Đang ở develop hoặc main thì lời nhắc yêu cầu agent nhắc người dùng tạo nhánh trước khi commit (sửa file trên
-//    develop được phép, commit và push thì không, AGENTS.md mục 5 bước 1).
+// Không nhắc gì về git: nhánh do skill tự tạo, còn commit, push, PR chỉ /pre-pr-check hướng dẫn (AGENTS.md mục 8).
 import { execFileSync } from 'node:child_process'
 import crypto from 'node:crypto'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { currentBranch, readStdinJson, runGit } from './lib.mjs'
+import { readStdinJson, runGit } from './lib.mjs'
 
 export const REMINDER = [
   'Trước khi kết thúc lượt này, tự soát (AGENTS.md mục 5) và trả lời ngắn gọn từng ý:',
   '1. Đã chạy test liên quan chưa? Ghi lệnh và kết quả thật (số test qua/đỏ). Chưa chạy được thì nói lý do.',
   '2. Có thêm hoặc sửa endpoint không? Nếu có, đã cập nhật docs/postman/xile-spa.postman_collection.json chưa?',
   '3. Trạng thái card trong docs/backlog/ đã đúng chưa ("Đang làm" hoặc "Xong")?',
-  '4. Báo cáo: file đã sửa, cách thử bằng Postman hoặc giao diện, gợi ý câu commit theo CONTRIBUTING.md mục 3.',
+  '4. Báo cáo: file đã sửa, cách thử bằng Postman hoặc giao diện. Không hướng dẫn git; việc đó chỉ thuộc /pre-pr-check.',
   'Nếu đang dừng để chờ người dùng duyệt kế hoạch thì chỉ cần nói vậy. Không sửa thêm code chỉ vì lời nhắc này.',
 ].join('\n')
 
@@ -35,7 +34,6 @@ const TESTABLE = [
   /^frontend\/src\/shared\/lib\/[^/]+\.ts$/,
 ]
 const TEST_FILE = /^(backend\/src\/test\/|frontend\/(src|e2e)\/.+\.(test|spec)\.tsx?$)/
-const PROTECTED_BRANCHES = new Set(['develop', 'main'])
 
 export function changedFiles(porcelain) {
   return porcelain
@@ -54,20 +52,13 @@ export function filesMissingTests(files) {
     .filter((f) => !testNames.some((name) => name.startsWith(baseName(f))))
 }
 
-export function reminderFor(missingTests, branch) {
+export function reminderFor(missingTests) {
   const lines = [REMINDER]
   if (missingTests.length > 0) {
     lines.push(
       '5. Các file code sau đã đổi mà file test của nó chưa đổi:',
       ...missingTests.map((file) => `   - ${file}`),
       '   Chạy /write-tests cho từng file, hoặc nói rõ vì sao không cần test mới (ví dụ chỉ đổi CSS, nhãn).',
-    )
-  }
-  if (PROTECTED_BRANCHES.has(branch)) {
-    lines.push(
-      `6. Đang ở nhánh ${branch}. Nhắc người dùng tạo nhánh card trước khi commit (CONTRIBUTING.md mục 2), ví dụ:`,
-      '   git switch -c feature/<mã-card>-<mô-tả>   (fix/, docs/, chore/ theo loại việc)',
-      '   Thay đổi chưa commit sẽ đi theo sang nhánh mới.',
     )
   }
   return lines.join('\n')
@@ -144,7 +135,7 @@ async function main() {
   fs.writeFileSync(stateFile, JSON.stringify(state))
   if (!remind) return { decision: 'stop' }
   const missingTests = filesMissingTests(branchFiles(root, files))
-  return { decision: 'continue', reason: reminderFor(missingTests, currentBranch(root)) }
+  return { decision: 'continue', reason: reminderFor(missingTests) }
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {

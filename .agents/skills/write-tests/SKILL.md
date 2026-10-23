@@ -10,7 +10,8 @@ Test và lệnh. Mẫu trong repo: `StaffServiceTest`, `StaffControllerIT`, `mon
 
 ## 1. Xác định đối tượng test
 
-Đọc code cần test (service, controller, schema, component) và yêu cầu FR/BR của nó. Liệt kê **mọi nhánh**: mỗi
+Đọc code cần test (service, controller, schema, component), yêu cầu FR/BR của nó và bảng "Hành vi và test" trong
+file luồng của tính năng (`docs/design/flows/<module>/`). Liệt kê **mọi nhánh**: mỗi
 `if`, mỗi `throw new BusinessException(ErrorCode.X)`, mỗi annotation validation, mỗi trạng thái hiển thị.
 
 ## 2. Lập bảng ca test trước khi viết
