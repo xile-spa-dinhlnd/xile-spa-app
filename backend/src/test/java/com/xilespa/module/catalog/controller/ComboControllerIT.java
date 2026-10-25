@@ -522,6 +522,21 @@ class ComboControllerIT {
         assertThat(updateLog.getBeforeData()).contains(String.valueOf(service2.getId()));
         assertThat(updateLog.getAfterData()).contains(prefix + "Combo Đã Sửa");
         assertThat(updateLog.getAfterData()).contains(String.valueOf(service3.getId()));
+
+        // Đọc lại từ CSDL để đảm bảo dữ liệu thực sự được lưu và dòng cũ bị orphanRemoval loại bỏ
+        mockMvc.perform(send(get("/api/catalog/combos/" + comboId)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(comboId))
+                .andExpect(jsonPath("$.name").value(prefix + "Combo Đã Sửa"))
+                .andExpect(jsonPath("$.price").value(380_000))
+                .andExpect(jsonPath("$.tourFee").value(30_000))
+                .andExpect(jsonPath("$.retailTotal").value(450_000))
+                .andExpect(jsonPath("$.savings").value(70_000))
+                .andExpect(jsonPath("$.items.length()").value(2))
+                .andExpect(jsonPath("$.items[0].serviceId").value(service1.getId()))
+                .andExpect(jsonPath("$.items[0].quantity").value(3))
+                .andExpect(jsonPath("$.items[1].serviceId").value(service3.getId()))
+                .andExpect(jsonPath("$.items[1].quantity").value(1));
     }
 
     @Test

@@ -69,6 +69,10 @@ public class Combo {
         items.forEach((svc, qty) -> this.items.add(new ComboItem(this, svc, qty)));
     }
 
+    /**
+     * Cập nhật thông tin chi tiết của combo (FR-CMB-04). Trả về {@code true} nếu có thay đổi để cập
+     * nhật {@code updatedAt}, {@code false} nếu giữ nguyên để không chạm thời gian cập nhật.
+     */
     public boolean updateDetails(String name, long price, long tourFee, Instant now) {
         boolean changed =
                 !Objects.equals(this.name, name) || this.price != price || this.tourFee != tourFee;
@@ -82,38 +86,46 @@ public class Combo {
         return true;
     }
 
+    /**
+     * Thay thế danh sách thành phần theo so sánh {@code serviceId} (FR-CMB-04). Giữ nguyên thực thể
+     * cũ và cập nhật số lượng thay vì xóa hết rồi thêm lại để tránh xung đột unique index {@code
+     * ux_combo_item}. Trả về {@code true} nếu thành phần hoặc số lượng có thay đổi.
+     */
     public boolean replaceItems(Map<ServiceItem, Integer> newItems, Instant now) {
         boolean changed = false;
-        Map<Long, Integer> newQuantitiesByServiceId = new LinkedHashMap<>();
-        Map<Long, ServiceItem> newServiceByServiceId = new LinkedHashMap<>();
-        for (Map.Entry<ServiceItem, Integer> entry : newItems.entrySet()) {
-            Long sId = entry.getKey().getId();
-            newQuantitiesByServiceId.put(sId, entry.getValue());
-            newServiceByServiceId.put(sId, entry.getKey());
+
+        Map<Long, ComboItem> existingItemsByServiceId = new LinkedHashMap<>();
+        for (ComboItem item : this.items) {
+            existingItemsByServiceId.put(item.getService().getId(), item);
         }
 
-        Set<Long> retainedServiceIds = new HashSet<>();
-        Iterator<ComboItem> it = this.items.iterator();
-        while (it.hasNext()) {
-            ComboItem item = it.next();
-            Long sId = item.getService().getId();
-            if (!newQuantitiesByServiceId.containsKey(sId)) {
-                it.remove();
+        Set<Long> newServiceIds = new HashSet<>();
+        for (ServiceItem service : newItems.keySet()) {
+            newServiceIds.add(service.getId());
+        }
+
+        Iterator<ComboItem> iterator = this.items.iterator();
+        while (iterator.hasNext()) {
+            ComboItem item = iterator.next();
+            Long serviceId = item.getService().getId();
+            if (!newServiceIds.contains(serviceId)) {
+                iterator.remove();
                 changed = true;
-            } else {
-                retainedServiceIds.add(sId);
-                int newQty = newQuantitiesByServiceId.get(sId);
-                if (item.changeQuantity(newQty)) {
-                    changed = true;
-                }
             }
         }
 
-        for (Map.Entry<Long, ServiceItem> entry : newServiceByServiceId.entrySet()) {
-            Long sId = entry.getKey();
-            if (!retainedServiceIds.contains(sId)) {
-                this.items.add(
-                        new ComboItem(this, entry.getValue(), newQuantitiesByServiceId.get(sId)));
+        for (Map.Entry<ServiceItem, Integer> entry : newItems.entrySet()) {
+            ServiceItem service = entry.getKey();
+            Long serviceId = service.getId();
+            int newQuantity = entry.getValue();
+
+            ComboItem existingItem = existingItemsByServiceId.get(serviceId);
+            if (existingItem != null) {
+                if (existingItem.changeQuantity(newQuantity)) {
+                    changed = true;
+                }
+            } else {
+                this.items.add(new ComboItem(this, service, newQuantity));
                 changed = true;
             }
         }

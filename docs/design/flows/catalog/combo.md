@@ -9,6 +9,7 @@ Trạng thái: thiết kế (đã duyệt) · Card: S2-07 (backend; giao diện 
 | 25/10/2026 | Đình (Claude) | S2-07     | Thiết kế backend                                                                           |
 | 25/10/2026 | Đình (Claude) | S2-07     | Đình duyệt: OQ-22 (chặn ngừng bán dịch vụ trong combo đang bán), có API tính thử, một card chia bốn phần |
 | 25/10/2026 | Đình (Claude) | S2-07     | Tự soát phần 1: 2 vòng, sạch; Postman combo tự tạo dữ liệu |
+| 25/10/2026 | Đình (Claude) | S2-07     | Tự soát phần 2: 2 vòng, sạch; test đọc lại combo từ DB sau khi sửa |
 
 Phần chung của module (tên không trùng, không xóa cứng, nhật ký, OQ-21): `README.md` cùng thư mục.
 
@@ -218,7 +219,7 @@ Tên test đề xuất; `/implement` thay bằng tên thật. Lớp: `ComboTest`
 | Danh sách, tìm, lọc | IT | `searchFiltersByNameAndStatus`, `searchReturnsItemsAndTotals` | không áp dụng: tham số tùy chọn | `wildcardCharactersInSearchAreLiteral`, `emptyResultAndLastPage` | không áp dụng | `requiresLogin` | không áp dụng: chỉ đọc |
 | Xem một combo | IT | `getReturnsComboWithItems` | không áp dụng | `getShowsCurrentServicePriceAfterPriceChange` (đổi giá dịch vụ thì `retailTotal` đổi, `price` giữ) | `getUnknownComboIs404` | `requiresLogin` | không áp dụng |
 | Tạo combo | entity, service, IT | `newComboIsActiveWithItems`, `createTrimsSpacesAndRecordsAudit`, `createReturns201AndAuditLog` | `invalidInputReturnsFieldErrors` (tên trống, chỉ khoảng trắng, 151 ký tự, giá âm, giá trống, `items` rỗng, số lượng 0 và 100, thiếu `serviceId`) | `missingTourFeeIsZero`, `priceZeroIsAllowed`, `priceAboveRetailIsAllowed`, `namesDifferingOnlyByCaseOrSpacesAreDuplicates` | `createWithDuplicateNameIsRejected`, `createWithDuplicateServiceIsRejected`, `createWithInactiveServiceIsRejected`, `createWithUnknownServiceIsRejected` | `requiresLogin` | mỗi ca lỗi: `verify(comboRepository, never()).saveAndFlush(any())`, `verify(auditService, never())` |
-| Sửa combo | entity, service, IT | `updateChangesDetailsAndItems` (đổi giá, số lượng, bỏ một dịch vụ, thêm một dịch vụ), `updateReturns200AndAuditLogWithBeforeAndAfterItems` | `invalidInputReturnsFieldErrors` | `updateWithoutChangesWritesNoAudit`, `unchangedDetailsDoNotTouchUpdatedAt`, `removeAndReAddSameServiceKeepsItemRow`, `updateKeepsOwnNameWithoutDuplicateError`, `changingOnlyItemsTouchesUpdatedAt` | `updateWithDuplicateNameIsRejected`, `updateWithInactiveServiceIsRejected`, `updateUnknownComboIs404` | `requiresLogin` | `updateWithInactiveServiceIsRejected` (thành phần, giá trong DB như cũ, không có audit UPDATE) |
+| Sửa combo | entity, service, IT | `updateChangesDetailsAndItems` (đổi giá, số lượng, bỏ một dịch vụ, thêm một dịch vụ), `updateReturns200AndAuditLogWithBeforeAndAfterItems` | `updateInvalidInputReturnsFieldErrors` | `updateWithoutChangesWritesNoAudit`, `unchangedDetailsDoNotTouchUpdatedAt`, `removeAndReAddSameServiceKeepsItemRow`, `updateKeepsOwnNameWithoutDuplicateError`, `changingOnlyItemsTouchesUpdatedAt` | `updateWithDuplicateNameIsRejected`, `updateWithInactiveServiceIsRejected`, `updateUnknownComboIs404` | `requiresLogin` | `updateWithInactiveServiceIsRejected` (thành phần, giá trong DB như cũ, không có audit UPDATE) |
 | Ngừng bán, bán lại combo | entity, service, IT | `deactivateThenActivateRecordsAudit` | không áp dụng: không có body | `deactivateAndActivateAreIdempotent` (không ghi audit lần hai) | `activatingComboWithInactiveServiceIsRejected`, `deactivateUnknownComboIs404` | `requiresLogin` | `activatingComboWithInactiveServiceIsRejected` (combo vẫn ngừng bán, không có audit ACTIVATE) |
 | Ngừng bán dịch vụ nằm trong combo | service (`ServiceItemService`), IT (`ServiceItemControllerIT`) | `deactivatingServiceOnlyInInactiveComboIsAllowed` | không áp dụng | `messageListsAtMostThreeComboNames` | `deactivatingServiceInActiveComboIsRejected` | `requiresLogin` (đã có) | `deactivatingServiceInActiveComboIsRejected` (dịch vụ vẫn đang bán, không có audit DEACTIVATE) |
 | Không xóa cứng | IT | không áp dụng | không áp dụng | không áp dụng | `deleteIsNotSupported` | `requiresLogin` | không áp dụng |
@@ -251,7 +252,7 @@ nền và nặng tới nhẹ: phần 1 đặt khuôn cho cả tính năng, phầ
 | Phần | Chức năng                                                   | Khoảng   | Trạng thái |
 | ---- | ----------------------------------------------------------- | -------- | ---------- |
 | 1    | Tạo và xem combo, tính thử giá                              | 330 dòng | đã soát    |
-| 2    | Sửa combo                                                   | 110 dòng | đã code    |
+| 2    | Sửa combo                                                   | 110 dòng | đã soát    |
 | 3    | Ngừng bán, bán lại combo; chặn ngừng bán dịch vụ (OQ-22)    | 120 dòng | chưa làm   |
 | 4    | Danh sách, tìm, lọc combo; hoàn tất card                    | 50 dòng  | chưa làm   |
 

@@ -41,6 +41,12 @@ public class ComboItem {
         this.quantity = quantity;
     }
 
+    /**
+     * Cập nhật số lượng dịch vụ thành phần trong combo (FR-CMB-04).
+     *
+     * @return {@code true} nếu số lượng thay đổi so với giá trị hiện tại, {@code false} nếu giữ
+     *     nguyên
+     */
     public boolean changeQuantity(int newQuantity) {
         if (this.quantity == newQuantity) {
             return false;
