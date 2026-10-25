@@ -43,10 +43,21 @@ Quy tắc riêng của từng phần: `backend/AGENTS.md`, `frontend/AGENTS.md`.
 
 Java 21 · Spring Boot 4 · Gradle (Kotlin DSL) · Spring Data JPA · Spring Security (JWT trong cookie
 `httpOnly`) · Flyway · PostgreSQL · React + TypeScript (Vite) · Ant Design · TanStack Query ·
-JUnit 5 + Testcontainers · Vitest · Docker Compose · GitHub Actions.
+JUnit 6 + Testcontainers · Vitest · Docker Compose · GitHub Actions.
 
-Chi tiết và lý do: `docs/adr/0001-tech-stack.md`. **Muốn thêm thư viện hoặc đổi cách làm thì đối chiếu
-ADR-0001 trước và nói rõ trong PR**, đừng tự thêm dependency.
+Chi tiết và lý do: `docs/adr/0001-tech-stack.md`. Thư viện đang dùng, phiên bản chính và lưu ý API: mục "Thư viện"
+của `backend/AGENTS.md`, `frontend/AGENTS.md`; nguồn sự thật là `backend/gradle/libs.versions.toml` và
+`frontend/package.json` (không có ở đó là chưa có, không được import).
+
+**Thêm thư viện: hỏi người làm card trước khi cài, không tự thêm** (AI cũng vậy, kể cả thư viện chỉ dùng cho test).
+Câu hỏi nêu đủ bốn điểm:
+
+1. **Mục đích:** dùng làm gì, vì sao thư viện đang có (bảng "Thư viện") không làm được.
+2. **Ưu, nhược:** so với cách không thêm thư viện và với một lựa chọn khác.
+3. **Uy tín:** ai duy trì, giấy phép, lần phát hành gần nhất, mức độ được dùng (lượt tải, sao GitHub).
+4. **Hiệu năng:** frontend thì tăng bao nhiêu kích thước bundle; backend thì thời gian khởi động, bộ nhớ; nặng nhẹ khi cài.
+
+Được đồng ý mới cài; trong cùng PR ghi một dòng "Cập nhật" ở ADR-0001 và thêm dòng vào bảng "Thư viện".
 
 ### Lệnh thường dùng
 
@@ -89,7 +100,7 @@ Database dev: `docker compose up -d` ở gốc repo. Windows dùng `gradlew.bat`
     mà không nói trước. Code chính (không tính test, Postman, tài liệu) dự kiến quá khoảng 400 dòng thì nêu trong
     thiết kế để tách card khi lập sprint (CONTRIBUTING.md mục 2); việc không thuộc card đi PR riêng.
 11. **Giữ các file AGENTS luôn đúng với code.** Khi đổi kiến trúc, cấu trúc thư mục, quy ước đặt tên, thư viện
-    hay cách làm chung thì cập nhật `AGENTS.md`, `backend/AGENTS.md` hoặc `frontend/AGENTS.md` **trong cùng
+    (thêm, bỏ, nâng phiên bản chính) hay cách làm chung thì cập nhật `AGENTS.md`, `backend/AGENTS.md` hoặc `frontend/AGENTS.md` **trong cùng
     PR** (kèm ADR nếu là quyết định công nghệ), để cả nhóm và AI theo kịp.
 12. **Không sửa tay file sinh tự động:** `frontend/package-lock.json` (chỉ đổi qua `npm install`), Gradle Wrapper
     (`backend/gradlew*`, `backend/gradle/wrapper/`), sơ đồ `docs/design/diagrams/` (sinh bằng

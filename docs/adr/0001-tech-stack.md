@@ -59,3 +59,7 @@ Hệ thống quản trị cho một tiệm nhỏ, một người dùng chính (c
   và constructor viết tay, phổ biến trong dự án Spring ở Việt Nam.
 - **12/10/2026 (S2-04):** Chuyển phần ký và kiểm tra JWT từ code tự viết sang **Spring Security OAuth2 JOSE (`spring-security-oauth2-jose`)** với `NimbusJwtEncoder` và `NimbusJwtDecoder`. Lý do: chuẩn hóa theo hệ sinh thái Spring Security, loại bỏ code thủ công HMAC/Base64/JSON, tận dụng bộ parser và validator chuẩn RFC 7519 đã được kiểm chứng bảo mật, hỗ trợ mở rộng thuật toán ký trong tương lai mà không đổi kiến trúc.
 - **14/10/2026 (S2-02):** Thêm **Spring Boot Starter Mail (`spring-boot-starter-mail`)** để gửi email đặt lại mật khẩu qua SMTP (OQ-10, FR-AUTH-03). Chọn bean qua thuộc tính `xile.mail.sender` (`log` | `smtp`) bằng `@ConditionalOnProperty`. Dev ghi link ra console, prod gửi SMTP qua biến môi trường.
+- **25/10/2026:** Ghi lại cho đúng thực tế: Spring Boot 4 kéo **JUnit Jupiter 6** (bảng trên ghi JUnit 5 lúc chọn);
+  **Recharts** và **Playwright** vẫn giữ lựa chọn nhưng chưa cài, cài khi có card cần. Thêm quy trình thêm thư viện:
+  hỏi người làm card trước, nêu mục đích, ưu nhược, uy tín, hiệu năng (`AGENTS.md` mục 3); thư viện đang dùng và lưu ý
+  API theo phiên bản ở mục "Thư viện" của `backend/AGENTS.md`, `frontend/AGENTS.md`.

@@ -23,7 +23,10 @@ phần <N>`. Thiếu số phần thì hỏi, không tự làm cả card. Chỉ l
   chỉ làm ở phần cuối.
 
 Code đúng như thiết kế. Thấy thiết kế sai, thiếu hoặc không làm được (thêm bảng, đổi API, đụng module của người
-kia) thì **dừng và hỏi**; được đồng ý thì sửa file luồng trước rồi mới code khác đi.
+kia) thì **dừng và hỏi**; được đồng ý thì sửa file luồng trước rồi mới code khác đi. Cần thư viện chưa có trong
+`package.json` hoặc `libs.versions.toml` cũng **dừng và hỏi** theo bốn điểm của AGENTS.md mục 3, không tự `npm install`
+hay thêm vào `libs.versions.toml`. Viết code theo phiên bản và lưu ý ở bảng "Thư viện" của `backend/AGENTS.md`,
+`frontend/AGENTS.md`.
 
 ## Bước 0. Nhánh
 

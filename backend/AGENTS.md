@@ -3,6 +3,31 @@
 Đọc `../AGENTS.md` trước. File này chỉ bổ sung phần riêng của backend.
 Stack: Java 21, Spring Boot 4, Gradle (Kotlin DSL, dùng Gradle Wrapper), JPA, Spring Security, Flyway, PostgreSQL.
 
+## Thư viện
+
+Nguồn sự thật: `gradle/libs.versions.toml` (thư viện có trong BOM của Spring Boot thì không ghi version, nâng cùng
+plugin `spring-boot`). Không có trong file đó là chưa có. Thêm thư viện: hỏi trước theo `../AGENTS.md` mục 3. Bản ghi
+ở đây là bản chính đang chạy (`./gradlew dependencies`), đổi thì sửa bảng trong cùng PR (quy tắc 11).
+
+| Thư viện | Bản | Dùng cho | Lưu ý API (tài liệu, ví dụ cũ hay viết theo bản trước) |
+| --- | --- | --- | --- |
+| Spring Boot (Framework 7, Security 7) | 4.1 | nền ứng dụng | Starter tách nhỏ: `spring-boot-starter-webmvc`, `-flyway`; test starter theo phần (`-webmvc-test`, `-data-jpa-test`...) |
+| Gradle, Kotlin DSL | 9.7 | build | Version thư viện chỉ khai ở `libs.versions.toml`, không viết thẳng trong `build.gradle.kts` |
+| Spring Data JPA, Hibernate ORM | 7.4 | truy cập dữ liệu | `jakarta.persistence`; `ddl-auto` chỉ `validate` hoặc `none` (quy tắc 2) |
+| Jackson | 3.1 | JSON | Package `tools.jackson.databind`, không `com.fasterxml.jackson.databind` (mục 7 của `../AGENTS.md`) |
+| Flyway (+ `flyway-database-postgresql`) | 12 | migration | `V{n}__...sql`, không sửa file đã có |
+| PostgreSQL JDBC | BOM | driver | Database PostgreSQL 16 (dev và Testcontainers) |
+| Spring Security OAuth2 JOSE (Nimbus JOSE JWT) | 10 | ký, kiểm JWT | Dùng `NimbusJwtEncoder`, `NimbusJwtDecoder` qua `security/`; không thêm jjwt hay tự viết HMAC |
+| Bean Validation (`spring-boot-starter-validation`) | BOM | kiểm dữ liệu request | Thông báo tiếng Việt ngay trên annotation |
+| Spring Boot Mail | BOM | email đặt lại mật khẩu | Chọn bean theo `xile.mail.sender` (`log`, `smtp`) |
+| Spring Boot Actuator | BOM | health check | Chỉ mở `health` |
+| MapStruct (+ `lombok-mapstruct-binding`) | 1.6 | mapper entity → DTO | Bốn quy tắc ở mục Cấu trúc; Lombok chạy trước MapStruct |
+| Lombok | BOM | getter, constructor | Giới hạn trong `lombok.config` (mục Cấu trúc) |
+| JUnit Jupiter | 6 | test | Spring Boot 4 kéo JUnit 6; import vẫn `org.junit.jupiter.api` |
+| AssertJ, Mockito | 3.27, 5 | assert, mock | `assertThatThrownBy(...).extracting("errorCode")`; `@ExtendWith(MockitoExtension.class)` |
+| Testcontainers | 2.0 | test tích hợp | Artifact `testcontainers-postgresql`, import `org.testcontainers.postgresql.PostgreSQLContainer` (bản 1.x là `org.testcontainers.containers`) |
+| Spotless (google-java-format, kiểu AOSP) | 8 | format | `./gradlew spotlessApply` trước khi commit |
+
 ## Cấu trúc
 
 **Chia module theo tính năng ở cấp ngoài, chia tầng bên trong mỗi module** (controller, service,
