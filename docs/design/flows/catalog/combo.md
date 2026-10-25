@@ -1,6 +1,6 @@
 # Combo
 
-Trạng thái: thiết kế (đã duyệt) · Card: S2-07 (backend; giao diện ở S2-08) · Yêu cầu: FR-CMB-01 đến FR-CMB-05, BR-01, BR-03, BR-13, BR-18, BR-19, OQ-06, OQ-22
+Trạng thái: khớp code · Card: S2-07 (backend; giao diện ở S2-08) · Yêu cầu: FR-CMB-01 đến FR-CMB-05, BR-01, BR-03, BR-13, BR-18, BR-19, OQ-06, OQ-22
 
 **Chia bốn phần** (mục cuối "Các phần"): mỗi lần `/implement docs/design/flows/catalog/combo.md phần <N>` làm một phần rồi dừng.
 
@@ -11,6 +11,7 @@ Trạng thái: thiết kế (đã duyệt) · Card: S2-07 (backend; giao diện 
 | 25/10/2026 | Đình (Claude) | S2-07     | Tự soát phần 1: 2 vòng, sạch; Postman combo tự tạo dữ liệu |
 | 25/10/2026 | Đình (Claude) | S2-07     | Tự soát phần 2: 2 vòng, sạch; test đọc lại combo từ DB sau khi sửa |
 | 25/10/2026 | Đình (Claude) | S2-07     | Tự soát phần 3: 1 vòng, sạch; 2 điểm nên sửa làm cùng phần 4 |
+| 25/10/2026 | Đình (Antigravity) | S2-07 | Phần 4 và 2 điểm nên sửa của phần 3; khớp code toàn bộ backend |
 
 Phần chung của module (tên không trùng, không xóa cứng, nhật ký, OQ-21): `README.md` cùng thư mục.
 
@@ -255,7 +256,7 @@ nền và nặng tới nhẹ: phần 1 đặt khuôn cho cả tính năng, phầ
 | 1    | Tạo và xem combo, tính thử giá                              | 330 dòng | đã soát    |
 | 2    | Sửa combo                                                   | 110 dòng | đã soát    |
 | 3    | Ngừng bán, bán lại combo; chặn ngừng bán dịch vụ (OQ-22)    | 120 dòng | đã soát    |
-| 4    | Danh sách, tìm, lọc combo; hoàn tất card                    | 50 dòng  | chưa làm   |
+| 4    | Danh sách, tìm, lọc combo; hoàn tất card                    | 50 dòng  | đã code    |
 
 ### Phần 1. Tạo và xem combo, tính thử giá
 

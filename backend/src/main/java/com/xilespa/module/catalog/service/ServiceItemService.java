@@ -35,6 +35,7 @@ public class ServiceItemService {
 
     static final String AUDIT_ENTITY = "service";
     private static final int MAX_PAGE_SIZE = 100;
+    private static final int MAX_ACTIVE_COMBOS_IN_MESSAGE = 3;
 
     private final ServiceItemRepository serviceRepository;
     private final ServiceGroupRepository groupRepository;
@@ -122,20 +123,10 @@ public class ServiceItemService {
         if (service.isActive()) {
             List<String> activeComboNames = comboItemRepository.findActiveComboNamesByServiceId(id);
             if (!activeComboNames.isEmpty()) {
-                String namesPart;
-                if (activeComboNames.size() <= 3) {
-                    namesPart = String.join(", ", activeComboNames);
-                } else {
-                    namesPart =
-                            String.join(", ", activeComboNames.subList(0, 3))
-                                    + " và "
-                                    + (activeComboNames.size() - 3)
-                                    + " combo khác";
-                }
                 throw new BusinessException(
                         ErrorCode.SERVICE_IN_ACTIVE_COMBO,
                         "Dịch vụ đang có trong combo đang bán: "
-                                + namesPart
+                                + formatActiveComboNames(activeComboNames)
                                 + ". Hãy ngừng bán các combo này hoặc bỏ dịch vụ khỏi combo trước.");
             }
         }
@@ -147,6 +138,16 @@ public class ServiceItemService {
             return after;
         }
         return before;
+    }
+
+    private String formatActiveComboNames(List<String> activeComboNames) {
+        if (activeComboNames.size() <= MAX_ACTIVE_COMBOS_IN_MESSAGE) {
+            return String.join(", ", activeComboNames);
+        }
+        return String.join(", ", activeComboNames.subList(0, MAX_ACTIVE_COMBOS_IN_MESSAGE))
+                + " và "
+                + (activeComboNames.size() - MAX_ACTIVE_COMBOS_IN_MESSAGE)
+                + " combo khác";
     }
 
     /**

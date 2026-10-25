@@ -4,6 +4,7 @@ import com.xilespa.common.audit.AuditAction;
 import com.xilespa.common.audit.AuditService;
 import com.xilespa.common.exception.BusinessException;
 import com.xilespa.common.exception.ErrorCode;
+import com.xilespa.common.response.PageResponse;
 import com.xilespa.module.catalog.dto.request.ComboItemRequest;
 import com.xilespa.module.catalog.dto.request.ComboQuoteRequest;
 import com.xilespa.module.catalog.dto.request.ComboRequest;
@@ -27,6 +28,9 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,6 +43,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class ComboService {
 
     static final String AUDIT_ENTITY = "combo";
+    private static final int MAX_PAGE_SIZE = 100;
 
     private final ComboRepository comboRepository;
     private final ServiceItemRepository serviceItemRepository;
@@ -49,6 +54,39 @@ public class ComboService {
     private record ItemLine(ServiceItem service, int quantity) {}
 
     private record LineCalculation(List<ComboItemResponse> items, long retailTotal) {}
+
+    /**
+     * Danh sách combo: tìm theo tên và trạng thái; xếp theo tên rồi id (FR-CMB-01). Dùng hai bước:
+     * phân trang trên bảng combo, rồi nạp trước thành phần bằng JOIN FETCH theo id để tránh N+1.
+     */
+    @Transactional(readOnly = true)
+    public PageResponse<ComboResponse> search(String q, Boolean active, int page, int size) {
+        String namePattern = ServiceItemService.likePattern(q);
+        PageRequest pageable =
+                PageRequest.of(
+                        Math.max(page, 0),
+                        Math.clamp(size, 1, MAX_PAGE_SIZE),
+                        Sort.by("name", "id"));
+        Page<Combo> pageResult = comboRepository.search(namePattern, active, pageable);
+        if (pageResult.isEmpty()) {
+            return PageResponse.from(pageResult, this::toResponse);
+        }
+
+        List<Long> ids = pageResult.getContent().stream().map(Combo::getId).toList();
+        Map<Long, Combo> comboMap =
+                comboRepository.findAllWithItemsByIdIn(ids).stream()
+                        .collect(Collectors.toMap(Combo::getId, Function.identity()));
+
+        List<ComboResponse> responses =
+                ids.stream().map(comboMap::get).map(this::toResponse).toList();
+
+        return new PageResponse<>(
+                responses,
+                pageResult.getNumber(),
+                pageResult.getSize(),
+                pageResult.getTotalElements(),
+                pageResult.getTotalPages());
+    }
 
     /** Xem chi tiết một combo kèm thành phần và tổng giá lẻ, tiết kiệm (FR-CMB-01). */
     @Transactional(readOnly = true)
@@ -146,12 +184,7 @@ public class ComboService {
                             .filter(service -> !service.isActive())
                             .map(ServiceItem::getName)
                             .toList();
-
-            if (!inactiveServiceNames.isEmpty()) {
-                throw new BusinessException(
-                        ErrorCode.COMBO_SERVICE_UNAVAILABLE,
-                        "Dịch vụ đã ngừng bán: " + String.join(", ", inactiveServiceNames) + ".");
-            }
+            rejectInactiveServices(inactiveServiceNames);
         }
 
         ComboResponse before = toResponse(combo);
@@ -252,13 +285,17 @@ public class ComboService {
                         .map(ServiceItem::getName)
                         .toList();
 
+        rejectInactiveServices(inactiveNames);
+
+        return serviceMap;
+    }
+
+    private void rejectInactiveServices(List<String> inactiveNames) {
         if (!inactiveNames.isEmpty()) {
             throw new BusinessException(
                     ErrorCode.COMBO_SERVICE_UNAVAILABLE,
                     "Dịch vụ đã ngừng bán: " + String.join(", ", inactiveNames) + ".");
         }
-
-        return serviceMap;
     }
 
     private ComboResponse toResponse(Combo combo) {

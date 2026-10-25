@@ -2168,6 +2168,95 @@
           ]
         },
         {
+          "name": "Danh sách combo",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/catalog/combos?q=Combo Thư Giãn {{runId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "catalog",
+                "combos"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Combo Thư Giãn {{runId}}"
+                }
+              ]
+            },
+            "description": "FR-CMB-01. Tìm kiếm combo theo tên kèm thành phần và số tính sẵn."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 200\", () => pm.response.to.have.status(200));",
+                  "const p = pm.response.json();",
+                  "pm.test(\"Có ít nhất 1 combo\", () => pm.expect(p.totalElements).to.be.at.least(1));",
+                  "pm.test(\"Combo kèm thành phần và tổng giá\", () => {",
+                  "  const c = p.content[0];",
+                  "  pm.expect(c.items.length).to.be.at.least(1);",
+                  "  pm.expect(c.retailTotal).to.be.a(\"number\");",
+                  "  pm.expect(c.savings).to.be.a(\"number\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Lọc combo đang bán",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/catalog/combos?active=true&q=Combo Thư Giãn {{runId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "catalog",
+                "combos"
+              ],
+              "query": [
+                {
+                  "key": "active",
+                  "value": "true"
+                },
+                {
+                  "key": "q",
+                  "value": "Combo Thư Giãn {{runId}}"
+                }
+              ]
+            },
+            "description": "FR-CMB-01. Lọc combo đang bán."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 200\", () => pm.response.to.have.status(200));",
+                  "const p = pm.response.json();",
+                  "pm.test(\"Có ít nhất 1 combo đang bán\", () => {",
+                  "  pm.expect(p.totalElements).to.be.at.least(1);",
+                  "  pm.expect(p.content.every(c => c.active === true)).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
           "name": "Tạo combo trùng tên",
           "request": {
             "method": "POST",

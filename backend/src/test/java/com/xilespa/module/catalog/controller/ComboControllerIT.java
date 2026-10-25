@@ -789,11 +789,110 @@ class ComboControllerIT {
     }
 
     // =========================================================================
-    // 6. Quyền & không xóa cứng
+    // 6. Danh sách, tìm, lọc (search)
+    // =========================================================================
+
+    @Test
+    void searchFiltersByNameAndStatus() throws Exception {
+        String items = "[{\"serviceId\": " + service1.getId() + ", \"quantity\": 1}]";
+        long c1 = createCombo(prefix + "Gội Thảo Dược", 150_000L, items);
+        long c2 = createCombo(prefix + "Gội Cũ", 150_000L, items);
+        mockMvc.perform(send(post("/api/catalog/combos/" + c2 + "/deactivate")))
+                .andExpect(status().isOk());
+
+        // Tìm theo tên không phân biệt hoa thường
+        mockMvc.perform(send(get("/api/catalog/combos").param("q", prefix.toUpperCase() + "gội")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(2));
+
+        // Lọc đang bán
+        mockMvc.perform(send(get("/api/catalog/combos").param("q", prefix).param("active", "true")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].id").value(c1));
+
+        // Lọc ngừng bán
+        mockMvc.perform(
+                        send(
+                                get("/api/catalog/combos")
+                                        .param("q", prefix)
+                                        .param("active", "false")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].id").value(c2));
+    }
+
+    @Test
+    void searchReturnsItemsAndTotals() throws Exception {
+        String items =
+                """
+                [
+                    {"serviceId": %d, "quantity": 2},
+                    {"serviceId": %d, "quantity": 1}
+                ]
+                """
+                        .formatted(service1.getId(), service2.getId());
+        long comboId = createCombo(prefix + "Combo Kèm Thành Phần", 350_000L, items);
+
+        mockMvc.perform(
+                        send(
+                                get("/api/catalog/combos")
+                                        .param("q", prefix + "Combo Kèm Thành Phần")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].id").value(comboId))
+                .andExpect(jsonPath("$.content[0].price").value(350_000))
+                .andExpect(jsonPath("$.content[0].retailTotal").value(400_000))
+                .andExpect(jsonPath("$.content[0].savings").value(50_000))
+                .andExpect(jsonPath("$.content[0].items.length()").value(2))
+                .andExpect(jsonPath("$.content[0].items[0].serviceId").value(service1.getId()))
+                .andExpect(jsonPath("$.content[0].items[0].quantity").value(2))
+                .andExpect(jsonPath("$.content[0].items[0].lineTotal").value(200_000))
+                .andExpect(jsonPath("$.content[0].items[1].serviceId").value(service2.getId()))
+                .andExpect(jsonPath("$.content[0].items[1].quantity").value(1))
+                .andExpect(jsonPath("$.content[0].items[1].lineTotal").value(200_000));
+    }
+
+    @Test
+    void wildcardCharactersInSearchAreLiteral() throws Exception {
+        String items = "[{\"serviceId\": " + service1.getId() + ", \"quantity\": 1}]";
+        createCombo(prefix + "100% Tự Nhiên", 100_000L, items);
+        createCombo(prefix + "1000 Tự Nhiên", 100_000L, items);
+        createCombo(prefix + "A_B", 100_000L, items);
+        createCombo(prefix + "AXB", 100_000L, items);
+
+        // Ký tự % tìm chính xác, không phải wildcard
+        mockMvc.perform(send(get("/api/catalog/combos").param("q", prefix + "100%")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].name").value(prefix + "100% Tự Nhiên"));
+
+        // Ký tự _ tìm chính xác, không phải wildcard
+        mockMvc.perform(send(get("/api/catalog/combos").param("q", prefix + "A_B")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].name").value(prefix + "A_B"));
+    }
+
+    @Test
+    void emptyResultAndLastPage() throws Exception {
+        mockMvc.perform(send(get("/api/catalog/combos").param("q", prefix + "Không Tồn Tại")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(0))
+                .andExpect(jsonPath("$.content.length()").value(0));
+
+        mockMvc.perform(send(get("/api/catalog/combos").param("page", "9999")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(0));
+    }
+
+    // =========================================================================
+    // 7. Quyền & không xóa cứng
     // =========================================================================
 
     @Test
     void requiresLogin() throws Exception {
+        mockMvc.perform(get("/api/catalog/combos")).andExpect(status().isUnauthorized());
         mockMvc.perform(get("/api/catalog/combos/1")).andExpect(status().isUnauthorized());
         mockMvc.perform(
                         post("/api/catalog/combos")

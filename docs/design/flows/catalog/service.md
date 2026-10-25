@@ -6,6 +6,7 @@ Trạng thái: khớp code · Card: S1-05, S1-06 · Yêu cầu: FR-SVC-01 đến
 | ---------- | ------------- | -------------------- | -------------------------------------------------------------------------------- |
 | 23/10/2026 | Đình (Claude)      | chore/agent-workflow | Viết bù theo code đang chạy (S1-05 04dd2f7, sửa 46ef8b0; OQ-21 ở S2-06, #41)     |
 | 23/10/2026 | Đình (Antigravity) | S2-06                | Ô lọc nhóm lấy tất cả nhóm; nhóm ngừng dùng có nhãn "(ngừng dùng)"               |
+| 25/10/2026 | Đình (Claude)      | S2-07                | Ngừng bán bị chặn khi dịch vụ nằm trong combo đang bán (OQ-22)                    |
 
 Phần chung của module (tên không trùng, không xóa cứng, nhật ký, OQ-21): `README.md` cùng thư mục.
 
@@ -46,7 +47,9 @@ flowchart TD
     I -- không --> E2
     I -- có --> J[Đổi thông tin; giá khác giá cũ thì ghi service_price_history]
     J --> K[audit_log UPDATE nếu có thay đổi] --> OK2[200]
-    B -- Ngừng bán --> L[active = false, audit_log DEACTIVATE; đã ngừng thì trả như cũ] --> OK2
+    B -- Ngừng bán --> L0{Đang bán và nằm trong combo đang bán?}
+    L0 -- có --> E3[409 SERVICE_IN_ACTIVE_COMBO, nêu tên combo]
+    L0 -- không --> L[active = false, audit_log DEACTIVATE; đã ngừng thì trả như cũ] --> OK2
     B -- Bán lại --> M{Nhóm của dịch vụ đang dùng?}
     M -- không --> E2
     M -- có --> N[active = true, audit_log ACTIVATE; đang bán thì trả như cũ] --> OK2
@@ -60,6 +63,8 @@ flowchart TD
 - Tạo và sửa chỉ chọn được nhóm đang dùng. Hệ quả: dịch vụ đã ngừng bán thuộc nhóm đã ngừng dùng chỉ sửa được khi
   đổi sang nhóm đang dùng hoặc dùng lại nhóm (OQ-21).
 - Bán lại dịch vụ trong nhóm đã ngừng dùng bị chặn (OQ-21).
+- Ngừng bán dịch vụ đang nằm trong combo đang bán bị chặn (OQ-22, 409 `SERVICE_IN_ACTIVE_COMBO`); thông báo nêu tối đa 3
+  tên combo rồi "và N combo khác". Dịch vụ đã ngừng bán từ trước thì gọi lại không bị chặn. Chi tiết: `combo.md`.
 - Tìm theo tên: không phân biệt hoa thường; ký tự `%`, `_`, `\` người dùng gõ được coi là chữ thường, không phải ký
   tự đại diện (`likePattern`). Từ khóa trống là lấy tất cả.
 - Giao diện: mặc định lọc "Đang bán"; đang lọc thì có nút "Xóa bộ lọc"; danh sách trống nói rõ không có kết quả khớp
@@ -75,11 +80,12 @@ flowchart TD
 | 404  | `NOT_FOUND`               | `id` không tồn tại                                             | `message.error`                            |
 | 405  | (không có body nghiệp vụ) | gọi `DELETE`                                                   | không có nút xóa                           |
 | 409  | `SERVICE_NAME_DUPLICATE`  | trùng tên dịch vụ khác                                         | lỗi ở ô Tên                                |
+| 409  | `SERVICE_IN_ACTIVE_COMBO` | ngừng bán dịch vụ đang nằm trong combo đang bán (OQ-22)        | `message.error`                            |
 
 ## Ảnh hưởng
 
-Không (file viết bù theo code đang chạy). Khi làm combo (S2-07): ngừng bán một dịch vụ đang nằm trong combo đang bán là
-chỗ cần xét theo `AGENTS.md` mục 7 (tham chiếu hai chiều).
+Không (file viết bù theo code đang chạy). Đã cập nhật khi làm combo (S2-07): chặn ngừng bán dịch vụ đang nằm trong combo
+đang bán theo OQ-22.
 
 ## Hành vi và test
 
@@ -91,7 +97,7 @@ Tên test thật. Module chưa có test đơn vị cho `ServiceItemService`; cá
 | Xem một dịch vụ | IT | thiếu | không áp dụng | không áp dụng | `getUnknownServiceIs404` | `requiresLogin` | không áp dụng |
 | Tạo dịch vụ | IT, Vitest | `createReturns201AndAuditLog`; `hiển thị dịch vụ với tiền đã định dạng, mặc định lọc đang bán` | `invalidInputReturnsFieldErrors`; `serviceFormSchema` `báo lỗi tiếng Việt theo từng ô` | `priceZeroAndMissingTourFeeAreAllowed`, `namesDifferingOnlyByCaseOrSpacesAreDuplicates`; `chấp nhận dữ liệu hợp lệ, giá 0 và tiền tour trống` | `unknownGroupIsRejected`; `lỗi trùng tên từ backend hiển thị ngay dưới ô tên` | `requiresLogin` | thiếu (chưa kiểm không lưu, không audit khi lỗi) |
 | Sửa, đổi giá | entity, IT, Vitest | `changingPriceCreatesHistoryWithOldAndNewPrice`, `updatingPriceWritesPriceHistory`; `đổi tên nhóm thì danh sách dịch vụ hiện tên mới` | `invalidInputReturnsFieldErrors` | `samePriceCreatesNoHistory`, `unchangedDetailsDoNotTouchUpdatedAt`, `updateWithoutPriceChangeWritesNoHistory` | `renamingToAnotherServicesNameIsDuplicate`; `sửa dịch vụ thuộc nhóm đã ngừng dùng: hiện lựa chọn bị khóa và báo lỗi nếu giữ nguyên` | `requiresLogin` | thiếu |
-| Ngừng bán, bán lại | entity, IT | `deactivateThenActivate` | không áp dụng: không có body | `deactivateAndActivateAreIdempotent` | `activatingServiceInInactiveGroupIsRejected` (ở `ServiceGroupControllerIT`) | `requiresLogin` | `activatingServiceInInactiveGroupIsRejected` |
+| Ngừng bán, bán lại | entity, IT | `deactivateThenActivate`, `deactivatingServiceOnlyInInactiveComboIsAllowed` | không áp dụng: không có body | `deactivateAndActivateAreIdempotent`, `messageListsAtMostThreeComboNames` | `activatingServiceInInactiveGroupIsRejected` (ở `ServiceGroupControllerIT`), `deactivatingServiceInActiveComboIsRejected` | `requiresLogin` | `activatingServiceInInactiveGroupIsRejected`, `deactivatingServiceInActiveComboIsRejected` |
 | Không xóa cứng | IT | không áp dụng | không áp dụng | không áp dụng | `deleteIsNotSupported` | `requiresLogin` | không áp dụng |
 
 Ô "thiếu" là ca chưa có test; bổ sung khi card sau đụng vào module này (S2-07 combo).

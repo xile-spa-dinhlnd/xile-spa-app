@@ -1,5 +1,6 @@
 package com.xilespa.module.catalog.controller;
 
+import com.xilespa.common.response.PageResponse;
 import com.xilespa.module.catalog.dto.request.ComboQuoteRequest;
 import com.xilespa.module.catalog.dto.request.ComboRequest;
 import com.xilespa.module.catalog.dto.response.ComboQuoteResponse;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /** API quản lý combo dịch vụ (FR-CMB-01 đến 05). Không có DELETE: combo chỉ ngừng bán (BR-19). */
@@ -24,6 +26,15 @@ import org.springframework.web.bind.annotation.RestController;
 public class ComboController {
 
     private final ComboService comboService;
+
+    @GetMapping
+    public PageResponse<ComboResponse> search(
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) Boolean active,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return comboService.search(q, active, page, size);
+    }
 
     @GetMapping("/{id}")
     public ComboResponse get(@PathVariable Long id) {
