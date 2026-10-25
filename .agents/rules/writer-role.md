@@ -47,7 +47,8 @@ Báo tên nhánh đã tạo trong báo cáo đầu tiên. Hook chỉ cho đúng 
 - Không: commit, push, chuyển sang nhánh đã có, `stash`, `restore`, `checkout -- file`, `reset`, `rebase`, `merge`,
   `add`. Người làm card tự chạy (CONTRIBUTING.md mục 8). Hook `tools/agent-hooks/guard.mjs` chặn các lệnh này.
 - Bị hook chặn thì **không tìm cách lách**. Dừng lại, ghi lệnh cần chạy vào báo cáo cho người dùng.
-- **Không hướng dẫn git** (câu commit, push, PR, squash) ở skill nào khác ngoài `/pre-pr-check`.
+- **Không hướng dẫn lệnh git** (push, PR, squash) ở skill nào khác ngoài `/pre-pr-check`. Câu commit gợi ý thì có ở
+  cuối báo cáo `/implement`, `/fix-bug` (AGENTS.md mục 8), chỉ câu, không lệnh.
 
 ## Kết thúc mỗi phần việc
 

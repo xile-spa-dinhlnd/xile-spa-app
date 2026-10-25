@@ -28,15 +28,19 @@ Luồng của Đình dùng Claude `/plan-feature` thay cho skill này; Đình đ
 6. **Viết file luồng** `docs/design/flows/<module>/<tính-năng>.md` theo khung ở `docs/design/flows/README.md`. Trạng
    thái `thiết kế (chờ duyệt)`; dòng lịch sử đầu `<dd/MM/yyyy> | <tên người dùng> (Antigravity) | <card> | Thiết kế`
    (tên lấy từ `git config --get user.name`). Chỗ SRS chưa rõ đưa vào "Câu hỏi mở", mỗi câu có **Đề xuất:**.
+   Card lớn thì viết mục "Các phần" theo mục "Chia phần" của `docs/design/flows/README.md`: mỗi phần một chức năng
+   người dùng thấy, phần nền và nặng trước (thường là "Tạo"), nhẹ sau.
 7. **Chuyển card sang "Đang làm"** trong file backlog.
 8. **Dừng lại**, báo đường dẫn file, tóm tắt vài dòng, các câu hỏi mở, rồi hỏi: "Bạn duyệt thiết kế này chứ? Có gì
    cần đổi?" Khi được duyệt: ghi câu trả lời vào file (câu thành quyết định nghiệp vụ thì thêm OQ), xóa "Câu hỏi mở",
-   đổi trạng thái thành `thiết kế (đã duyệt)`. Bước tiếp theo là `/implement <đường dẫn file luồng>`.
+   đổi trạng thái thành `thiết kế (đã duyệt)`. Bước tiếp theo là `/implement <đường dẫn file luồng>` (file chia phần:
+   `/implement <đường dẫn file luồng> phần 1`).
 
 ## Một card, một PR
 
 Card và PR là một (CONTRIBUTING.md mục 2). Ước lượng code chính (không tính test, Postman, tài liệu) quá khoảng 400
 dòng thì ghi vào "Câu hỏi mở": đề xuất tách card ở lần lập sprint sau, hoặc giữ một PR và ghi lý do. Không tự tách.
+Giữ một PR thì chia phần để code và soát từng phần (`docs/design/flows/README.md` mục "Chia phần").
 
 ## Quy tắc vẽ sơ đồ
 

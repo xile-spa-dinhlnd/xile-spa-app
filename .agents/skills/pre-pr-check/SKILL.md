@@ -6,7 +6,8 @@ description: Chỉ chạy khi người dùng tự gõ /pre-pr-check; không tự
 # /pre-pr-check: sẵn sàng mở PR và hướng dẫn git
 
 - **Chỉ chạy khi người dùng gõ `/pre-pr-check`.** Không tự cho rằng code đã đúng và đã xong.
-- Đây là **nơi duy nhất** hướng dẫn git (AGENTS.md mục 8). Skill khác không đưa câu commit hay lệnh push.
+- Đây là **nơi duy nhất** hướng dẫn lệnh git (AGENTS.md mục 8). `/implement`, `/fix-bug`, `/self-review` chỉ gợi ý câu
+  commit cho từng lần sửa; skill này soát lại các câu đã commit và soạn lệnh còn lại.
 - Skill này không commit, push hay mở PR: chỉ soạn sẵn để người dùng tự chạy. Ngoại lệ: tạo nhánh ở bước 1.
 
 ## 1. Nhánh và phạm vi

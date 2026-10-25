@@ -12,6 +12,16 @@ description: Code theo một thiết kế đã duyệt của Xile Spa - đầu v
 - **Khối sửa** bắt đầu bằng `# Sửa theo ...` (từ `/self-review` hoặc `/review-pr`): làm đúng từng bước của khối, không
   làm thêm ngoài khối.
 
+**File có mục "Các phần"** (`docs/design/flows/README.md` mục "Chia phần"): người dùng gõ `/implement <file luồng>
+phần <N>`. Thiếu số phần thì hỏi, không tự làm cả card. Chỉ làm phần N:
+
+- Phần trước chưa `đã soát` (Huy: chưa `đã code`) thì dừng và hỏi.
+- Theo "Thứ tự làm" bên dưới nhưng chỉ với lớp, method, test, Postman ghi ở phần N; không viết trước code của phần sau.
+  Bước 1 (backlog "Đang làm") chỉ ở phần 1.
+- Xong phần: bảng "Hành vi và test" ghi tên test thật cho các dòng của phần N, trạng thái phần N trong bảng "Các
+  phần" thành `đã code`, rồi dừng và báo cáo. Bước 5 đến 9 (ảnh hưởng còn lại, file luồng `khớp code`, backlog "Xong")
+  chỉ làm ở phần cuối.
+
 Code đúng như thiết kế. Thấy thiết kế sai, thiếu hoặc không làm được (thêm bảng, đổi API, đụng module của người
 kia) thì **dừng và hỏi**; được đồng ý thì sửa file luồng trước rồi mới code khác đi.
 
@@ -51,7 +61,7 @@ test" của file luồng: viết test, thử làm đỏ, chạy xanh. Test của
    trạng thái thành `khớp code`, thêm dòng lịch sử `<dd/MM/yyyy> | <tên người dùng> (Antigravity) | <card> | Khớp
    code`. Còn ô trống thì quay lại `/write-tests`, chưa được sang bước 9.
 9. **Backlog:** card sang "Xong" khi đủ Definition of Done.
-10. **Dừng.** Báo cáo theo mục dưới. Không tự chạy `/pre-pr-check`, không hướng dẫn git.
+10. **Dừng.** Báo cáo theo mục dưới. Không tự chạy `/pre-pr-check`, không đưa lệnh git (chỉ câu commit gợi ý).
 
 Chạy theo khối sửa thì chỉ làm các bước của khối, rồi bước 8 nếu khối có đổi hành vi so với file luồng.
 
@@ -65,4 +75,10 @@ Một lần, không lặp lại:
 - Lệnh test đã chạy, kết quả thật (số test qua, đỏ).
 - Bảng thử làm đỏ của `/write-tests` bước 4 (code đã sửa sai, test đỏ, lỗi in ra). Không có bảng thì không báo xong.
 - Cách thử bằng Postman hoặc giao diện, kết quả mong đợi.
+- **Câu commit gợi ý** cho đúng thay đổi của lần chạy này, theo CONTRIBUTING.md mục 3 (AGENTS.md mục 8): dòng đầu
+  `<loại>(<phạm vi>): <mô tả tiếng Việt có dấu>`, dòng `Refs: <mã card>, <FR/BR/OQ>`; chạy theo phần thì ghi "phần
+  <N>" ở cuối mô tả; khối sửa trong card dùng loại của phần code được sửa (`feat`, `refactor`, `test`), không `fix`.
+  Chỉ câu, đặt trong khung code để chép, không kèm lệnh git.
 - Bước tiếp theo: Đình chạy `/self-review` bằng Claude Code; Huy đọc diff rồi gõ `/pre-pr-check` khi sẵn sàng.
+  File chia phần, chưa tới phần cuối: Đình chạy `/self-review phần <N>`; Huy đọc diff của phần, đổi trạng thái phần
+  thành `đã soát` rồi gõ `/implement <file luồng> phần <N+1>`.
