@@ -42,6 +42,16 @@ public class ComboController {
         return comboService.update(id, request);
     }
 
+    @PostMapping("/{id}/deactivate")
+    public ComboResponse deactivate(@PathVariable Long id) {
+        return comboService.deactivate(id);
+    }
+
+    @PostMapping("/{id}/activate")
+    public ComboResponse activate(@PathVariable Long id) {
+        return comboService.activate(id);
+    }
+
     @PostMapping("/quote")
     public ComboQuoteResponse quote(@Valid @RequestBody ComboQuoteRequest request) {
         return comboService.quote(request);

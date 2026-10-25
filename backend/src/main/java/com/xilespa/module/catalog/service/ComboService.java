@@ -11,6 +11,7 @@ import com.xilespa.module.catalog.dto.response.ComboItemResponse;
 import com.xilespa.module.catalog.dto.response.ComboQuoteResponse;
 import com.xilespa.module.catalog.dto.response.ComboResponse;
 import com.xilespa.module.catalog.entity.Combo;
+import com.xilespa.module.catalog.entity.ComboItem;
 import com.xilespa.module.catalog.entity.ServiceItem;
 import com.xilespa.module.catalog.mapper.CatalogMapper;
 import com.xilespa.module.catalog.repository.ComboRepository;
@@ -111,6 +112,55 @@ public class ComboService {
             return after;
         }
 
+        return before;
+    }
+
+    /**
+     * Ngừng bán combo (FR-CMB-05, BR-19). Gọi lại khi đã ngừng bán thì không đổi gì (idempotent) và
+     * không ghi audit log.
+     */
+    @Transactional
+    public ComboResponse deactivate(Long id) {
+        Combo combo = findComboWithItems(id);
+        ComboResponse before = toResponse(combo);
+        if (combo.deactivate(clock.instant())) {
+            comboRepository.save(combo);
+            ComboResponse after = toResponse(combo);
+            auditService.record(AuditAction.DEACTIVATE, AUDIT_ENTITY, id, before, after);
+            return after;
+        }
+        return before;
+    }
+
+    /**
+     * Bán lại combo (FR-CMB-05). Chặn bán lại nếu có bất kỳ dịch vụ thành phần nào đã ngừng bán
+     * (OQ-22). Gọi lại khi đang bán thì không đổi gì (idempotent) và không ghi audit log.
+     */
+    @Transactional
+    public ComboResponse activate(Long id) {
+        Combo combo = findComboWithItems(id);
+        if (!combo.isActive()) {
+            List<String> inactiveServiceNames =
+                    combo.getItems().stream()
+                            .map(ComboItem::getService)
+                            .filter(service -> !service.isActive())
+                            .map(ServiceItem::getName)
+                            .toList();
+
+            if (!inactiveServiceNames.isEmpty()) {
+                throw new BusinessException(
+                        ErrorCode.COMBO_SERVICE_UNAVAILABLE,
+                        "Dịch vụ đã ngừng bán: " + String.join(", ", inactiveServiceNames) + ".");
+            }
+        }
+
+        ComboResponse before = toResponse(combo);
+        if (combo.activate(clock.instant())) {
+            comboRepository.save(combo);
+            ComboResponse after = toResponse(combo);
+            auditService.record(AuditAction.ACTIVATE, AUDIT_ENTITY, id, before, after);
+            return after;
+        }
         return before;
     }
 

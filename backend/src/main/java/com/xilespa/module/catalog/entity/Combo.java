@@ -135,4 +135,30 @@ public class Combo {
         }
         return changed;
     }
+
+    /**
+     * Ngừng bán combo (FR-CMB-05, BR-19). Trả về {@code true} nếu trạng thái thay đổi từ đang bán
+     * sang ngừng bán, {@code false} nếu đã ở trạng thái ngừng bán từ trước.
+     */
+    public boolean deactivate(Instant now) {
+        if (!this.active) {
+            return false;
+        }
+        this.active = false;
+        this.updatedAt = now;
+        return true;
+    }
+
+    /**
+     * Bán lại combo (FR-CMB-05). Trả về {@code true} nếu trạng thái thay đổi từ ngừng bán sang đang
+     * bán, {@code false} nếu đã ở trạng thái đang bán từ trước.
+     */
+    public boolean activate(Instant now) {
+        if (this.active) {
+            return false;
+        }
+        this.active = true;
+        this.updatedAt = now;
+        return true;
+    }
 }

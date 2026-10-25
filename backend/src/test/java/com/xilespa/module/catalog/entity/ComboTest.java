@@ -151,4 +151,31 @@ class ComboTest {
         assertThat(keptItem.getId()).isEqualTo(999L);
         assertThat(keptItem.getQuantity()).isEqualTo(5);
     }
+
+    @Test
+    void deactivateThenActivateChangesStatusAndUpdatedAt() {
+        ServiceGroup group = new ServiceGroup("Massage", 1);
+        ServiceItem s1 = new ServiceItem(group, "Massage cổ vai gáy", 30, 150_000L, 20_000L, now);
+        Combo combo = new Combo("Combo Thư Giãn", 450_000L, 50_000L, Map.of(s1, 1), now);
+
+        Instant t1 = Instant.parse("2026-10-25T11:00:00Z");
+        boolean deactivated = combo.deactivate(t1);
+        assertThat(deactivated).isTrue();
+        assertThat(combo.isActive()).isFalse();
+        assertThat(combo.getUpdatedAt()).isEqualTo(t1);
+
+        Instant t2 = Instant.parse("2026-10-25T12:00:00Z");
+        assertThat(combo.deactivate(t2)).isFalse();
+        assertThat(combo.getUpdatedAt()).isEqualTo(t1);
+
+        Instant t3 = Instant.parse("2026-10-25T13:00:00Z");
+        boolean activated = combo.activate(t3);
+        assertThat(activated).isTrue();
+        assertThat(combo.isActive()).isTrue();
+        assertThat(combo.getUpdatedAt()).isEqualTo(t3);
+
+        Instant t4 = Instant.parse("2026-10-25T14:00:00Z");
+        assertThat(combo.activate(t4)).isFalse();
+        assertThat(combo.getUpdatedAt()).isEqualTo(t3);
+    }
 }

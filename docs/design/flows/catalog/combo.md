@@ -10,6 +10,7 @@ Trạng thái: thiết kế (đã duyệt) · Card: S2-07 (backend; giao diện 
 | 25/10/2026 | Đình (Claude) | S2-07     | Đình duyệt: OQ-22 (chặn ngừng bán dịch vụ trong combo đang bán), có API tính thử, một card chia bốn phần |
 | 25/10/2026 | Đình (Claude) | S2-07     | Tự soát phần 1: 2 vòng, sạch; Postman combo tự tạo dữ liệu |
 | 25/10/2026 | Đình (Claude) | S2-07     | Tự soát phần 2: 2 vòng, sạch; test đọc lại combo từ DB sau khi sửa |
+| 25/10/2026 | Đình (Claude) | S2-07     | Tự soát phần 3: 1 vòng, sạch; 2 điểm nên sửa làm cùng phần 4 |
 
 Phần chung của module (tên không trùng, không xóa cứng, nhật ký, OQ-21): `README.md` cùng thư mục.
 
@@ -253,7 +254,7 @@ nền và nặng tới nhẹ: phần 1 đặt khuôn cho cả tính năng, phầ
 | ---- | ----------------------------------------------------------- | -------- | ---------- |
 | 1    | Tạo và xem combo, tính thử giá                              | 330 dòng | đã soát    |
 | 2    | Sửa combo                                                   | 110 dòng | đã soát    |
-| 3    | Ngừng bán, bán lại combo; chặn ngừng bán dịch vụ (OQ-22)    | 120 dòng | chưa làm   |
+| 3    | Ngừng bán, bán lại combo; chặn ngừng bán dịch vụ (OQ-22)    | 120 dòng | đã soát    |
 | 4    | Danh sách, tìm, lọc combo; hoàn tất card                    | 50 dòng  | chưa làm   |
 
 ### Phần 1. Tạo và xem combo, tính thử giá

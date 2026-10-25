@@ -37,6 +37,9 @@ public enum ErrorCode {
             HttpStatus.BAD_REQUEST,
             "Mỗi dịch vụ chỉ được có một dòng trong combo, hãy tăng số lượng."),
     COMBO_SERVICE_UNAVAILABLE(HttpStatus.BAD_REQUEST, "Dịch vụ không tồn tại hoặc đã ngừng bán."),
+    SERVICE_IN_ACTIVE_COMBO(
+            HttpStatus.CONFLICT,
+            "Dịch vụ đang có trong combo đang bán. Hãy ngừng bán các combo này hoặc bỏ dịch vụ khỏi combo trước."),
 
     // Nhân viên (module staff)
     STAFF_NAME_DUPLICATE(HttpStatus.CONFLICT, "Đã có nhân viên đang làm trùng tên."),

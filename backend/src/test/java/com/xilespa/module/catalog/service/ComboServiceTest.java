@@ -578,4 +578,91 @@ class ComboServiceTest {
         verify(comboRepository, never()).saveAndFlush(any());
         verify(auditService, never()).record(any(), any(), any(), any(), any());
     }
+
+    // =========================================================================
+    // 4. Ngừng bán & bán lại (deactivate & activate)
+    // =========================================================================
+
+    @Test
+    void deactivateThenActivateRecordsAudit() {
+        Combo combo = new Combo("Combo Thư Giãn", 450_000L, 50_000L, Map.of(s1, 1), now);
+        ReflectionTestUtils.setField(combo, "id", 50L);
+
+        when(comboRepository.findWithItemsById(50L)).thenReturn(Optional.of(combo));
+
+        // Ngừng bán
+        ComboResponse deactivated = service.deactivate(50L);
+        assertThat(deactivated.active()).isFalse();
+        verify(comboRepository).save(combo);
+        verify(auditService)
+                .record(eq(AuditAction.DEACTIVATE), eq("combo"), eq(50L), any(), eq(deactivated));
+
+        // Bán lại
+        ComboResponse activated = service.activate(50L);
+        assertThat(activated.active()).isTrue();
+        verify(auditService)
+                .record(eq(AuditAction.ACTIVATE), eq("combo"), eq(50L), any(), eq(activated));
+    }
+
+    @Test
+    void deactivateAndActivateAreIdempotent() {
+        Combo combo = new Combo("Combo Thư Giãn", 450_000L, 50_000L, Map.of(s1, 1), now);
+        ReflectionTestUtils.setField(combo, "id", 50L);
+
+        when(comboRepository.findWithItemsById(50L)).thenReturn(Optional.of(combo));
+
+        // Đang bán mà gọi activate -> không đổi, không ghi audit
+        ComboResponse alreadyActive = service.activate(50L);
+        assertThat(alreadyActive.active()).isTrue();
+        verify(auditService, never()).record(any(), any(), any(), any(), any());
+
+        // Ngừng bán lần 1 -> ghi audit
+        service.deactivate(50L);
+        verify(auditService).record(eq(AuditAction.DEACTIVATE), eq("combo"), eq(50L), any(), any());
+
+        // Ngừng bán lần 2 -> không đổi, không ghi thêm audit
+        ComboResponse alreadyInactive = service.deactivate(50L);
+        assertThat(alreadyInactive.active()).isFalse();
+        // Vẫn chỉ có 1 lần DEACTIVATE được ghi
+        verify(auditService).record(eq(AuditAction.DEACTIVATE), eq("combo"), eq(50L), any(), any());
+    }
+
+    @Test
+    void activatingComboWithInactiveServiceIsRejected() {
+        s1.deactivate(now);
+        Combo combo = new Combo("Combo Có Dịch Vụ Ngừng", 450_000L, 50_000L, Map.of(s1, 1), now);
+        ReflectionTestUtils.setField(combo, "id", 50L);
+        combo.deactivate(now);
+
+        when(comboRepository.findWithItemsById(50L)).thenReturn(Optional.of(combo));
+
+        assertThatThrownBy(() -> service.activate(50L))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("Dịch vụ đã ngừng bán: Massage cổ vai gáy.")
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.COMBO_SERVICE_UNAVAILABLE);
+
+        verify(comboRepository, never()).save(any());
+        verify(auditService, never()).record(any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void deactivateUnknownComboIs404() {
+        when(comboRepository.findWithItemsById(999L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.deactivate(999L))
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.NOT_FOUND);
+    }
+
+    @Test
+    void activateUnknownComboIs404() {
+        when(comboRepository.findWithItemsById(999L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.activate(999L))
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.NOT_FOUND);
+    }
 }

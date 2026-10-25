@@ -10,12 +10,14 @@ import com.xilespa.module.catalog.dto.response.ServiceItemResponse;
 import com.xilespa.module.catalog.entity.ServiceGroup;
 import com.xilespa.module.catalog.entity.ServiceItem;
 import com.xilespa.module.catalog.mapper.CatalogMapper;
+import com.xilespa.module.catalog.repository.ComboItemRepository;
 import com.xilespa.module.catalog.repository.ServiceGroupRepository;
 import com.xilespa.module.catalog.repository.ServiceItemRepository;
 import com.xilespa.module.catalog.repository.ServicePriceHistoryRepository;
 import com.xilespa.security.CurrentUser;
 import java.time.Clock;
 import java.time.Instant;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
@@ -37,6 +39,7 @@ public class ServiceItemService {
     private final ServiceItemRepository serviceRepository;
     private final ServiceGroupRepository groupRepository;
     private final ServicePriceHistoryRepository priceHistoryRepository;
+    private final ComboItemRepository comboItemRepository;
     private final CatalogMapper mapper;
     private final AuditService auditService;
     private final Clock clock;
@@ -109,10 +112,34 @@ public class ServiceItemService {
         return after;
     }
 
-    /** Ngừng bán (FR-SVC-04). Gọi lại khi đã ngừng bán thì không đổi gì. */
+    /**
+     * Ngừng bán (FR-SVC-04, OQ-22). Gọi lại khi đã ngừng bán thì không đổi gì. Chặn ngừng bán nếu
+     * dịch vụ đang nằm trong bất kỳ combo nào đang bán (409 SERVICE_IN_ACTIVE_COMBO).
+     */
     @Transactional
     public ServiceItemResponse deactivate(Long id) {
         ServiceItem service = findService(id);
+        if (service.isActive()) {
+            List<String> activeComboNames = comboItemRepository.findActiveComboNamesByServiceId(id);
+            if (!activeComboNames.isEmpty()) {
+                String namesPart;
+                if (activeComboNames.size() <= 3) {
+                    namesPart = String.join(", ", activeComboNames);
+                } else {
+                    namesPart =
+                            String.join(", ", activeComboNames.subList(0, 3))
+                                    + " và "
+                                    + (activeComboNames.size() - 3)
+                                    + " combo khác";
+                }
+                throw new BusinessException(
+                        ErrorCode.SERVICE_IN_ACTIVE_COMBO,
+                        "Dịch vụ đang có trong combo đang bán: "
+                                + namesPart
+                                + ". Hãy ngừng bán các combo này hoặc bỏ dịch vụ khỏi combo trước.");
+            }
+        }
+
         ServiceItemResponse before = mapper.toResponse(service);
         if (service.deactivate(clock.instant())) {
             ServiceItemResponse after = mapper.toResponse(service);

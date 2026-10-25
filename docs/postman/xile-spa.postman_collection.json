@@ -2059,6 +2059,115 @@
           ]
         },
         {
+          "name": "Ngừng bán dịch vụ đang trong combo",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/catalog/services/{{comboServiceId1}}/deactivate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "catalog",
+                "services",
+                "{{comboServiceId1}}",
+                "deactivate"
+              ]
+            },
+            "description": "FR-SVC-04, OQ-22. Chặn ngừng bán dịch vụ đang nằm trong combo đang bán (409 SERVICE_IN_ACTIVE_COMBO)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 409\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"Mã lỗi SERVICE_IN_ACTIVE_COMBO\", () => {",
+                  "  const res = pm.response.json();",
+                  "  pm.expect(res.code).to.eql(\"SERVICE_IN_ACTIVE_COMBO\");",
+                  "  pm.expect(res.message).to.include(\"Dịch vụ đang có trong combo đang bán\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ngừng bán combo",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/catalog/combos/{{comboId}}/deactivate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "catalog",
+                "combos",
+                "{{comboId}}",
+                "deactivate"
+              ]
+            },
+            "description": "FR-CMB-05. Ngừng bán combo."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Trạng thái active = false\", () => {",
+                  "  const c = pm.response.json();",
+                  "  pm.expect(c.active).to.eql(false);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Bán lại combo",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/catalog/combos/{{comboId}}/activate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "catalog",
+                "combos",
+                "{{comboId}}",
+                "activate"
+              ]
+            },
+            "description": "FR-CMB-05. Bán lại combo."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Trạng thái active = true\", () => {",
+                  "  const c = pm.response.json();",
+                  "  pm.expect(c.active).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
           "name": "Tạo combo trùng tên",
           "request": {
             "method": "POST",

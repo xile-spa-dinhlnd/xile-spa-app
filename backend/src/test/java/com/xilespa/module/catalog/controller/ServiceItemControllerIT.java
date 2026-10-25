@@ -15,11 +15,16 @@ import com.xilespa.common.audit.AuditLogRepository;
 import com.xilespa.module.auth.entity.AppUser;
 import com.xilespa.module.auth.enums.UserRole;
 import com.xilespa.module.auth.repository.AppUserRepository;
+import com.xilespa.module.catalog.entity.Combo;
+import com.xilespa.module.catalog.entity.ServiceItem;
+import com.xilespa.module.catalog.repository.ComboRepository;
 import com.xilespa.module.catalog.repository.ServiceGroupRepository;
+import com.xilespa.module.catalog.repository.ServiceItemRepository;
 import com.xilespa.module.catalog.repository.ServicePriceHistoryRepository;
 import com.xilespa.security.UserPrincipal;
 import com.xilespa.support.IntegrationTest;
 import java.time.Clock;
+import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -43,6 +48,8 @@ class ServiceItemControllerIT {
     @Autowired MockMvc mockMvc;
     @Autowired AppUserRepository userRepository;
     @Autowired ServiceGroupRepository groupRepository;
+    @Autowired ServiceItemRepository serviceItemRepository;
+    @Autowired ComboRepository comboRepository;
     @Autowired ServicePriceHistoryRepository priceHistoryRepository;
     @Autowired AuditLogRepository auditLogRepository;
     @Autowired Clock clock;
@@ -213,6 +220,72 @@ class ServiceItemControllerIT {
                 .andExpect(jsonPath("$.active").value(true));
 
         assertThat(auditActions(id)).containsExactly("ACTIVATE", "DEACTIVATE", "CREATE");
+    }
+
+    @Test
+    void deactivatingServiceInActiveComboIsRejected() throws Exception {
+        long svcId = create(prefix + "Dịch vụ trong combo", 100_000);
+        ServiceItem svc = serviceItemRepository.findById(svcId).orElseThrow();
+        Combo combo =
+                new Combo(prefix + "Combo Đang Bán", 150_000L, 0L, Map.of(svc, 1), clock.instant());
+        comboRepository.save(combo);
+
+        mockMvc.perform(post("/api/catalog/services/" + svcId + "/deactivate").with(loggedIn))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("SERVICE_IN_ACTIVE_COMBO"))
+                .andExpect(
+                        jsonPath("$.message")
+                                .value(
+                                        "Dịch vụ đang có trong combo đang bán: "
+                                                + combo.getName()
+                                                + ". Hãy ngừng bán các combo này hoặc bỏ dịch vụ khỏi combo trước."));
+
+        assertThat(serviceItemRepository.findById(svcId).orElseThrow().isActive()).isTrue();
+        assertThat(auditActions(svcId)).doesNotContain("DEACTIVATE");
+    }
+
+    @Test
+    void deactivatingServiceOnlyInInactiveComboIsAllowed() throws Exception {
+        long svcId = create(prefix + "Dịch vụ trong combo ngừng", 100_000);
+        ServiceItem svc = serviceItemRepository.findById(svcId).orElseThrow();
+        Combo combo =
+                new Combo(prefix + "Combo Đã Ngừng", 150_000L, 0L, Map.of(svc, 1), clock.instant());
+        combo.deactivate(clock.instant());
+        comboRepository.save(combo);
+
+        mockMvc.perform(post("/api/catalog/services/" + svcId + "/deactivate").with(loggedIn))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.active").value(false));
+
+        assertThat(serviceItemRepository.findById(svcId).orElseThrow().isActive()).isFalse();
+        assertThat(auditActions(svcId)).contains("DEACTIVATE");
+    }
+
+    @Test
+    void messageListsAtMostThreeComboNames() throws Exception {
+        long svcId = create(prefix + "Dịch vụ 4 combo", 100_000);
+        ServiceItem svc = serviceItemRepository.findById(svcId).orElseThrow();
+        comboRepository.save(
+                new Combo(prefix + "Combo A", 100_000L, 0L, Map.of(svc, 1), clock.instant()));
+        comboRepository.save(
+                new Combo(prefix + "Combo B", 100_000L, 0L, Map.of(svc, 1), clock.instant()));
+        comboRepository.save(
+                new Combo(prefix + "Combo C", 100_000L, 0L, Map.of(svc, 1), clock.instant()));
+        comboRepository.save(
+                new Combo(prefix + "Combo D", 100_000L, 0L, Map.of(svc, 1), clock.instant()));
+
+        String expectedMessage =
+                "Dịch vụ đang có trong combo đang bán: "
+                        + prefix
+                        + "Combo A, "
+                        + prefix
+                        + "Combo B, "
+                        + prefix
+                        + "Combo C và 1 combo khác. Hãy ngừng bán các combo này hoặc bỏ dịch vụ khỏi combo trước.";
+        mockMvc.perform(post("/api/catalog/services/" + svcId + "/deactivate").with(loggedIn))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("SERVICE_IN_ACTIVE_COMBO"))
+                .andExpect(jsonPath("$.message").value(expectedMessage));
     }
 
     @Test

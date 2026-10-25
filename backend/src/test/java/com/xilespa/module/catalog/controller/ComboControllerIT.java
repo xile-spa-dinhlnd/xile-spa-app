@@ -669,7 +669,127 @@ class ComboControllerIT {
     }
 
     // =========================================================================
-    // 5. Quyền & không xóa cứng
+    // 5. Ngừng bán & bán lại (deactivate & activate)
+    // =========================================================================
+
+    @Test
+    void deactivateThenActivateRecordsAudit() throws Exception {
+        String items = "[{\"serviceId\": " + service1.getId() + ", \"quantity\": 1}]";
+        long comboId = createCombo(prefix + "Combo Ngừng Bán Rồi Bán Lại", 100_000L, items);
+
+        mockMvc.perform(send(post("/api/catalog/combos/" + comboId + "/deactivate")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(comboId))
+                .andExpect(jsonPath("$.active").value(false));
+
+        var deactivateLogs =
+                auditLogRepository
+                        .findByEntityTypeAndEntityId(
+                                "combo", String.valueOf(comboId), PageRequest.of(0, 10))
+                        .getContent();
+        assertThat(deactivateLogs.stream().anyMatch(l -> l.getAction().name().equals("DEACTIVATE")))
+                .isTrue();
+
+        mockMvc.perform(send(post("/api/catalog/combos/" + comboId + "/activate")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(comboId))
+                .andExpect(jsonPath("$.active").value(true));
+
+        var activateLogs =
+                auditLogRepository
+                        .findByEntityTypeAndEntityId(
+                                "combo", String.valueOf(comboId), PageRequest.of(0, 10))
+                        .getContent();
+        assertThat(activateLogs.stream().anyMatch(l -> l.getAction().name().equals("ACTIVATE")))
+                .isTrue();
+    }
+
+    @Test
+    void deactivateAndActivateAreIdempotent() throws Exception {
+        String items = "[{\"serviceId\": " + service1.getId() + ", \"quantity\": 1}]";
+        long comboId = createCombo(prefix + "Combo Lặp Trạng Thái", 100_000L, items);
+
+        mockMvc.perform(send(post("/api/catalog/combos/" + comboId + "/activate")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.active").value(true));
+
+        long countAfterActivate =
+                auditLogRepository
+                        .findByEntityTypeAndEntityId(
+                                "combo", String.valueOf(comboId), PageRequest.of(0, 10))
+                        .getTotalElements();
+        assertThat(countAfterActivate).isEqualTo(1L);
+
+        mockMvc.perform(send(post("/api/catalog/combos/" + comboId + "/deactivate")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.active").value(false));
+
+        long countAfterDeactivate1 =
+                auditLogRepository
+                        .findByEntityTypeAndEntityId(
+                                "combo", String.valueOf(comboId), PageRequest.of(0, 10))
+                        .getTotalElements();
+        assertThat(countAfterDeactivate1).isEqualTo(2L);
+
+        mockMvc.perform(send(post("/api/catalog/combos/" + comboId + "/deactivate")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.active").value(false));
+
+        long countAfterDeactivate2 =
+                auditLogRepository
+                        .findByEntityTypeAndEntityId(
+                                "combo", String.valueOf(comboId), PageRequest.of(0, 10))
+                        .getTotalElements();
+        assertThat(countAfterDeactivate2).isEqualTo(2L);
+    }
+
+    @Test
+    void activatingComboWithInactiveServiceIsRejected() throws Exception {
+        String items = "[{\"serviceId\": " + service2.getId() + ", \"quantity\": 1}]";
+        long comboId = createCombo(prefix + "Combo Sắp Bán Lại", 150_000L, items);
+
+        mockMvc.perform(send(post("/api/catalog/combos/" + comboId + "/deactivate")))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(send(post("/api/catalog/services/" + service2.getId() + "/deactivate")))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(send(post("/api/catalog/combos/" + comboId + "/activate")))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("COMBO_SERVICE_UNAVAILABLE"))
+                .andExpect(
+                        jsonPath("$.message")
+                                .value("Dịch vụ đã ngừng bán: " + service2.getName() + "."));
+
+        var combo = comboRepository.findById(comboId).orElseThrow();
+        assertThat(combo.isActive()).isFalse();
+
+        var logs =
+                auditLogRepository
+                        .findByEntityTypeAndEntityId(
+                                "combo", String.valueOf(comboId), PageRequest.of(0, 10))
+                        .getContent();
+        assertThat(logs.stream().noneMatch(l -> l.getAction().name().equals("ACTIVATE"))).isTrue();
+    }
+
+    @Test
+    void deactivateUnknownComboIs404() throws Exception {
+        mockMvc.perform(send(post("/api/catalog/combos/999999/deactivate")))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("NOT_FOUND"))
+                .andExpect(jsonPath("$.message").value("Không tìm thấy combo."));
+    }
+
+    @Test
+    void activateUnknownComboIs404() throws Exception {
+        mockMvc.perform(send(post("/api/catalog/combos/999999/activate")))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("NOT_FOUND"))
+                .andExpect(jsonPath("$.message").value("Không tìm thấy combo."));
+    }
+
+    // =========================================================================
+    // 6. Quyền & không xóa cứng
     // =========================================================================
 
     @Test
@@ -684,6 +804,14 @@ class ComboControllerIT {
                         put("/api/catalog/combos/1")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("{}"))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(
+                        post("/api/catalog/combos/1/deactivate")
+                                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(
+                        post("/api/catalog/combos/1/activate")
+                                .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isUnauthorized());
         mockMvc.perform(
                         post("/api/catalog/combos/quote")
