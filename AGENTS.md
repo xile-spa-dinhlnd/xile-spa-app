@@ -143,7 +143,7 @@ Quy tắc sinh ra từ lỗi thật mới đáng giữ.
 - Chuyển method sang lớp khác mà để lại bản cũ không ai gọi, hoặc hai method repository làm cùng một việc: grep tên cũ, xóa.
 - Thêm ràng buộc trạng thái (ngừng dùng, đã chốt...) mà chỉ chặn ở một chỗ: liệt kê mọi method đưa bản ghi vào hoặc ra
   khỏi trạng thái đó, xét cả bản ghi tham chiếu tới (OQ-21: ngừng dùng nhóm, bán lại dịch vụ trong nhóm đã ngừng).
-- Câu commit tiếng Anh hoặc dùng `fix` cho việc mới của card: theo CONTRIBUTING.md mục 3, do `/pre-pr-check` soạn.
+- Câu commit tiếng Anh hoặc dùng `fix` cho việc mới của card: theo CONTRIBUTING.md mục 3, dùng câu gợi ý ở cuối `/implement`, `/self-review` (mục 8).
 - Editor (Antigravity IDE, VS Code) mặc định dùng TypeScript 5.x đi kèm, chưa bật `strict` như TypeScript 6 của dự án, nên báo đỏ khác `npm run typecheck`: giữ `"strict": true` trong `frontend/tsconfig.app.json`, chọn "Use Workspace Version" trong editor, lấy `npm run typecheck` làm chuẩn.
 
 ## 8. Vai trò từng agent
@@ -158,8 +158,12 @@ Quy tắc sinh ra từ lỗi thật mới đáng giữ.
   `git fetch origin` và `git switch -c <loại>/<tên> origin/develop` khi đang ở `develop` hoặc `main`); xóa hàng loạt;
   đọc, sửa file bí mật; sửa migration đã có trên `develop`; sửa file sinh tự động; tự sửa cấu hình hook. Bị chặn thì
   dừng và báo người dùng, không tìm cách lách.
-- **Chỉ `/pre-pr-check` hướng dẫn git** (câu commit, push, PR, squash), và chỉ chạy khi người dùng gõ. Skill khác,
-  hook và Claude không đưa lệnh git.
+- **Câu commit gợi ý:** cuối mỗi lần `/implement` (kể cả một phần, một khối sửa), `/fix-bug`, và khi `/self-review`
+  thấy một phần sạch, báo cáo có một câu commit theo CONTRIBUTING.md mục 3 cho thay đổi của lần đó. Chỉ câu, không
+  lệnh. Việc trong card dùng `feat`, `refactor`, `test`, `docs`, không dùng `fix` (`fix` chỉ cho lỗi đã có trên
+  `develop`). Người làm card tự commit.
+- **Lệnh git chỉ `/pre-pr-check` hướng dẫn** (push, mở PR, squash, dọn nhánh), và chỉ chạy khi người dùng gõ. Skill
+  khác, hook và Claude không đưa lệnh git.
 - **Nạp quy tắc của thư mục con:** nội dung chỉ viết ở `backend/AGENTS.md`, `frontend/AGENTS.md`. Antigravity nạp
   qua rule glob `.agents/rules/backend.md`, `frontend.md`; Claude Code nạp qua `backend/CLAUDE.md`,
   `frontend/CLAUDE.md` (một dòng `@AGENTS.md`). Thêm thư mục có `AGENTS.md` riêng thì thêm cả hai lớp trỏ này.

@@ -6,7 +6,6 @@ import com.xilespa.module.catalog.dto.response.ComboResponse;
 import com.xilespa.module.catalog.dto.response.ServiceGroupResponse;
 import com.xilespa.module.catalog.dto.response.ServiceItemResponse;
 import com.xilespa.module.catalog.entity.Combo;
-import com.xilespa.module.catalog.entity.ComboItem;
 import com.xilespa.module.catalog.entity.ServiceGroup;
 import com.xilespa.module.catalog.entity.ServiceItem;
 import java.util.List;
@@ -22,13 +21,13 @@ public interface CatalogMapper {
 
     ServiceGroupResponse toResponse(ServiceGroup group);
 
-    @Mapping(target = "serviceId", source = "item.service.id")
-    @Mapping(target = "serviceName", source = "item.service.name")
-    @Mapping(target = "serviceActive", source = "item.service.active")
-    @Mapping(target = "listPrice", source = "item.service.listPrice")
-    @Mapping(target = "quantity", source = "item.quantity")
+    @Mapping(target = "serviceId", source = "service.id")
+    @Mapping(target = "serviceName", source = "service.name")
+    @Mapping(target = "serviceActive", source = "service.active")
+    @Mapping(target = "listPrice", source = "service.listPrice")
+    @Mapping(target = "quantity", source = "quantity")
     @Mapping(target = "lineTotal", source = "lineTotal")
-    ComboItemResponse toItemResponse(ComboItem item, long lineTotal);
+    ComboItemResponse toItemResponse(ServiceItem service, int quantity, long lineTotal);
 
     @Mapping(target = "id", source = "combo.id")
     @Mapping(target = "name", source = "combo.name")

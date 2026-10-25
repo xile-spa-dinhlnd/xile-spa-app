@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -257,7 +258,7 @@ class ComboServiceTest {
         assertThat(created.items()).hasSize(2);
 
         verify(auditService)
-                .record(eq(AuditAction.CREATE), eq("combo"), eq(50L), any(), eq(created));
+                .record(eq(AuditAction.CREATE), eq("combo"), eq(50L), isNull(), eq(created));
     }
 
     @Test

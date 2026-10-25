@@ -362,7 +362,8 @@ từng agent: `AGENTS.md` mục 8. Cách dùng skill, hook và luồng chi tiế
 3. **Trong lúc AI đang sửa file, không đổi nhánh.** Chờ AI báo xong rồi mới commit hoặc làm việc khác.
 4. **Soát.** Đình: Claude Code `/self-review`, dán khối "lần N" vào Antigravity cho tới khi sạch. Huy: đọc diff.
 5. **Git.** Người làm card gõ `/pre-pr-check` (Antigravity): chạy kiểm tra, rồi đưa câu commit, lệnh push, bản nháp
-   PR và cách squash merge. Đây là nơi duy nhất hướng dẫn git; skill khác không đưa câu commit.
+   PR và cách squash merge. Đây là nơi duy nhất hướng dẫn lệnh git. Câu commit cho từng lần sửa thì có sẵn ở cuối
+   báo cáo `/implement`, `/fix-bug` và khi `/self-review` thấy một phần sạch (AGENTS.md mục 8), chỉ câu, không lệnh.
 6. **Review.** PR của Huy: Đình chạy `/review-pr <số>` bằng Claude Code, xem lại rồi đăng; Huy dán khối sửa trong
    review vào Antigravity, commit, push, Re-request review. PR của Đình: merge theo mục 4 sau khi `/self-review` sạch.
 

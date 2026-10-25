@@ -11,7 +11,6 @@ import com.xilespa.module.catalog.dto.response.ComboItemResponse;
 import com.xilespa.module.catalog.dto.response.ComboQuoteResponse;
 import com.xilespa.module.catalog.dto.response.ComboResponse;
 import com.xilespa.module.catalog.entity.Combo;
-import com.xilespa.module.catalog.entity.ComboItem;
 import com.xilespa.module.catalog.entity.ServiceItem;
 import com.xilespa.module.catalog.mapper.CatalogMapper;
 import com.xilespa.module.catalog.repository.ComboRepository;
@@ -44,6 +43,10 @@ public class ComboService {
     private final CatalogMapper mapper;
     private final AuditService auditService;
     private final Clock clock;
+
+    private record ItemLine(ServiceItem service, int quantity) {}
+
+    private record LineCalculation(List<ComboItemResponse> items, long retailTotal) {}
 
     /** Xem chi tiết một combo kèm thành phần và tổng giá lẻ, tiết kiệm (FR-CMB-01). */
     @Transactional(readOnly = true)
@@ -86,38 +89,32 @@ public class ComboService {
         }
 
         checkDuplicateServiceItems(request.items());
+        Map<Long, ServiceItem> serviceMap = findServices(request.items());
+        List<ItemLine> lines =
+                request.items().stream()
+                        .map(req -> new ItemLine(serviceMap.get(req.serviceId()), req.quantity()))
+                        .toList();
 
-        List<Long> serviceIds = request.items().stream().map(ComboItemRequest::serviceId).toList();
-        Map<Long, ServiceItem> serviceMap =
-                serviceItemRepository.findAllById(serviceIds).stream()
-                        .collect(Collectors.toMap(ServiceItem::getId, Function.identity()));
+        LineCalculation calc = calculateLines(lines);
+        Long savings =
+                request.price() == null
+                        ? null
+                        : Math.subtractExact(calc.retailTotal(), request.price());
+        return new ComboQuoteResponse(calc.items(), calc.retailTotal(), savings);
+    }
 
-        if (serviceMap.size() != serviceIds.size()) {
-            throw new BusinessException(
-                    ErrorCode.COMBO_SERVICE_UNAVAILABLE,
-                    "Dịch vụ không tồn tại hoặc đã ngừng bán.");
-        }
-
-        List<ComboItemResponse> itemResponses = new ArrayList<>(request.items().size());
+    private LineCalculation calculateLines(List<ItemLine> lines) {
+        List<ComboItemResponse> itemResponses = new ArrayList<>(lines.size());
         long retailTotal = 0L;
 
-        for (ComboItemRequest itemReq : request.items()) {
-            ServiceItem service = serviceMap.get(itemReq.serviceId());
-            long lineTotal = Math.multiplyExact(service.getListPrice(), (long) itemReq.quantity());
+        for (ItemLine line : lines) {
+            long lineTotal =
+                    Math.multiplyExact(line.service().getListPrice(), (long) line.quantity());
             retailTotal = Math.addExact(retailTotal, lineTotal);
-            itemResponses.add(
-                    new ComboItemResponse(
-                            service.getId(),
-                            service.getName(),
-                            service.isActive(),
-                            service.getListPrice(),
-                            itemReq.quantity(),
-                            lineTotal));
+            itemResponses.add(mapper.toItemResponse(line.service(), line.quantity(), lineTotal));
         }
 
-        Long savings =
-                request.price() == null ? null : Math.subtractExact(retailTotal, request.price());
-        return new ComboQuoteResponse(itemResponses, retailTotal, savings);
+        return new LineCalculation(itemResponses, retailTotal);
     }
 
     private Combo findComboWithItems(Long id) {
@@ -143,7 +140,7 @@ public class ComboService {
         }
     }
 
-    private Map<Long, ServiceItem> findAndValidateActiveServices(List<ComboItemRequest> items) {
+    private Map<Long, ServiceItem> findServices(List<ComboItemRequest> items) {
         List<Long> serviceIds = items.stream().map(ComboItemRequest::serviceId).toList();
         Map<Long, ServiceItem> serviceMap =
                 serviceItemRepository.findAllById(serviceIds).stream()
@@ -155,9 +152,16 @@ public class ComboService {
                     "Dịch vụ không tồn tại hoặc đã ngừng bán.");
         }
 
+        return serviceMap;
+    }
+
+    private Map<Long, ServiceItem> findAndValidateActiveServices(List<ComboItemRequest> items) {
+        Map<Long, ServiceItem> serviceMap = findServices(items);
+
         List<String> inactiveNames =
-                serviceMap.values().stream()
-                        .filter(s -> !s.isActive())
+                items.stream()
+                        .map(item -> serviceMap.get(item.serviceId()))
+                        .filter(service -> !service.isActive())
                         .map(ServiceItem::getName)
                         .toList();
 
@@ -171,18 +175,13 @@ public class ComboService {
     }
 
     private ComboResponse toResponse(Combo combo) {
-        List<ComboItemResponse> itemResponses = new ArrayList<>(combo.getItems().size());
-        long retailTotal = 0L;
-
-        for (ComboItem item : combo.getItems()) {
-            long lineTotal =
-                    Math.multiplyExact(item.getService().getListPrice(), (long) item.getQuantity());
-            retailTotal = Math.addExact(retailTotal, lineTotal);
-            itemResponses.add(mapper.toItemResponse(item, lineTotal));
-        }
-
-        long savings = Math.subtractExact(retailTotal, combo.getPrice());
-        return mapper.toResponse(combo, itemResponses, retailTotal, savings);
+        List<ItemLine> lines =
+                combo.getItems().stream()
+                        .map(item -> new ItemLine(item.getService(), item.getQuantity()))
+                        .toList();
+        LineCalculation calc = calculateLines(lines);
+        long savings = Math.subtractExact(calc.retailTotal(), combo.getPrice());
+        return mapper.toResponse(combo, calc.items(), calc.retailTotal(), savings);
     }
 
     private void saveChecked(Combo combo) {

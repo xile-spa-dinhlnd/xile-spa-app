@@ -257,14 +257,48 @@ class ComboControllerIT {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.fieldErrors[?(@.field == 'name')]").exists());
 
-        // Số lượng 0 hoặc 100
-        String invalidQty = "[{\"serviceId\": " + service1.getId() + ", \"quantity\": 100}]";
+        // Tên chỉ có khoảng trắng
         mockMvc.perform(
                         send(
                                 post("/api/catalog/combos"),
-                                comboJson("Combo Tên", 100_000L, 0L, invalidQty)))
+                                comboJson("   ", 100_000L, 0L, validItem)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.fieldErrors[?(@.field == 'name')]").exists());
+
+        // Giá trống
+        mockMvc.perform(
+                        send(
+                                post("/api/catalog/combos"),
+                                comboJson("Combo Giá Trống", null, 0L, validItem)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.fieldErrors[?(@.field == 'price')]").exists());
+
+        // Số lượng 0
+        String qtyZero = "[{\"serviceId\": " + service1.getId() + ", \"quantity\": 0}]";
+        mockMvc.perform(
+                        send(
+                                post("/api/catalog/combos"),
+                                comboJson("Combo Qty 0", 100_000L, 0L, qtyZero)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.fieldErrors[?(@.field == 'items[0].quantity')]").exists());
+
+        // Số lượng 100
+        String qtyHundred = "[{\"serviceId\": " + service1.getId() + ", \"quantity\": 100}]";
+        mockMvc.perform(
+                        send(
+                                post("/api/catalog/combos"),
+                                comboJson("Combo Qty 100", 100_000L, 0L, qtyHundred)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.fieldErrors[?(@.field == 'items[0].quantity')]").exists());
+
+        // Thiếu serviceId
+        String missingServiceId = "[{\"quantity\": 1}]";
+        mockMvc.perform(
+                        send(
+                                post("/api/catalog/combos"),
+                                comboJson("Combo Thiếu Svc", 100_000L, 0L, missingServiceId)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.fieldErrors[?(@.field == 'items[0].serviceId')]").exists());
     }
 
     @Test
@@ -373,7 +407,19 @@ class ComboControllerIT {
                 .andExpect(jsonPath("$.price").value(320_000))
                 .andExpect(jsonPath("$.retailTotal").value(400_000))
                 .andExpect(jsonPath("$.savings").value(80_000))
-                .andExpect(jsonPath("$.items.length()").value(2));
+                .andExpect(jsonPath("$.items.length()").value(2))
+                .andExpect(jsonPath("$.items[0].serviceId").value(service1.getId()))
+                .andExpect(jsonPath("$.items[0].serviceName").value(service1.getName()))
+                .andExpect(jsonPath("$.items[0].serviceActive").value(true))
+                .andExpect(jsonPath("$.items[0].listPrice").value(service1.getListPrice()))
+                .andExpect(jsonPath("$.items[0].quantity").value(2))
+                .andExpect(jsonPath("$.items[0].lineTotal").value(200_000))
+                .andExpect(jsonPath("$.items[1].serviceId").value(service2.getId()))
+                .andExpect(jsonPath("$.items[1].serviceName").value(service2.getName()))
+                .andExpect(jsonPath("$.items[1].serviceActive").value(true))
+                .andExpect(jsonPath("$.items[1].listPrice").value(service2.getListPrice()))
+                .andExpect(jsonPath("$.items[1].quantity").value(1))
+                .andExpect(jsonPath("$.items[1].lineTotal").value(200_000));
     }
 
     @Test

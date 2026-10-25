@@ -90,7 +90,8 @@ Ghi nhớ:
   sau; hết phần cuối mới `/pre-pr-check`. Vẫn một nhánh một PR (`docs/design/flows/README.md` mục "Chia phần").
 - Agent tự tạo nhánh card ở skill đầu tiên ghi file, chỉ khi đang ở `develop` hoặc `main`. Ngoài việc đó, AI không
   commit, không push, không đổi nhánh; người làm card chạy mọi lệnh git (CONTRIBUTING.md mục 8).
-- Chỉ `/pre-pr-check` hướng dẫn git, và chỉ khi người dùng gõ. Các skill khác không đưa câu commit.
+- Câu commit gợi ý có ở cuối mỗi lần `/implement`, `/fix-bug`, và khi `/self-review` thấy một phần sạch (theo
+  CONTRIBUTING.md mục 3, chỉ câu); lệnh git (push, PR, squash) chỉ `/pre-pr-check` hướng dẫn, và chỉ khi người dùng gõ.
 - Trong lúc Antigravity đang sửa file, không đổi nhánh.
 
 ### 3.2 Sửa lỗi

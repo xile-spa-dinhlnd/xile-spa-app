@@ -92,5 +92,5 @@ flowchart TD
 3. Cập nhật file luồng của tính năng theo luồng mới (chỉ phần "Mới:", bỏ phần "Cũ:" của sơ đồ so sánh), thêm test
    chống tái phát vào bảng "Hành vi và test" và dòng lịch sử `<dd/MM/yyyy> | <tên người dùng> (Antigravity) |
    <card> | Sửa lỗi: <tóm tắt>`. Tính năng chưa có file luồng thì tạo theo `docs/design/flows/README.md`.
-4. Báo cáo: file đã sửa, test trước/sau, cách thử tay. Không hướng dẫn git; người dùng gõ `/pre-pr-check` khi sẵn
+4. Báo cáo: file đã sửa, test trước/sau, cách thử tay. Câu commit gợi ý `fix(<phạm vi>): ...` theo CONTRIBUTING.md mục 3 (chỉ câu, không lệnh git); người dùng gõ `/pre-pr-check` khi sẵn
    sàng.

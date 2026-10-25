@@ -61,9 +61,6 @@ public class Combo {
         this.active = true;
         this.createdAt = now;
         this.updatedAt = now;
-        this.items = new ArrayList<>();
-        if (items != null) {
-            items.forEach((svc, qty) -> this.items.add(new ComboItem(this, svc, qty)));
-        }
+        items.forEach((svc, qty) -> this.items.add(new ComboItem(this, svc, qty)));
     }
 }

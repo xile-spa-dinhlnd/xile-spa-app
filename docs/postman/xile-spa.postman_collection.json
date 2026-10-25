@@ -1731,7 +1731,7 @@
       "name": "6. Combo (S2-07)",
       "item": [
         {
-          "name": "Tạo dịch vụ thứ hai cho combo",
+          "name": "Tạo dịch vụ 1 cho combo",
           "request": {
             "method": "POST",
             "header": [
@@ -1751,7 +1751,53 @@
                 "services"
               ]
             },
-            "description": "Tạo thêm dịch vụ để chuẩn bị ghép combo ở request sau.",
+            "description": "Tạo dịch vụ thứ nhất cho combo, giá 100.000 đ.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Dịch vụ combo 1 {{runId}}\",\n  \"groupId\": {{groupId}},\n  \"durationMinutes\": 30,\n  \"listPrice\": 100000,\n  \"tourFee\": 10000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 201\", () => pm.response.to.have.status(201));",
+                  "const s = pm.response.json();",
+                  "pm.collectionVariables.set(\"comboServiceId1\", s.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Tạo dịch vụ 2 cho combo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/catalog/services",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "catalog",
+                "services"
+              ]
+            },
+            "description": "Tạo dịch vụ thứ hai cho combo, giá 120.000 đ.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"name\": \"Dịch vụ combo 2 {{runId}}\",\n  \"groupId\": {{groupId}},\n  \"durationMinutes\": 45,\n  \"listPrice\": 120000,\n  \"tourFee\": 20000\n}",
@@ -1798,10 +1844,10 @@
                 "quote"
               ]
             },
-            "description": "FR-CMB-03. Tính thử tổng giá lẻ và mức tiết kiệm mà không lưu vào DB.",
+            "description": "FR-CMB-03. Tính thử tổng giá lẻ và mức tiết kiệm mà không lưu vào DB (100k + 120k = 220k, giá 160k -> tiết kiệm 60k).",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"price\": 160000,\n  \"items\": [\n    {\n      \"serviceId\": {{serviceId}},\n      \"quantity\": 1\n    },\n    {\n      \"serviceId\": {{comboServiceId2}},\n      \"quantity\": 1\n    }\n  ]\n}",
+              "raw": "{\n  \"price\": 160000,\n  \"items\": [\n    {\n      \"serviceId\": {{comboServiceId1}},\n      \"quantity\": 1\n    },\n    {\n      \"serviceId\": {{comboServiceId2}},\n      \"quantity\": 1\n    }\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1818,8 +1864,8 @@
                   "pm.test(\"Mã trạng thái 200\", () => pm.response.to.have.status(200));",
                   "const q = pm.response.json();",
                   "pm.test(\"Tính đúng tổng giá lẻ và tiết kiệm\", () => {",
-                  "  pm.expect(q.retailTotal).to.eql(189000);",
-                  "  pm.expect(q.savings).to.eql(29000);",
+                  "  pm.expect(q.retailTotal).to.eql(220000);",
+                  "  pm.expect(q.savings).to.eql(60000);",
                   "  pm.expect(q.items.length).to.eql(2);",
                   "});"
                 ]
@@ -1851,7 +1897,7 @@
             "description": "FR-CMB-02. Tạo combo mới kèm 2 dịch vụ thành phần, tourFee bỏ trống mặc định là 0.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Combo Thư Giãn {{runId}}\",\n  \"price\": 160000,\n  \"items\": [\n    {\n      \"serviceId\": {{serviceId}},\n      \"quantity\": 1\n    },\n    {\n      \"serviceId\": {{comboServiceId2}},\n      \"quantity\": 1\n    }\n  ]\n}",
+              "raw": "{\n  \"name\": \"Combo Thư Giãn {{runId}}\",\n  \"price\": 160000,\n  \"items\": [\n    {\n      \"serviceId\": {{comboServiceId1}},\n      \"quantity\": 1\n    },\n    {\n      \"serviceId\": {{comboServiceId2}},\n      \"quantity\": 1\n    }\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1870,8 +1916,8 @@
                   "pm.collectionVariables.set(\"comboId\", c.id);",
                   "pm.test(\"Dữ liệu combo hợp lệ\", () => {",
                   "  pm.expect(c.items.length).to.eql(2);",
-                  "  pm.expect(c.retailTotal).to.eql(189000);",
-                  "  pm.expect(c.savings).to.eql(29000);",
+                  "  pm.expect(c.retailTotal).to.eql(220000);",
+                  "  pm.expect(c.savings).to.eql(60000);",
                   "  pm.expect(c.tourFee).to.eql(0);",
                   "  pm.expect(c.active).to.eql(true);",
                   "});"
@@ -1915,6 +1961,254 @@
               }
             }
           ]
+        },
+        {
+          "name": "Tạo combo trùng tên",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/catalog/combos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "catalog",
+                "combos"
+              ]
+            },
+            "description": "Trùng tên combo đã có phải trả 409 COMBO_NAME_DUPLICATE.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Combo Thư Giãn {{runId}}\",\n  \"price\": 160000,\n  \"items\": [\n    {\n      \"serviceId\": {{comboServiceId1}},\n      \"quantity\": 1\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 409\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"Mã lỗi COMBO_NAME_DUPLICATE\", () => {",
+                  "  const res = pm.response.json();",
+                  "  pm.expect(res.code).to.eql(\"COMBO_NAME_DUPLICATE\");",
+                  "  pm.expect(res.message).to.eql(\"Tên combo đã tồn tại.\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Tạo combo không có dịch vụ, giá âm",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/catalog/combos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "catalog",
+                "combos"
+              ]
+            },
+            "description": "Validation: items rỗng và giá âm phải trả 400 VALIDATION_FAILED với fieldErrors.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Combo Sai {{runId}}\",\n  \"price\": -1000,\n  \"items\": []\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Lỗi validation trường items và price\", () => {",
+                  "  const res = pm.response.json();",
+                  "  pm.expect(res.code).to.eql(\"VALIDATION_FAILED\");",
+                  "  const fields = res.fieldErrors.map(f => f.field);",
+                  "  pm.expect(fields).to.include(\"items\");",
+                  "  pm.expect(fields).to.include(\"price\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Tạo combo lặp dịch vụ",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/catalog/combos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "catalog",
+                "combos"
+              ]
+            },
+            "description": "Hai dòng cùng serviceId phải trả 400 COMBO_ITEM_DUPLICATE.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Combo Lặp {{runId}}\",\n  \"price\": 100000,\n  \"items\": [\n    {\n      \"serviceId\": {{comboServiceId1}},\n      \"quantity\": 1\n    },\n    {\n      \"serviceId\": {{comboServiceId1}},\n      \"quantity\": 2\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Mã lỗi COMBO_ITEM_DUPLICATE\", () => {",
+                  "  const res = pm.response.json();",
+                  "  pm.expect(res.code).to.eql(\"COMBO_ITEM_DUPLICATE\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Combo không tồn tại",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/catalog/combos/999999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "catalog",
+                "combos",
+                "999999"
+              ]
+            },
+            "description": "Id không tồn tại phải trả 404 NOT_FOUND."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Mã lỗi NOT_FOUND\", () => {",
+                  "  const res = pm.response.json();",
+                  "  pm.expect(res.code).to.eql(\"NOT_FOUND\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Xóa combo (không hỗ trợ)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/catalog/combos/{{comboId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "catalog",
+                "combos",
+                "{{comboId}}"
+              ]
+            },
+            "description": "Không xóa cứng combo (BR-19)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 405\", () => pm.response.to.have.status(405));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Xem combo khi chưa đăng nhập",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/catalog/combos/{{comboId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "catalog",
+                "combos",
+                "{{comboId}}"
+              ]
+            },
+            "description": "Request này tắt cookie nên coi như chưa đăng nhập."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 401\", () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableCookies": true
+          }
         }
       ]
     },
@@ -2490,254 +2784,6 @@
               }
             }
           ]
-        },
-        {
-          "name": "Tạo combo trùng tên",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/catalog/combos",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "catalog",
-                "combos"
-              ]
-            },
-            "description": "Trùng tên combo đã có phải trả 409 COMBO_NAME_DUPLICATE.",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Combo Thư Giãn {{runId}}\",\n  \"price\": 160000,\n  \"items\": [\n    {\n      \"serviceId\": {{serviceId}},\n      \"quantity\": 1\n    }\n  ]\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Mã trạng thái 409\", () => pm.response.to.have.status(409));",
-                  "pm.test(\"Mã lỗi COMBO_NAME_DUPLICATE\", () => {",
-                  "  const res = pm.response.json();",
-                  "  pm.expect(res.code).to.eql(\"COMBO_NAME_DUPLICATE\");",
-                  "  pm.expect(res.message).to.eql(\"Tên combo đã tồn tại.\");",
-                  "});"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Tạo combo không có dịch vụ, giá âm",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/catalog/combos",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "catalog",
-                "combos"
-              ]
-            },
-            "description": "Validation: items rỗng và giá âm phải trả 400 VALIDATION_FAILED với fieldErrors.",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Combo Sai {{runId}}\",\n  \"price\": -1000,\n  \"items\": []\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Mã trạng thái 400\", () => pm.response.to.have.status(400));",
-                  "pm.test(\"Lỗi validation trường items và price\", () => {",
-                  "  const res = pm.response.json();",
-                  "  pm.expect(res.code).to.eql(\"VALIDATION_FAILED\");",
-                  "  const fields = res.fieldErrors.map(f => f.field);",
-                  "  pm.expect(fields).to.include(\"items\");",
-                  "  pm.expect(fields).to.include(\"price\");",
-                  "});"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Tạo combo lặp dịch vụ",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/catalog/combos",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "catalog",
-                "combos"
-              ]
-            },
-            "description": "Hai dòng cùng serviceId phải trả 400 COMBO_ITEM_DUPLICATE.",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Combo Lặp {{runId}}\",\n  \"price\": 100000,\n  \"items\": [\n    {\n      \"serviceId\": {{serviceId}},\n      \"quantity\": 1\n    },\n    {\n      \"serviceId\": {{serviceId}},\n      \"quantity\": 2\n    }\n  ]\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Mã trạng thái 400\", () => pm.response.to.have.status(400));",
-                  "pm.test(\"Mã lỗi COMBO_ITEM_DUPLICATE\", () => {",
-                  "  const res = pm.response.json();",
-                  "  pm.expect(res.code).to.eql(\"COMBO_ITEM_DUPLICATE\");",
-                  "});"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Combo không tồn tại",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/catalog/combos/999999",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "catalog",
-                "combos",
-                "999999"
-              ]
-            },
-            "description": "Id không tồn tại phải trả 404 NOT_FOUND."
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Mã trạng thái 404\", () => pm.response.to.have.status(404));",
-                  "pm.test(\"Mã lỗi NOT_FOUND\", () => {",
-                  "  const res = pm.response.json();",
-                  "  pm.expect(res.code).to.eql(\"NOT_FOUND\");",
-                  "});"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Xóa combo (không hỗ trợ)",
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/catalog/combos/{{comboId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "catalog",
-                "combos",
-                "{{comboId}}"
-              ]
-            },
-            "description": "Không xóa cứng combo (BR-19)."
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Mã trạng thái 405\", () => pm.response.to.have.status(405));"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Xem combo khi chưa đăng nhập",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/catalog/combos/{{comboId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "catalog",
-                "combos",
-                "{{comboId}}"
-              ]
-            },
-            "description": "Request này tắt cookie nên coi như chưa đăng nhập."
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Mã trạng thái 401\", () => pm.response.to.have.status(401));"
-                ]
-              }
-            }
-          ],
-          "protocolProfileBehavior": {
-            "disableCookies": true
-          }
         }
       ]
     },
@@ -2846,6 +2892,10 @@
     },
     {
       "key": "comboId",
+      "value": ""
+    },
+    {
+      "key": "comboServiceId1",
       "value": ""
     }
   ]
