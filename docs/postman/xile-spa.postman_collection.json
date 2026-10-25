@@ -3176,6 +3176,57 @@
               }
             }
           ]
+        },
+        {
+          "name": "Tạo dịch vụ tên chỉ NBSP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/catalog/services",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "catalog",
+                "services"
+              ]
+            },
+            "description": "S3-08. Tên chỉ chứa ký tự vô hình/NBSP trả 400 VALIDATION_FAILED với lỗi ở ô name.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"\\u00A0\\u00A0\\u00A0\",\n  \"groupId\": 1,\n  \"listPrice\": 50000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 400\", () => pm.response.to.have.status(400));",
+                  "const e = pm.response.json();",
+                  "pm.test(\"Mã lỗi VALIDATION_FAILED\", () => pm.expect(e.code).to.eql(\"VALIDATION_FAILED\"));",
+                  "pm.test(\"Báo lỗi ở ô name: Tên dịch vụ không được để trống\", () => {",
+                  "  const fe = e.fieldErrors.find(f => f.field === \"name\");",
+                  "  pm.expect(fe).to.be.an(\"object\");",
+                  "  pm.expect(fe.message).to.eql(\"Tên dịch vụ không được để trống\");",
+                  "});"
+                ]
+              }
+            }
+          ]
         }
       ]
     },

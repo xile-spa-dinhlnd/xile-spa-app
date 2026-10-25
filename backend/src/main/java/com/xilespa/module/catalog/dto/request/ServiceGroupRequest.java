@@ -1,7 +1,7 @@
 package com.xilespa.module.catalog.dto.request;
 
+import com.xilespa.common.validation.VisibleText;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
@@ -10,7 +10,7 @@ import jakarta.validation.constraints.Size;
  * toàn bộ.
  */
 public record ServiceGroupRequest(
-        @NotBlank(message = "Tên nhóm dịch vụ không được để trống")
+        @VisibleText(message = "Tên nhóm dịch vụ không được để trống")
                 @Size(max = 100, message = "Tên nhóm dịch vụ tối đa 100 ký tự")
                 String name,
         @NotNull(message = "Thứ tự hiển thị không được để trống")

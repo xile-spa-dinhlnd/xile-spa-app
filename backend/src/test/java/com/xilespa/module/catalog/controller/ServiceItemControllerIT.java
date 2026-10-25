@@ -125,6 +125,138 @@ class ServiceItemControllerIT {
     }
 
     @Test
+    void nameOfOnlyNbspIsRejected() throws Exception {
+        mockMvc.perform(
+                        send(
+                                post("/api/catalog/services"),
+                                json("\u00A0\u00A0\u00A0", groupId, null, 50000, null)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"))
+                .andExpect(
+                        jsonPath("$.fieldErrors[?(@.field == 'name')].message")
+                                .value("Tên dịch vụ không được để trống"));
+    }
+
+    @Test
+    void nameOfOnlyZeroWidthIsRejected() throws Exception {
+        mockMvc.perform(
+                        send(
+                                post("/api/catalog/services"),
+                                json("\u200B\u200C\uFEFF", groupId, null, 50000, null)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"))
+                .andExpect(
+                        jsonPath("$.fieldErrors[?(@.field == 'name')].message")
+                                .value("Tên dịch vụ không được để trống"));
+    }
+
+    @Test
+    void invisibleNameCreatesNothing() throws Exception {
+        long countBefore = serviceItemRepository.count();
+
+        mockMvc.perform(
+                        send(
+                                post("/api/catalog/services"),
+                                json("\u200B\u200C", groupId, null, 50000, null)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"));
+
+        assertThat(serviceItemRepository.count()).isEqualTo(countBefore);
+    }
+
+    @Test
+    void nameDifferingOnlyByNbspIsDuplicate() throws Exception {
+        long id = create(prefix + "Gội Thảo Dược", 50000);
+        int auditCountBefore = auditActions(id).size();
+
+        mockMvc.perform(
+                        send(
+                                post("/api/catalog/services"),
+                                json(
+                                        prefix + "\u00A0Gội\u00A0Thảo\u00A0Dược\u00A0",
+                                        groupId,
+                                        null,
+                                        50000,
+                                        null)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("SERVICE_NAME_DUPLICATE"));
+
+        assertThat(auditActions(id)).hasSize(auditCountBefore);
+    }
+
+    @Test
+    void nameWithTrailingZeroWidthIsDuplicate() throws Exception {
+        create(prefix + "Gội Thảo Dược 2", 50000);
+
+        mockMvc.perform(
+                        send(
+                                post("/api/catalog/services"),
+                                json(prefix + "Gội Thảo Dược 2\u200B", groupId, null, 50000, null)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("SERVICE_NAME_DUPLICATE"));
+    }
+
+    @Test
+    void decomposedNameIsDuplicate() throws Exception {
+        create(prefix + "Gội Đầu NFD", 50000);
+
+        mockMvc.perform(
+                        send(
+                                post("/api/catalog/services"),
+                                json(
+                                        prefix + "G\u006F\u0323\u0302i Đầu NFD",
+                                        groupId,
+                                        null,
+                                        50000,
+                                        null)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("SERVICE_NAME_DUPLICATE"));
+    }
+
+    @Test
+    void nameWithNulCharacterIsSavedClean() throws Exception {
+        String cleanName = prefix + "GộiThảo Dược";
+        String body =
+                """
+                {"name": "%sGội\\u0000Thảo Dược", "groupId": %d, "listPrice": 50000}
+                """
+                        .formatted(prefix, groupId);
+
+        String response =
+                mockMvc.perform(send(post("/api/catalog/services"), body))
+                        .andExpect(status().isCreated())
+                        .andExpect(jsonPath("$.name").value(cleanName))
+                        .andReturn()
+                        .getResponse()
+                        .getContentAsString();
+
+        Number id = JsonPath.read(response, "$.id");
+        var saved = serviceItemRepository.findById(id.longValue()).orElseThrow();
+        assertThat(saved.getName()).isEqualTo(cleanName);
+    }
+
+    @Test
+    void nameIsStoredNormalized() throws Exception {
+        String dirtyName = "  " + prefix + "\u00A0Massage\u200B  Cổ\u00A0Vai   ";
+        String cleanName = prefix + "Massage Cổ Vai";
+
+        String response =
+                mockMvc.perform(
+                                send(
+                                        post("/api/catalog/services"),
+                                        json(dirtyName, groupId, null, 60000, null)))
+                        .andExpect(status().isCreated())
+                        .andExpect(jsonPath("$.name").value(cleanName))
+                        .andReturn()
+                        .getResponse()
+                        .getContentAsString();
+
+        Number id = JsonPath.read(response, "$.id");
+        var saved = serviceItemRepository.findById(id.longValue()).orElseThrow();
+        assertThat(saved.getName()).isEqualTo(cleanName);
+    }
+
+    @Test
     void invalidInputReturnsFieldErrors() throws Exception {
         mockMvc.perform(send(post("/api/catalog/services"), "{\"name\":\"\",\"listPrice\":-1}"))
                 .andExpect(status().isBadRequest())

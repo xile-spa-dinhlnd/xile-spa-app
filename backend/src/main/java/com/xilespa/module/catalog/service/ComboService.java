@@ -5,6 +5,7 @@ import com.xilespa.common.audit.AuditService;
 import com.xilespa.common.exception.BusinessException;
 import com.xilespa.common.exception.ErrorCode;
 import com.xilespa.common.response.PageResponse;
+import com.xilespa.common.util.TextNormalizer;
 import com.xilespa.module.catalog.dto.request.ComboItemRequest;
 import com.xilespa.module.catalog.dto.request.ComboQuoteRequest;
 import com.xilespa.module.catalog.dto.request.ComboRequest;
@@ -97,7 +98,7 @@ public class ComboService {
     /** Tạo combo mới kèm các dịch vụ thành phần (FR-CMB-02). */
     @Transactional
     public ComboResponse create(ComboRequest request) {
-        String name = normalizeSpaces(request.name());
+        String name = TextNormalizer.normalizeName(request.name());
         ensureNameAvailable(name, 0L);
         checkDuplicateServiceItems(request.items());
 
@@ -127,7 +128,7 @@ public class ComboService {
         Combo combo = findComboWithItems(id);
         ComboResponse before = toResponse(combo);
 
-        String name = normalizeSpaces(request.name());
+        String name = TextNormalizer.normalizeName(request.name());
         ensureNameAvailable(name, id);
         checkDuplicateServiceItems(request.items());
 
@@ -317,9 +318,5 @@ public class ComboService {
             }
             throw e;
         }
-    }
-
-    private static String normalizeSpaces(String name) {
-        return name.trim().replaceAll("\\s+", " ");
     }
 }

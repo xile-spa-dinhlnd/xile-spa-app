@@ -317,6 +317,103 @@ class ComboControllerIT {
     }
 
     @Test
+    void nameOfOnlyNbspIsRejected() throws Exception {
+        String items = "[{\"serviceId\": " + service1.getId() + ", \"quantity\": 1}]";
+        mockMvc.perform(
+                        send(
+                                post("/api/catalog/combos"),
+                                comboJson("\u00A0\u00A0\u00A0", 100_000L, 0L, items)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"))
+                .andExpect(
+                        jsonPath("$.fieldErrors[?(@.field == 'name')].message")
+                                .value("Tên combo không được để trống"));
+    }
+
+    @Test
+    void nameOfOnlyZeroWidthIsRejected() throws Exception {
+        String items = "[{\"serviceId\": " + service1.getId() + ", \"quantity\": 1}]";
+        mockMvc.perform(
+                        send(
+                                post("/api/catalog/combos"),
+                                comboJson("\u200B\u200C\uFEFF", 100_000L, 0L, items)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"))
+                .andExpect(
+                        jsonPath("$.fieldErrors[?(@.field == 'name')].message")
+                                .value("Tên combo không được để trống"));
+    }
+
+    @Test
+    void nameDifferingOnlyByNbspIsDuplicate() throws Exception {
+        String items = "[{\"serviceId\": " + service1.getId() + ", \"quantity\": 1}]";
+        createCombo(prefix + "Combo Phục Hồi", 100_000L, items);
+
+        mockMvc.perform(
+                        send(
+                                post("/api/catalog/combos"),
+                                comboJson(
+                                        prefix + "\u00A0Combo\u00A0Phục\u00A0Hồi\u00A0",
+                                        100_000L,
+                                        0L,
+                                        items)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("COMBO_NAME_DUPLICATE"));
+    }
+
+    @Test
+    void nameWithTrailingZeroWidthIsDuplicate() throws Exception {
+        String items = "[{\"serviceId\": " + service1.getId() + ", \"quantity\": 1}]";
+        createCombo(prefix + "Combo Trị Liệu", 100_000L, items);
+
+        mockMvc.perform(
+                        send(
+                                post("/api/catalog/combos"),
+                                comboJson(prefix + "Combo Trị Liệu\u200B", 100_000L, 0L, items)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("COMBO_NAME_DUPLICATE"));
+    }
+
+    @Test
+    void decomposedNameIsDuplicate() throws Exception {
+        String items = "[{\"serviceId\": " + service1.getId() + ", \"quantity\": 1}]";
+        createCombo(prefix + "Combo Gội NFD", 100_000L, items);
+
+        mockMvc.perform(
+                        send(
+                                post("/api/catalog/combos"),
+                                comboJson(
+                                        prefix + "Combo G\u006F\u0323\u0302i NFD",
+                                        100_000L,
+                                        0L,
+                                        items)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("COMBO_NAME_DUPLICATE"));
+    }
+
+    @Test
+    void nameIsStoredNormalized() throws Exception {
+        String items = "[{\"serviceId\": " + service1.getId() + ", \"quantity\": 1}]";
+        String dirtyName = "  " + prefix + "\u00A0Combo\u200B  Thư\u00A0Giãn   ";
+        String cleanName = prefix + "Combo Thư Giãn";
+
+        String response =
+                mockMvc.perform(
+                                send(
+                                        post("/api/catalog/combos"),
+                                        comboJson(dirtyName, 150_000L, 0L, items)))
+                        .andExpect(status().isCreated())
+                        .andExpect(jsonPath("$.name").value(cleanName))
+                        .andReturn()
+                        .getResponse()
+                        .getContentAsString();
+
+        Number id = JsonPath.read(response, "$.id");
+        var saved = comboRepository.findById(id.longValue()).orElseThrow();
+        assertThat(saved.getName()).isEqualTo(cleanName);
+    }
+
+    @Test
     void createWithDuplicateNameIsRejected() throws Exception {
         String items = "[{\"serviceId\": " + service1.getId() + ", \"quantity\": 1}]";
         createCombo(prefix + "Combo Trùng", 100_000L, items);

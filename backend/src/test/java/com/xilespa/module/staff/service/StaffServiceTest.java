@@ -131,6 +131,13 @@ class StaffServiceTest {
         assertThat(StaffService.likePattern("50%_a\\")).isEqualTo("%50\\%\\_a\\\\%");
     }
 
+    @Test
+    void likePatternNormalizesKeyword() {
+        // Có NBSP, zero-width, khoảng trắng thừa
+        assertThat(StaffService.likePattern("\u00A0 LAN\u200B   ANH \u00A0"))
+                .isEqualTo("%lan anh%");
+    }
+
     private Staff existing(long id, String name, boolean active) {
         Staff staff = new Staff(name, StaffRole.THERAPIST, clock.instant());
         ReflectionTestUtils.setField(staff, "id", id);

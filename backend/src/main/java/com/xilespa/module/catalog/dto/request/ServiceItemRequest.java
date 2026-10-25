@@ -1,7 +1,7 @@
 package com.xilespa.module.catalog.dto.request;
 
+import com.xilespa.common.validation.VisibleText;
 import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
@@ -15,7 +15,7 @@ import jakarta.validation.constraints.Size;
  * @param tourFee tiền tour mặc định; để trống thì là 0
  */
 public record ServiceItemRequest(
-        @NotBlank(message = "Tên dịch vụ không được để trống")
+        @VisibleText(message = "Tên dịch vụ không được để trống")
                 @Size(max = 150, message = "Tên dịch vụ tối đa 150 ký tự")
                 String name,
         @NotNull(message = "Vui lòng chọn nhóm dịch vụ") Long groupId,

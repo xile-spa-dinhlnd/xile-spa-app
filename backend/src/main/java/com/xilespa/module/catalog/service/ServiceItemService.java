@@ -5,6 +5,7 @@ import com.xilespa.common.audit.AuditService;
 import com.xilespa.common.exception.BusinessException;
 import com.xilespa.common.exception.ErrorCode;
 import com.xilespa.common.response.PageResponse;
+import com.xilespa.common.util.TextNormalizer;
 import com.xilespa.module.catalog.dto.request.ServiceItemRequest;
 import com.xilespa.module.catalog.dto.response.ServiceItemResponse;
 import com.xilespa.module.catalog.entity.ServiceGroup;
@@ -70,7 +71,7 @@ public class ServiceItemService {
     /** Tạo dịch vụ (FR-SVC-02). */
     @Transactional
     public ServiceItemResponse create(ServiceItemRequest request) {
-        String name = normalizeSpaces(request.name());
+        String name = TextNormalizer.normalizeName(request.name());
         ensureNameAvailable(name, 0L);
         ServiceItem service =
                 new ServiceItem(
@@ -93,7 +94,7 @@ public class ServiceItemService {
         ServiceItem service = findService(id);
         ServiceItemResponse before = mapper.toResponse(service);
 
-        String name = normalizeSpaces(request.name());
+        String name = TextNormalizer.normalizeName(request.name());
         ensureNameAvailable(name, id);
         Instant now = clock.instant();
         service.updateDetails(
@@ -205,11 +206,15 @@ public class ServiceItemService {
 
     /** Mẫu LIKE viết thường, thoát ký tự đặc biệt % _ \\ của người dùng; rỗng thì lấy tất cả. */
     static String likePattern(String q) {
-        if (q == null || q.isBlank()) {
+        if (q == null) {
+            return "%";
+        }
+        String normalized = TextNormalizer.normalizeName(q);
+        if (normalized.isEmpty()) {
             return "%";
         }
         String escaped =
-                q.trim()
+                normalized
                         .toLowerCase(java.util.Locale.ROOT)
                         .replace("\\", "\\\\")
                         .replace("%", "\\%")
@@ -219,11 +224,6 @@ public class ServiceItemService {
 
     private static long tourFeeOf(ServiceItemRequest request) {
         return request.tourFee() == null ? 0L : request.tourFee();
-    }
-
-    /** Cắt đầu cuối và gộp khoảng trắng liên tiếp, khớp với cách CSDL so sánh tên. */
-    private static String normalizeSpaces(String name) {
-        return name.trim().replaceAll("\\s+", " ");
     }
 
     private static Long currentUserId() {
