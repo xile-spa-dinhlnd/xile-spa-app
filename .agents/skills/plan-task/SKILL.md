@@ -21,7 +21,8 @@ Luồng của Đình dùng Claude `/plan-feature` thay cho skill này; Đình đ
 4. **Đọc code và file luồng hiện có.** Module gần giống nhất để làm theo (`module/staff` cho danh mục đơn giản,
    `module/catalog` cho danh mục có giá); migration nếu cần bảng; `git log` để xem card trước làm thế nào; các file
    trong `docs/design/flows/<module>/`. Tính năng đã có file luồng thì sửa file đó, không tạo file mới.
-5. **Soát chỗ bị ảnh hưởng** (`AGENTS.md` mục 7), ghi vào mục "Ảnh hưởng" của file luồng:
+5. **Soát chỗ bị ảnh hưởng** (`AGENTS.md` mục 7), ghi vào mục "Ảnh hưởng" của file luồng; ghi luôn dòng "Dữ liệu
+   mẫu dev" (`backend/AGENTS.md` mục "Dữ liệu mẫu cho máy dev"):
    - Endpoint đổi hành vi: grep URL trong `frontend/src`, `backend/src/test`, `docs/postman`.
    - Thêm ràng buộc trạng thái (ngừng dùng, đã chốt...): liệt kê mọi method đưa bản ghi vào, ra khỏi trạng thái đó.
    - Bản ghi bị bản ghi khác tham chiếu: xét cả hai chiều đổi trạng thái.

@@ -83,7 +83,9 @@ catalog/
 │     └─ ServiceGroupResponse.java
 ├─ mapper/
 │  └─ CatalogMapper.java              # entity → DTO bằng MapStruct (interface @Mapper)
-└─ exception/                         # exception riêng của module (kế thừa BusinessException), nếu cần
+├─ exception/                         # exception riêng của module (kế thừa BusinessException), nếu cần
+└─ devdata/
+   └─ CatalogDevData.java             # dữ liệu mẫu cho máy dev của module (mục "Dữ liệu mẫu cho máy dev")
 ```
 
 Thư mục nào chưa có file thì chưa tạo. Module nhỏ (như `dashboard`) có thể không có `entity/`, `repository/`
@@ -219,8 +221,30 @@ có ghi log). Trigger là rào chắn cuối: service vẫn nên tự kiểm tra
 ## Cấu hình
 
 - Chọn hành vi theo môi trường bằng thuộc tính trong `application-{profile}.yml` và `@ConditionalOnProperty`; không dùng `@Profile` phủ định (như `@Profile("!prod")`).
-- `@Profile` chỉ dùng cho bean dành riêng dev hoặc test (dữ liệu mẫu, OwnerAccountInitializer).
+- `@Profile` chỉ dùng cho bean dành riêng dev hoặc test. Dữ liệu mẫu dev bật bằng thuộc tính `xile.dev-data.enabled`,
+  không bằng `@Profile` (mục dưới).
 - Giá trị mặc định đặt một chỗ trong `application.yml`; `application-prod.yml` chỉ đọc biến môi trường, không có mặc định.
+
+## Dữ liệu mẫu cho máy dev
+
+Để thử tính năng mà không phải tạo tay qua Postman. Bật bằng `xile.dev-data.enabled` (mặc định `false` ở
+`application.yml`, `true` ở `application-dev.yml`; tắt bằng `XILE_DEV_DATA=false`). Muốn làm lại từ đầu thì xóa sạch
+database dev (lệnh ở `README.md` mục "Bật database") rồi chạy lại backend.
+
+- **Không bao giờ để dữ liệu mẫu trong migration Flyway**: migration chạy cả ở production. `V2` chỉ chứa danh mục gốc.
+- **Mỗi module một lớp** `module/<tên>/devdata/<Tên>DevData.java` (`ApplicationRunner`,
+  `@ConditionalOnProperty(name = "xile.dev-data.enabled", havingValue = "true")`). Tính năng mới thêm bản ghi vào lớp
+  của chính module mình; module mới thì tạo lớp mới. **Không sửa lớp của module khác, không sửa migration cũ.**
+- **Gọi service của module, không gọi repository**, để dữ liệu mẫu qua đủ validation, quy tắc nghiệp vụ và audit.
+  Module sau cần bản ghi của module trước (giao dịch cần nhân viên, dịch vụ) thì đọc qua service của module đó.
+- **Chạy lại không tạo trùng**: bản ghi đã có cùng tên (khóa nghiệp vụ) thì bỏ qua; nhờ vậy thêm bản ghi mẫu mới chỉ
+  cần chạy lại backend, không phải xóa database.
+- **Thứ tự** bằng `@Order`: `10` nhân viên, `20` danh mục (dịch vụ, combo), `30` khách hàng, `40` giao dịch, `50` chi
+  phí, chốt sổ. Module mới chọn số theo phụ thuộc và ghi vào danh sách này.
+- **Chỉ dữ liệu giả** (tên, SĐT, ghi chú không phải của khách thật, NFR-PRV-01). Nên có sẵn ca biên để thử giao diện:
+  bản ghi ngừng dùng, giá 0, combo đắt hơn giá lẻ...
+- **Test** bằng Mockito như test service (mẫu `CatalogDevDataTest`): tạo đủ khi trống, không tạo lại bản ghi đã có.
+  Không chạy dữ liệu mẫu trong test tích hợp (`src/test/resources/application.yml` không bật).
 
 ## Test
 

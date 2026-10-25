@@ -37,6 +37,9 @@ xile:
       email: ${APP_OWNER_EMAIL:}
       password: ${APP_OWNER_PASSWORD:}
       display-name: ${APP_OWNER_NAME:Chủ tiệm Xile}
+  # Dữ liệu mẫu cho máy dev (backend/AGENTS.md mục "Dữ liệu mẫu cho máy dev"); chỉ bật ở application-dev.yml.
+  dev-data:
+    enabled: false
   mail:
     sender: log # log | smtp
     from: ${MAIL_FROM:no-reply@xilespa.vn}

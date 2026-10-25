@@ -64,6 +64,9 @@ Nhánh mặc định là `develop`. Quy trình nhánh, commit, PR: [CONTRIBUTING
 docker compose up -d
 ```
 
+Chạy backend với profile `dev` sẽ tự thêm dữ liệu mẫu (nhân viên, dịch vụ, combo); chạy lại không tạo trùng. Muốn
+database trống thì đặt `XILE_DEV_DATA=false`. Quy tắc thêm dữ liệu mẫu: `backend/AGENTS.md` mục "Dữ liệu mẫu cho máy dev".
+
 PostgreSQL 16 chạy ở `localhost:5433` (không dùng 5432 để khỏi đụng PostgreSQL cài sẵn trên máy, nếu có), database `xile_spa`, user `xile`, mật khẩu `xile_dev`. Đây là thông số **chỉ dùng cho dev**. Muốn đổi thì chép `.env.example` thành `.env` rồi sửa.
 
 Tắt: `docker compose down` (giữ dữ liệu). Xóa sạch dữ liệu dev: `docker compose down -v`.

@@ -135,6 +135,9 @@ Theo sáu nhóm của `AGENTS.md` mục 10. Lúc thiết kế ghi ca cần có; 
 
 Thử tay (Postman, giao diện): <bước và kết quả mong đợi>.
 
+Dữ liệu mẫu dev: <bản ghi thêm vào `module/<tên>/devdata/<Tên>DevData` để thử tính năng, có ca biên nào; hoặc "Không"
+kèm lý do> (`backend/AGENTS.md` mục "Dữ liệu mẫu cho máy dev").
+
 ## Các phần
 
 <Chỉ có khi chia phần (mục "Chia phần" của README). Gõ `/implement <file này> phần <N>`, mỗi lần một phần.>

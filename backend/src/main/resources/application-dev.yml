@@ -15,6 +15,8 @@ xile:
       email: ${APP_OWNER_EMAIL:owner@xilespa.vn}
       password: ${APP_OWNER_PASSWORD:xile_dev_123}
       display-name: ${APP_OWNER_NAME:Chủ tiệm Xile}
+  dev-data:
+    enabled: ${XILE_DEV_DATA:true} # tắt bằng XILE_DEV_DATA=false nếu muốn database dev trống
   mail:
     sender: log
   security:
