@@ -800,10 +800,15 @@ class ComboControllerIT {
         mockMvc.perform(send(post("/api/catalog/combos/" + c2 + "/deactivate")))
                 .andExpect(status().isOk());
 
-        // Tìm theo tên không phân biệt hoa thường
+        // Tìm theo tên không phân biệt hoa thường và kiểm tra thứ tự sắp xếp theo tên (Gội Cũ trước
+        // Gội Thảo Dược)
         mockMvc.perform(send(get("/api/catalog/combos").param("q", prefix.toUpperCase() + "gội")))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.totalElements").value(2));
+                .andExpect(jsonPath("$.totalElements").value(2))
+                .andExpect(jsonPath("$.content[0].id").value(c2))
+                .andExpect(jsonPath("$.content[0].name").value(prefix + "Gội Cũ"))
+                .andExpect(jsonPath("$.content[1].id").value(c1))
+                .andExpect(jsonPath("$.content[1].name").value(prefix + "Gội Thảo Dược"));
 
         // Lọc đang bán
         mockMvc.perform(send(get("/api/catalog/combos").param("q", prefix).param("active", "true")))

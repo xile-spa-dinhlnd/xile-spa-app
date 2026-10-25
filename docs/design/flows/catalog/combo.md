@@ -12,6 +12,7 @@ Trạng thái: khớp code · Card: S2-07 (backend; giao diện ở S2-08) · Y�
 | 25/10/2026 | Đình (Claude) | S2-07     | Tự soát phần 2: 2 vòng, sạch; test đọc lại combo từ DB sau khi sửa |
 | 25/10/2026 | Đình (Claude) | S2-07     | Tự soát phần 3: 1 vòng, sạch; 2 điểm nên sửa làm cùng phần 4 |
 | 25/10/2026 | Đình (Antigravity) | S2-07 | Phần 4 và 2 điểm nên sửa của phần 3; khớp code toàn bộ backend |
+| 25/10/2026 | Đình (Claude) | S2-07     | Tự soát phần 4: 2 vòng, sạch (thêm test thứ tự danh sách). Cả card: 7 vòng cho 4 phần |
 
 Phần chung của module (tên không trùng, không xóa cứng, nhật ký, OQ-21): `README.md` cùng thư mục.
 
@@ -256,7 +257,7 @@ nền và nặng tới nhẹ: phần 1 đặt khuôn cho cả tính năng, phầ
 | 1    | Tạo và xem combo, tính thử giá                              | 330 dòng | đã soát    |
 | 2    | Sửa combo                                                   | 110 dòng | đã soát    |
 | 3    | Ngừng bán, bán lại combo; chặn ngừng bán dịch vụ (OQ-22)    | 120 dòng | đã soát    |
-| 4    | Danh sách, tìm, lọc combo; hoàn tất card                    | 50 dòng  | đã code    |
+| 4    | Danh sách, tìm, lọc combo; hoàn tất card                    | 50 dòng  | đã soát    |
 
 ### Phần 1. Tạo và xem combo, tính thử giá
 
