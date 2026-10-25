@@ -1,7 +1,6 @@
 package com.xilespa.common.exception;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.isOneOf;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.startsWith;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
@@ -26,15 +25,15 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
 /**
- * Kiểm tra các ca biên và chặn đầu vào bất thường (S3-08): - Kiểu chặt: tiền, số lượng là số
- * nguyên, không nhận số thập phân, chuỗi hay số mũ; enum sai báo lỗi ở ô. - Body, định dạng: JSON
- * hỏng, rỗng; sai Content-Type; Accept XML; không cho gán trường lạ (id, active).
+ * Kiểm tra các ca biên và chặn đầu vào bất thường theo thiết kế S3-08. Bao gồm kiểm tra kiểu dữ
+ * liệu chặt, định dạng body, mã hóa dữ liệu và xử lý lỗi luôn trả về JSON.
  */
 @IntegrationTest
 class InputHandlingIT {
@@ -287,12 +286,7 @@ class InputHandlingIT {
                 .andExpect(status().isBadRequest());
 
         assertThat(serviceItemRepository.existsByNormalizedName(name, 0L)).isFalse();
-        assertThat(
-                        auditLogRepository
-                                .findByEntityType(
-                                        "service",
-                                        org.springframework.data.domain.Pageable.unpaged())
-                                .getContent())
+        assertThat(auditLogRepository.findByEntityType("service", Pageable.unpaged()).getContent())
                 .noneMatch(a -> a.getAfterData() != null && a.getAfterData().contains(name));
     }
 
@@ -346,15 +340,60 @@ class InputHandlingIT {
     }
 
     @Test
+    void nonNumericIdIsBadRequest() throws Exception {
+        mockMvc.perform(get("/api/catalog/services/abc").with(loggedIn))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("BAD_REQUEST"));
+    }
+
+    @Test
+    void numberBeyondLongIsBadRequest() throws Exception {
+        String name = prefix + "Dịch vụ số vượt Long";
+        String body =
+                """
+                {
+                  "name": "%s",
+                  "groupId": %d,
+                  "durationMinutes": 30,
+                  "listPrice": 99999999999999999999,
+                  "tourFee": 10000
+                }
+                """
+                        .formatted(name, groupId);
+
+        mockMvc.perform(
+                        post("/api/catalog/services")
+                                .with(loggedIn)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(body))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("BAD_REQUEST"));
+
+        assertThat(serviceItemRepository.existsByNormalizedName(name, 0L)).isFalse();
+    }
+
+    @Test
     void xmlAcceptOnMissingResourceNeverEscapes() throws Exception {
         mockMvc.perform(
                         get("/api/catalog/services/999999")
                                 .with(loggedIn)
                                 .accept(MediaType.APPLICATION_XML))
-                .andExpect(status().is(isOneOf(404, 406)))
+                .andExpect(status().isNotFound())
                 .andExpect(header().string("Content-Type", startsWith("application/json")))
-                .andExpect(jsonPath("$.code").value(isOneOf("NOT_FOUND", "NOT_ACCEPTABLE")))
+                .andExpect(jsonPath("$.code").value("NOT_FOUND"))
                 .andExpect(jsonPath("$.message").isNotEmpty());
+    }
+
+    @Test
+    void xmlAcceptOnListIs406() throws Exception {
+        mockMvc.perform(
+                        get("/api/catalog/services")
+                                .with(loggedIn)
+                                .accept(MediaType.APPLICATION_XML))
+                .andExpect(status().isNotAcceptable())
+                .andExpect(header().string("Content-Type", startsWith("application/json")))
+                .andExpect(jsonPath("$.code").value("NOT_ACCEPTABLE"))
+                .andExpect(jsonPath("$.message").value("Hệ thống chỉ trả dữ liệu dạng JSON."));
     }
 
     @Test

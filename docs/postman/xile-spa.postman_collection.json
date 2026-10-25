@@ -3080,7 +3080,7 @@
           ]
         },
         {
-          "name": "Tạo dịch vụ - Giá thập phân (400)",
+          "name": "Tạo dịch vụ giá thập phân",
           "request": {
             "method": "POST",
             "header": [
@@ -3103,7 +3103,7 @@
             "description": "BR-01, S3-08. Không nhận số thập phân cho trường tiền, trả 400 VALIDATION_FAILED với lỗi ở ô listPrice.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Dịch vụ test giá thập phân\",\n  \"groupId\": {{groupId}},\n  \"listPrice\": 100000.5\n}",
+              "raw": "{\n  \"name\": \"Dịch vụ test giá thập phân\",\n  \"groupId\": 1,\n  \"listPrice\": 100000.5\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -3131,7 +3131,7 @@
           ]
         },
         {
-          "name": "Tạo dịch vụ - Sai Content-Type (415)",
+          "name": "Tạo dịch vụ sai Content-Type",
           "request": {
             "method": "POST",
             "header": [

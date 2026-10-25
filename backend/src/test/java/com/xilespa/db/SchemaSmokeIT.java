@@ -1,10 +1,12 @@
 package com.xilespa.db;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.annotation.DirtiesContext.ClassMode.BEFORE_CLASS;
 
 import com.xilespa.support.IntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.annotation.DirtiesContext;
 import org.testcontainers.containers.Container.ExecResult;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.utility.MountableFile;
@@ -16,6 +18,8 @@ import org.testcontainers.utility.MountableFile;
  * liệu.
  */
 @IntegrationTest
+// Cần database mới vừa chạy Flyway, không bị dữ liệu của test khác ảnh hưởng khi đếm bảng.
+@DirtiesContext(classMode = BEFORE_CLASS)
 class SchemaSmokeIT {
 
     private static final String SCRIPT_IN_CONTAINER = "/tmp/schema_smoke_test.sql";

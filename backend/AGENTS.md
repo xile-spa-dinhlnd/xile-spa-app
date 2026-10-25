@@ -251,6 +251,7 @@ Tài sản, mối đe dọa (`T-xx`), bề mặt tấn công, bí mật và chec
 - `@Profile` chỉ dùng cho bean dành riêng dev hoặc test. Dữ liệu mẫu dev bật bằng thuộc tính `xile.dev-data.enabled`,
   không bằng `@Profile` (mục dưới).
 - Giá trị mặc định đặt một chỗ trong `application.yml`; `application-prod.yml` chỉ đọc biến môi trường, không có mặc định.
+- Test dùng hồ sơ `test` chồng lên `application.yml`, không tạo `src/test/resources/application.yml`, không chép khóa `spring.*` của file chính sang file test.
 
 ## Dữ liệu mẫu cho máy dev
 
@@ -271,7 +272,7 @@ database dev (lệnh ở `README.md` mục "Bật database") rồi chạy lại 
 - **Chỉ dữ liệu giả** (tên, SĐT, ghi chú không phải của khách thật, NFR-PRV-01). Nên có sẵn ca biên để thử giao diện:
   bản ghi ngừng dùng, giá 0, combo đắt hơn giá lẻ...
 - **Test** bằng Mockito như test service (mẫu `CatalogDevDataTest`): tạo đủ khi trống, không tạo lại bản ghi đã có.
-  Không chạy dữ liệu mẫu trong test tích hợp (`src/test/resources/application.yml` không bật).
+  Không chạy dữ liệu mẫu trong test tích hợp (`src/test/resources/application-test.yml` không bật).
 
 ## Test
 

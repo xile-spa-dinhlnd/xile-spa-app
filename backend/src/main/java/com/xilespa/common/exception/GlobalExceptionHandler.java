@@ -1,17 +1,16 @@
 package com.xilespa.common.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.transaction.TransactionSystemException;
+import org.springframework.util.ClassUtils;
 import org.springframework.web.HttpMediaTypeNotAcceptableException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
@@ -22,7 +21,6 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 import tools.jackson.core.JacksonException;
-import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.exc.MismatchedInputException;
 
 /** Chuyển mọi exception thành {@link ApiError}. Không để lộ chi tiết kỹ thuật ra ngoài. */
@@ -32,88 +30,78 @@ public class GlobalExceptionHandler {
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     private final ApiErrorFactory errors;
-    private final ObjectMapper objectMapper;
 
-    public GlobalExceptionHandler(ApiErrorFactory errors, ObjectMapper objectMapper) {
+    public GlobalExceptionHandler(ApiErrorFactory errors) {
         this.errors = errors;
-        this.objectMapper = objectMapper;
     }
 
     @ExceptionHandler(BusinessException.class)
-    void handleBusiness(
-            BusinessException ex, HttpServletRequest request, HttpServletResponse response) {
-        respond(ex.getErrorCode(), ex.getMessage(), List.of(), request, response);
+    ResponseEntity<ApiError> handleBusiness(BusinessException ex, HttpServletRequest request) {
+        return respond(ex.getErrorCode(), ex.getMessage(), List.of(), request);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    void handleValidation(
-            MethodArgumentNotValidException ex,
-            HttpServletRequest request,
-            HttpServletResponse response) {
+    ResponseEntity<ApiError> handleValidation(
+            MethodArgumentNotValidException ex, HttpServletRequest request) {
         List<ApiError.FieldError> fieldErrors =
                 ex.getBindingResult().getFieldErrors().stream()
                         .map(e -> new ApiError.FieldError(e.getField(), e.getDefaultMessage()))
                         .toList();
-        respond(
+        return respond(
                 ErrorCode.VALIDATION_FAILED,
                 ErrorCode.VALIDATION_FAILED.defaultMessage(),
                 fieldErrors,
-                request,
-                response);
+                request);
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    void handleNotReadable(
-            HttpMessageNotReadableException ex,
-            HttpServletRequest request,
-            HttpServletResponse response) {
+    ResponseEntity<ApiError> handleNotReadable(
+            HttpMessageNotReadableException ex, HttpServletRequest request) {
         log.debug("Lỗi đọc JSON body: {}", ex.getMessage());
         MismatchedInputException mismatch = findMismatchedInputException(ex);
         if (mismatch != null && mismatch.getPath() != null && !mismatch.getPath().isEmpty()) {
             String field = buildFieldPath(mismatch.getPath());
             String message = determineTypeMismatchMessage(mismatch.getTargetType());
-            respond(
+            return respond(
                     ErrorCode.VALIDATION_FAILED,
                     ErrorCode.VALIDATION_FAILED.defaultMessage(),
                     List.of(new ApiError.FieldError(field, message)),
-                    request,
-                    response);
-            return;
+                    request);
         }
-        respond(ErrorCode.BAD_REQUEST, request, response);
+        return respond(ErrorCode.BAD_REQUEST, request);
     }
 
     @ExceptionHandler({
         MethodArgumentTypeMismatchException.class,
         MissingServletRequestParameterException.class
     })
-    void handleBadRequest(Exception ex, HttpServletRequest request, HttpServletResponse response) {
-        respond(ErrorCode.BAD_REQUEST, request, response);
+    ResponseEntity<ApiError> handleBadRequest(Exception ex, HttpServletRequest request) {
+        return respond(ErrorCode.BAD_REQUEST, request);
     }
 
     @ExceptionHandler(NoResourceFoundException.class)
-    void handleNotFound(HttpServletRequest request, HttpServletResponse response) {
-        respond(ErrorCode.NOT_FOUND, request, response);
+    ResponseEntity<ApiError> handleNotFound(HttpServletRequest request) {
+        return respond(ErrorCode.NOT_FOUND, request);
     }
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
-    void handleMethodNotAllowed(HttpServletRequest request, HttpServletResponse response) {
-        respond(ErrorCode.METHOD_NOT_ALLOWED, request, response);
+    ResponseEntity<ApiError> handleMethodNotAllowed(HttpServletRequest request) {
+        return respond(ErrorCode.METHOD_NOT_ALLOWED, request);
     }
 
     @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
-    void handleUnsupportedMediaType(HttpServletRequest request, HttpServletResponse response) {
-        respond(ErrorCode.UNSUPPORTED_MEDIA_TYPE, request, response);
+    ResponseEntity<ApiError> handleUnsupportedMediaType(HttpServletRequest request) {
+        return respond(ErrorCode.UNSUPPORTED_MEDIA_TYPE, request);
     }
 
     @ExceptionHandler(HttpMediaTypeNotAcceptableException.class)
-    void handleNotAcceptable(HttpServletRequest request, HttpServletResponse response) {
-        respond(ErrorCode.NOT_ACCEPTABLE, request, response);
+    ResponseEntity<ApiError> handleNotAcceptable(HttpServletRequest request) {
+        return respond(ErrorCode.NOT_ACCEPTABLE, request);
     }
 
     @ExceptionHandler(AccessDeniedException.class)
-    void handleAccessDenied(HttpServletRequest request, HttpServletResponse response) {
-        respond(ErrorCode.FORBIDDEN, request, response);
+    ResponseEntity<ApiError> handleAccessDenied(HttpServletRequest request) {
+        return respond(ErrorCode.FORBIDDEN, request);
     }
 
     /**
@@ -121,46 +109,38 @@ public class GlobalExceptionHandler {
      * đích, trả thông báo tiếng Việt; các lỗi còn lại coi là lỗi hệ thống.
      */
     @ExceptionHandler({DataAccessException.class, TransactionSystemException.class})
-    void handleDatabase(Exception ex, HttpServletRequest request, HttpServletResponse response) {
-        DatabaseErrors.translate(ex)
-                .ifPresentOrElse(
+    ResponseEntity<ApiError> handleDatabase(Exception ex, HttpServletRequest request) {
+        return DatabaseErrors.translate(ex)
+                .map(
                         code -> {
                             log.info(
                                     "Từ chối bởi ràng buộc dữ liệu {} tại {} {}",
                                     code,
                                     request.getMethod(),
                                     request.getRequestURI());
-                            respond(code, request, response);
-                        },
-                        () -> handleUnexpected(ex, request, response));
+                            return respond(code, request);
+                        })
+                .orElseGet(() -> handleUnexpected(ex, request));
     }
 
     @ExceptionHandler(Exception.class)
-    void handleUnexpected(Exception ex, HttpServletRequest request, HttpServletResponse response) {
+    ResponseEntity<ApiError> handleUnexpected(Exception ex, HttpServletRequest request) {
         log.error("Lỗi không mong đợi tại {} {}", request.getMethod(), request.getRequestURI(), ex);
-        respond(ErrorCode.INTERNAL_ERROR, request, response);
+        return respond(ErrorCode.INTERNAL_ERROR, request);
     }
 
-    private void respond(ErrorCode code, HttpServletRequest request, HttpServletResponse response) {
-        respond(code, code.defaultMessage(), List.of(), request, response);
+    private ResponseEntity<ApiError> respond(ErrorCode code, HttpServletRequest request) {
+        return respond(code, code.defaultMessage(), List.of(), request);
     }
 
-    private void respond(
+    private ResponseEntity<ApiError> respond(
             ErrorCode code,
             String message,
             List<ApiError.FieldError> fieldErrors,
-            HttpServletRequest request,
-            HttpServletResponse response) {
-        response.setStatus(code.status().value());
-        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-        try {
-            objectMapper.writeValue(
-                    response.getOutputStream(),
-                    errors.create(code, message, fieldErrors, request.getRequestURI()));
-        } catch (IOException e) {
-            log.error("Không thể ghi lỗi ApiError ra response", e);
-        }
+            HttpServletRequest request) {
+        return ResponseEntity.status(code.status())
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(errors.create(code, message, fieldErrors, request.getRequestURI()));
     }
 
     private MismatchedInputException findMismatchedInputException(Throwable ex) {
@@ -190,19 +170,14 @@ public class GlobalExceptionHandler {
     }
 
     private String determineTypeMismatchMessage(Class<?> targetType) {
-        if (targetType != null
-                && (Number.class.isAssignableFrom(targetType)
-                        || targetType == long.class
-                        || targetType == int.class
-                        || targetType == short.class
-                        || targetType == byte.class
-                        || targetType == double.class
-                        || targetType == float.class)) {
-            return "Phải là số nguyên";
-        }
-        if (targetType != null
-                && (targetType.isEnum() || Enum.class.isAssignableFrom(targetType))) {
-            return "Giá trị không hợp lệ";
+        if (targetType != null) {
+            Class<?> resolved = ClassUtils.resolvePrimitiveIfNecessary(targetType);
+            if (Number.class.isAssignableFrom(resolved)) {
+                return "Phải là số nguyên";
+            }
+            if (Enum.class.isAssignableFrom(resolved)) {
+                return "Giá trị không hợp lệ";
+            }
         }
         return "Sai kiểu dữ liệu";
     }

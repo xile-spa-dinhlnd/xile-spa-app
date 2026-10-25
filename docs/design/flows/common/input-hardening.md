@@ -10,6 +10,7 @@ Trạng thái: thiết kế (đã duyệt) · Card: S3-08 (sửa lỗi) · Yêu 
 | 25/10/2026 | Đình (Claude) | S3-08     | Đình chốt: ký tự vô hình trong tên bỏ lặng lẽ          |
 | 25/10/2026 | Đình (Claude) | S3-08     | Đình duyệt; `q` chưa giới hạn độ dài                    |
 | 25/10/2026 | Đình (Claude) | S3-08     | Tự soát phần 1 lần 1: test nạp `application.yml` thật (hồ sơ `test`); lỗi trả bằng `ResponseEntity` đặt sẵn JSON; thêm ca 406, id sai, số vượt `Long` |
+| 25/10/2026 | Đình (Claude) | S3-08     | Tự soát phần 1: 2 vòng, sạch                          |
 
 Phần chung của module: `README.md` cùng thư mục.
 
@@ -179,7 +180,7 @@ Dữ liệu mẫu dev: không (tên mẫu đã là tên thường; `StaffDevData
 
 | Phần | Chức năng | Khoảng | Trạng thái |
 | ---- | --------- | ------ | ---------- |
-| 1 | Kiểu dữ liệu chặt, lỗi đúng ô, lỗi luôn JSON (#1, #5, #7) | 100 dòng | đã code |
+| 1 | Kiểu dữ liệu chặt, lỗi đúng ô, lỗi luôn JSON (#1, #5, #7) | 100 dòng | đã soát |
 | 2 | Chuẩn hóa tên và `@VisibleText` ở 4 request (#2, #3) | 120 dòng | chưa làm |
 | 3 | `null` trong danh sách, `PageRequests` ở 4 service; hoàn tất card (#4, #6) | 60 dòng | chưa làm |
 
