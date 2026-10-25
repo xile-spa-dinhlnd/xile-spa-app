@@ -40,4 +40,12 @@ public class ComboItem {
         this.service = service;
         this.quantity = quantity;
     }
+
+    public boolean changeQuantity(int newQuantity) {
+        if (this.quantity == newQuantity) {
+            return false;
+        }
+        this.quantity = newQuantity;
+        return true;
+    }
 }

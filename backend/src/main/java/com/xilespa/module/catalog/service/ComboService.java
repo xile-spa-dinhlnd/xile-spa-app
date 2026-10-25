@@ -16,6 +16,7 @@ import com.xilespa.module.catalog.mapper.CatalogMapper;
 import com.xilespa.module.catalog.repository.ComboRepository;
 import com.xilespa.module.catalog.repository.ServiceItemRepository;
 import java.time.Clock;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -75,6 +76,42 @@ public class ComboService {
         ComboResponse created = toResponse(combo);
         auditService.record(AuditAction.CREATE, AUDIT_ENTITY, combo.getId(), null, created);
         return created;
+    }
+
+    /**
+     * Cập nhật thông tin và thành phần của combo (FR-CMB-04). So thành phần theo serviceId: giữ
+     * nguyên dòng cũ nếu cùng serviceId và chỉ cập nhật số lượng, bỏ dòng mất và thêm dòng mới. Nếu
+     * không có thay đổi nào, không cập nhật updatedAt và không ghi audit log.
+     */
+    @Transactional
+    public ComboResponse update(Long id, ComboRequest request) {
+        Combo combo = findComboWithItems(id);
+        ComboResponse before = toResponse(combo);
+
+        String name = normalizeSpaces(request.name());
+        ensureNameAvailable(name, id);
+        checkDuplicateServiceItems(request.items());
+
+        Map<Long, ServiceItem> serviceMap = findAndValidateActiveServices(request.items());
+        Map<ServiceItem, Integer> itemMap = new LinkedHashMap<>();
+        for (ComboItemRequest itemReq : request.items()) {
+            itemMap.put(serviceMap.get(itemReq.serviceId()), itemReq.quantity());
+        }
+
+        long tourFee = request.tourFee() == null ? 0L : request.tourFee();
+        Instant now = clock.instant();
+
+        boolean detailsChanged = combo.updateDetails(name, request.price(), tourFee, now);
+        boolean itemsChanged = combo.replaceItems(itemMap, now);
+
+        if (detailsChanged || itemsChanged) {
+            saveChecked(combo);
+            ComboResponse after = toResponse(combo);
+            auditService.record(AuditAction.UPDATE, AUDIT_ENTITY, combo.getId(), before, after);
+            return after;
+        }
+
+        return before;
     }
 
     /**

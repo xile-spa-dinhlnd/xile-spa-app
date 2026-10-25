@@ -11,8 +11,13 @@ import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -62,5 +67,60 @@ public class Combo {
         this.createdAt = now;
         this.updatedAt = now;
         items.forEach((svc, qty) -> this.items.add(new ComboItem(this, svc, qty)));
+    }
+
+    public boolean updateDetails(String name, long price, long tourFee, Instant now) {
+        boolean changed =
+                !Objects.equals(this.name, name) || this.price != price || this.tourFee != tourFee;
+        if (!changed) {
+            return false;
+        }
+        this.name = name;
+        this.price = price;
+        this.tourFee = tourFee;
+        this.updatedAt = now;
+        return true;
+    }
+
+    public boolean replaceItems(Map<ServiceItem, Integer> newItems, Instant now) {
+        boolean changed = false;
+        Map<Long, Integer> newQuantitiesByServiceId = new LinkedHashMap<>();
+        Map<Long, ServiceItem> newServiceByServiceId = new LinkedHashMap<>();
+        for (Map.Entry<ServiceItem, Integer> entry : newItems.entrySet()) {
+            Long sId = entry.getKey().getId();
+            newQuantitiesByServiceId.put(sId, entry.getValue());
+            newServiceByServiceId.put(sId, entry.getKey());
+        }
+
+        Set<Long> retainedServiceIds = new HashSet<>();
+        Iterator<ComboItem> it = this.items.iterator();
+        while (it.hasNext()) {
+            ComboItem item = it.next();
+            Long sId = item.getService().getId();
+            if (!newQuantitiesByServiceId.containsKey(sId)) {
+                it.remove();
+                changed = true;
+            } else {
+                retainedServiceIds.add(sId);
+                int newQty = newQuantitiesByServiceId.get(sId);
+                if (item.changeQuantity(newQty)) {
+                    changed = true;
+                }
+            }
+        }
+
+        for (Map.Entry<Long, ServiceItem> entry : newServiceByServiceId.entrySet()) {
+            Long sId = entry.getKey();
+            if (!retainedServiceIds.contains(sId)) {
+                this.items.add(
+                        new ComboItem(this, entry.getValue(), newQuantitiesByServiceId.get(sId)));
+                changed = true;
+            }
+        }
+
+        if (changed) {
+            this.updatedAt = now;
+        }
+        return changed;
     }
 }

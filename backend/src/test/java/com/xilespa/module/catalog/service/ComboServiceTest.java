@@ -29,11 +29,15 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mapstruct.factory.Mappers;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -416,6 +420,161 @@ class ComboServiceTest {
                 .isInstanceOf(BusinessException.class)
                 .extracting("errorCode")
                 .isEqualTo(ErrorCode.COMBO_SERVICE_UNAVAILABLE);
+        verify(comboRepository, never()).saveAndFlush(any());
+        verify(auditService, never()).record(any(), any(), any(), any(), any());
+    }
+
+    // =========================================================================
+    // 3. Sửa combo (update)
+    // =========================================================================
+
+    @Test
+    void updateChangesDetailsAndItems() {
+        ServiceGroup group = new ServiceGroup("Massage", 1);
+        ServiceItem s3 = new ServiceItem(group, "Chăm sóc da mặt", 60, 250_000L, 35_000L, now);
+        ReflectionTestUtils.setField(s3, "id", 103L);
+
+        Map<ServiceItem, Integer> initialItems = new LinkedHashMap<>();
+        initialItems.put(s1, 2);
+        initialItems.put(s2, 1);
+        Combo combo = new Combo("Combo Ban Đầu", 450_000L, 50_000L, initialItems, now);
+        ReflectionTestUtils.setField(combo, "id", 50L);
+
+        when(comboRepository.findWithItemsById(50L)).thenReturn(Optional.of(combo));
+        when(comboRepository.existsByNormalizedName("Combo Sửa", 50L)).thenReturn(false);
+        when(serviceItemRepository.findAllById(List.of(101L, 103L))).thenReturn(List.of(s1, s3));
+        when(comboRepository.saveAndFlush(any(Combo.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        ComboRequest request =
+                new ComboRequest(
+                        "Combo Sửa",
+                        600_000L,
+                        70_000L,
+                        List.of(new ComboItemRequest(101L, 3), new ComboItemRequest(103L, 1)));
+
+        ComboResponse response = service.update(50L, request);
+
+        assertThat(response.id()).isEqualTo(50L);
+        assertThat(response.name()).isEqualTo("Combo Sửa");
+        assertThat(response.price()).isEqualTo(600_000L);
+        assertThat(response.tourFee()).isEqualTo(70_000L);
+        assertThat(response.items()).hasSize(2);
+        // s1: 150_000 * 3 = 450_000; s3: 250_000 * 1 = 250_000 -> retail = 700_000, savings =
+        // 100_000
+        assertThat(response.retailTotal()).isEqualTo(700_000L);
+        assertThat(response.savings()).isEqualTo(100_000L);
+
+        verify(comboRepository).saveAndFlush(combo);
+
+        ArgumentCaptor<ComboResponse> beforeCaptor = ArgumentCaptor.forClass(ComboResponse.class);
+        ArgumentCaptor<ComboResponse> afterCaptor = ArgumentCaptor.forClass(ComboResponse.class);
+        verify(auditService)
+                .record(
+                        eq(AuditAction.UPDATE),
+                        eq("combo"),
+                        eq(50L),
+                        beforeCaptor.capture(),
+                        afterCaptor.capture());
+
+        ComboResponse before = beforeCaptor.getValue();
+        ComboResponse after = afterCaptor.getValue();
+        assertThat(before.name()).isEqualTo("Combo Ban Đầu");
+        assertThat(before.items()).hasSize(2);
+        assertThat(before.items().get(0).quantity()).isEqualTo(2);
+        assertThat(after.name()).isEqualTo("Combo Sửa");
+        assertThat(after.items()).hasSize(2);
+        assertThat(after.items().get(0).quantity()).isEqualTo(3);
+        assertThat(after.items().get(1).serviceId()).isEqualTo(103L);
+    }
+
+    @Test
+    void updateWithoutChangesWritesNoAudit() {
+        Map<ServiceItem, Integer> initialItems = new LinkedHashMap<>();
+        initialItems.put(s1, 2);
+        initialItems.put(s2, 1);
+        Combo combo = new Combo("Combo Thư Giãn", 450_000L, 50_000L, initialItems, now);
+        ReflectionTestUtils.setField(combo, "id", 50L);
+
+        when(comboRepository.findWithItemsById(50L)).thenReturn(Optional.of(combo));
+        when(comboRepository.existsByNormalizedName("Combo Thư Giãn", 50L)).thenReturn(false);
+        when(serviceItemRepository.findAllById(List.of(101L, 102L))).thenReturn(List.of(s1, s2));
+
+        ComboRequest request =
+                new ComboRequest(
+                        "Combo Thư Giãn",
+                        450_000L,
+                        50_000L,
+                        List.of(new ComboItemRequest(101L, 2), new ComboItemRequest(102L, 1)));
+
+        ComboResponse response = service.update(50L, request);
+
+        assertThat(response.id()).isEqualTo(50L);
+        assertThat(response.name()).isEqualTo("Combo Thư Giãn");
+        verify(comboRepository, never()).saveAndFlush(any());
+        verify(auditService, never()).record(any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void updateWithDuplicateNameIsRejected() {
+        Map<ServiceItem, Integer> initialItems = new LinkedHashMap<>();
+        initialItems.put(s1, 1);
+        Combo combo = new Combo("Combo Cũ", 100_000L, 0L, initialItems, now);
+        ReflectionTestUtils.setField(combo, "id", 50L);
+
+        when(comboRepository.findWithItemsById(50L)).thenReturn(Optional.of(combo));
+        when(comboRepository.existsByNormalizedName("Combo Đã Có", 50L)).thenReturn(true);
+
+        ComboRequest request =
+                new ComboRequest(
+                        "Combo Đã Có", 100_000L, 0L, List.of(new ComboItemRequest(101L, 1)));
+
+        assertThatThrownBy(() -> service.update(50L, request))
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.COMBO_NAME_DUPLICATE);
+        verify(comboRepository, never()).saveAndFlush(any());
+        verify(auditService, never()).record(any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void updateWithInactiveServiceIsRejected() {
+        Map<ServiceItem, Integer> initialItems = new LinkedHashMap<>();
+        initialItems.put(s1, 1);
+        Combo combo = new Combo("Combo Cũ", 100_000L, 0L, initialItems, now);
+        ReflectionTestUtils.setField(combo, "id", 50L);
+
+        s2.deactivate(now);
+        when(comboRepository.findWithItemsById(50L)).thenReturn(Optional.of(combo));
+        when(comboRepository.existsByNormalizedName("Combo Cũ", 50L)).thenReturn(false);
+        when(serviceItemRepository.findAllById(List.of(101L, 102L))).thenReturn(List.of(s1, s2));
+
+        ComboRequest request =
+                new ComboRequest(
+                        "Combo Cũ",
+                        200_000L,
+                        0L,
+                        List.of(new ComboItemRequest(101L, 1), new ComboItemRequest(102L, 1)));
+
+        assertThatThrownBy(() -> service.update(50L, request))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("Dịch vụ đã ngừng bán: Gội đầu dưỡng sinh.")
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.COMBO_SERVICE_UNAVAILABLE);
+        verify(comboRepository, never()).saveAndFlush(any());
+        verify(auditService, never()).record(any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void updateUnknownComboIs404() {
+        when(comboRepository.findWithItemsById(999L)).thenReturn(Optional.empty());
+
+        ComboRequest request =
+                new ComboRequest("Combo Mới", 100_000L, 0L, List.of(new ComboItemRequest(101L, 1)));
+
+        assertThatThrownBy(() -> service.update(999L, request))
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.NOT_FOUND);
         verify(comboRepository, never()).saveAndFlush(any());
         verify(auditService, never()).record(any(), any(), any(), any(), any());
     }

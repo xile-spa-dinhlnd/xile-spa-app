@@ -1963,6 +1963,102 @@
           ]
         },
         {
+          "name": "Sửa combo",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/catalog/combos/{{comboId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "catalog",
+                "combos",
+                "{{comboId}}"
+              ]
+            },
+            "description": "FR-CMB-04. Sửa thông tin và thành phần: đổi giá 110k, tourFee 15k, bỏ dịch vụ thứ hai (items.length = 1).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Combo Thư Giãn {{runId}} (đã sửa)\",\n  \"price\": 110000,\n  \"tourFee\": 15000,\n  \"items\": [\n    {\n      \"serviceId\": {{comboServiceId1}},\n      \"quantity\": 1\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 200\", () => pm.response.to.have.status(200));",
+                  "const c = pm.response.json();",
+                  "pm.test(\"Cập nhật thành công thông tin và thành phần\", () => {",
+                  "  pm.expect(c.items.length).to.eql(1);",
+                  "  pm.expect(c.items[0].serviceId).to.eql(pm.collectionVariables.get(\"comboServiceId1\"));",
+                  "  pm.expect(c.price).to.eql(110000);",
+                  "  pm.expect(c.tourFee).to.eql(15000);",
+                  "  pm.expect(c.retailTotal).to.eql(100000);",
+                  "  pm.expect(c.savings).to.eql(-10000);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Nhật ký của combo",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/audit-logs?entityType=combo&entityId={{comboId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "audit-logs"
+              ],
+              "query": [
+                {
+                  "key": "entityType",
+                  "value": "combo"
+                },
+                {
+                  "key": "entityId",
+                  "value": "{{comboId}}"
+                }
+              ]
+            },
+            "description": "BR-18. Kiểm tra nhật ký thay đổi của combo có đủ bản ghi UPDATE rồi CREATE."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 200\", () => pm.response.to.have.status(200));",
+                  "const c = pm.response.json().content;",
+                  "pm.test(\"UPDATE rồi CREATE\", () => pm.expect(c.map(r => r.action)).to.eql([\"UPDATE\", \"CREATE\"]));",
+                  "pm.test(\"Ghi giá cũ và mới\", () => { pm.expect(c[0].before.price).to.eql(160000); pm.expect(c[0].after.price).to.eql(110000); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
           "name": "Tạo combo trùng tên",
           "request": {
             "method": "POST",

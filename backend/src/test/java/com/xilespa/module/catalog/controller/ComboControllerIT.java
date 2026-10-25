@@ -5,6 +5,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -454,7 +455,206 @@ class ComboControllerIT {
     }
 
     // =========================================================================
-    // 4. Quyền & không xóa cứng
+    // 4. Sửa combo (update)
+    // =========================================================================
+
+    @Test
+    void updateReturns200AndAuditLogWithBeforeAndAfterItems() throws Exception {
+        String items =
+                """
+                [
+                    {"serviceId": %d, "quantity": 2},
+                    {"serviceId": %d, "quantity": 1}
+                ]
+                """
+                        .formatted(service1.getId(), service2.getId());
+        long comboId = createCombo(prefix + "Combo Sửa", 300_000L, items);
+
+        ServiceGroup group = groupRepository.findByActiveOrderBySortOrderAscNameAsc(true).get(0);
+        ServiceItem service3 =
+                serviceItemRepository.save(
+                        new ServiceItem(
+                                group,
+                                prefix + "Dịch vụ 3",
+                                60,
+                                150_000L,
+                                15_000L,
+                                clock.instant()));
+
+        String updateItems =
+                """
+                [
+                    {"serviceId": %d, "quantity": 3},
+                    {"serviceId": %d, "quantity": 1}
+                ]
+                """
+                        .formatted(service1.getId(), service3.getId());
+        String body = comboJson(prefix + "Combo Đã Sửa", 380_000L, 30_000L, updateItems);
+
+        mockMvc.perform(send(put("/api/catalog/combos/" + comboId), body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(comboId))
+                .andExpect(jsonPath("$.name").value(prefix + "Combo Đã Sửa"))
+                .andExpect(jsonPath("$.price").value(380_000))
+                .andExpect(jsonPath("$.tourFee").value(30_000))
+                .andExpect(jsonPath("$.retailTotal").value(450_000))
+                .andExpect(jsonPath("$.savings").value(70_000))
+                .andExpect(jsonPath("$.items.length()").value(2))
+                .andExpect(jsonPath("$.items[0].serviceId").value(service1.getId()))
+                .andExpect(jsonPath("$.items[0].quantity").value(3))
+                .andExpect(jsonPath("$.items[0].lineTotal").value(300_000))
+                .andExpect(jsonPath("$.items[1].serviceId").value(service3.getId()))
+                .andExpect(jsonPath("$.items[1].quantity").value(1))
+                .andExpect(jsonPath("$.items[1].lineTotal").value(150_000));
+
+        var logs =
+                auditLogRepository
+                        .findByEntityTypeAndEntityId(
+                                "combo", String.valueOf(comboId), PageRequest.of(0, 10))
+                        .getContent();
+        assertThat(logs).hasSize(2);
+        var updateLog =
+                logs.stream()
+                        .filter(l -> l.getAction().name().equals("UPDATE"))
+                        .findFirst()
+                        .orElseThrow();
+        assertThat(updateLog.getBeforeData()).contains(prefix + "Combo Sửa");
+        assertThat(updateLog.getBeforeData()).contains(String.valueOf(service2.getId()));
+        assertThat(updateLog.getAfterData()).contains(prefix + "Combo Đã Sửa");
+        assertThat(updateLog.getAfterData()).contains(String.valueOf(service3.getId()));
+    }
+
+    @Test
+    void updateWithoutChangesWritesNoAudit() throws Exception {
+        String items =
+                """
+                [
+                    {"serviceId": %d, "quantity": 2}
+                ]
+                """
+                        .formatted(service1.getId());
+        long comboId = createCombo(prefix + "Combo Giữ Nguyên", 180_000L, items);
+
+        long initialAuditCount =
+                auditLogRepository
+                        .findByEntityTypeAndEntityId(
+                                "combo", String.valueOf(comboId), PageRequest.of(0, 10))
+                        .getTotalElements();
+        assertThat(initialAuditCount).isEqualTo(1L);
+
+        String body = comboJson(prefix + "Combo Giữ Nguyên", 180_000L, 0L, items);
+        mockMvc.perform(send(put("/api/catalog/combos/" + comboId), body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value(prefix + "Combo Giữ Nguyên"))
+                .andExpect(jsonPath("$.price").value(180_000));
+
+        long afterAuditCount =
+                auditLogRepository
+                        .findByEntityTypeAndEntityId(
+                                "combo", String.valueOf(comboId), PageRequest.of(0, 10))
+                        .getTotalElements();
+        assertThat(afterAuditCount).isEqualTo(1L);
+    }
+
+    @Test
+    void updateKeepsOwnNameWithoutDuplicateError() throws Exception {
+        String items =
+                """
+                [
+                    {"serviceId": %d, "quantity": 1}
+                ]
+                """
+                        .formatted(service1.getId());
+        long comboId = createCombo(prefix + "Combo Đổi Giá Giữ Tên", 90_000L, items);
+
+        String body = comboJson(prefix + "Combo Đổi Giá Giữ Tên", 95_000L, 10_000L, items);
+        mockMvc.perform(send(put("/api/catalog/combos/" + comboId), body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.price").value(95_000))
+                .andExpect(jsonPath("$.tourFee").value(10_000));
+    }
+
+    @Test
+    void updateWithDuplicateNameIsRejected() throws Exception {
+        String items = "[{\"serviceId\": " + service1.getId() + ", \"quantity\": 1}]";
+        createCombo(prefix + "Combo Thứ Nhất", 100_000L, items);
+        long combo2Id = createCombo(prefix + "Combo Thứ Hai", 120_000L, items);
+
+        String body = comboJson(prefix + "Combo Thứ Nhất", 130_000L, 0L, items);
+        mockMvc.perform(send(put("/api/catalog/combos/" + combo2Id), body))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("COMBO_NAME_DUPLICATE"))
+                .andExpect(jsonPath("$.message").value("Tên combo đã tồn tại."));
+    }
+
+    @Test
+    void updateWithInactiveServiceIsRejected() throws Exception {
+        service2.deactivate(clock.instant());
+        serviceItemRepository.save(service2);
+
+        String items = "[{\"serviceId\": " + service1.getId() + ", \"quantity\": 1}]";
+        long comboId = createCombo(prefix + "Combo Ban Đầu Cho Sửa Svc", 100_000L, items);
+
+        String updateItems =
+                """
+                [
+                    {"serviceId": %d, "quantity": 1},
+                    {"serviceId": %d, "quantity": 1}
+                ]
+                """
+                        .formatted(service1.getId(), service2.getId());
+        String body = comboJson(prefix + "Combo Ban Đầu Cho Sửa Svc", 150_000L, 0L, updateItems);
+
+        mockMvc.perform(send(put("/api/catalog/combos/" + comboId), body))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("COMBO_SERVICE_UNAVAILABLE"))
+                .andExpect(
+                        jsonPath("$.message")
+                                .value("Dịch vụ đã ngừng bán: " + service2.getName() + "."));
+
+        var combo = comboRepository.findWithItemsById(comboId).orElseThrow();
+        assertThat(combo.getItems()).hasSize(1);
+        assertThat(combo.getPrice()).isEqualTo(100_000L);
+
+        var logs =
+                auditLogRepository
+                        .findByEntityTypeAndEntityId(
+                                "combo", String.valueOf(comboId), PageRequest.of(0, 10))
+                        .getContent();
+        assertThat(logs).hasSize(1);
+        assertThat(logs.getFirst().getAction().name()).isEqualTo("CREATE");
+    }
+
+    @Test
+    void updateUnknownComboIs404() throws Exception {
+        String items = "[{\"serviceId\": " + service1.getId() + ", \"quantity\": 1}]";
+        String body = comboJson(prefix + "Combo Không Tồn Tại", 100_000L, 0L, items);
+
+        mockMvc.perform(send(put("/api/catalog/combos/999999"), body))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("NOT_FOUND"))
+                .andExpect(jsonPath("$.message").value("Không tìm thấy combo."));
+    }
+
+    @Test
+    void updateInvalidInputReturnsFieldErrors() throws Exception {
+        String items = "[{\"serviceId\": " + service1.getId() + ", \"quantity\": 1}]";
+        long comboId = createCombo(prefix + "Combo Kiểm Tra Lỗi", 100_000L, items);
+
+        mockMvc.perform(
+                        send(
+                                put("/api/catalog/combos/" + comboId),
+                                comboJson("", -10_000L, -1L, "[]")))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"))
+                .andExpect(jsonPath("$.fieldErrors[?(@.field == 'name')]").exists())
+                .andExpect(jsonPath("$.fieldErrors[?(@.field == 'price')]").exists())
+                .andExpect(jsonPath("$.fieldErrors[?(@.field == 'tourFee')]").exists())
+                .andExpect(jsonPath("$.fieldErrors[?(@.field == 'items')]").exists());
+    }
+
+    // =========================================================================
+    // 5. Quyền & không xóa cứng
     // =========================================================================
 
     @Test
@@ -462,6 +662,11 @@ class ComboControllerIT {
         mockMvc.perform(get("/api/catalog/combos/1")).andExpect(status().isUnauthorized());
         mockMvc.perform(
                         post("/api/catalog/combos")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{}"))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(
+                        put("/api/catalog/combos/1")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("{}"))
                 .andExpect(status().isUnauthorized());

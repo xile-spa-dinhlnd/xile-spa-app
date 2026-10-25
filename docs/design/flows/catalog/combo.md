@@ -251,7 +251,7 @@ nền và nặng tới nhẹ: phần 1 đặt khuôn cho cả tính năng, phầ
 | Phần | Chức năng                                                   | Khoảng   | Trạng thái |
 | ---- | ----------------------------------------------------------- | -------- | ---------- |
 | 1    | Tạo và xem combo, tính thử giá                              | 330 dòng | đã soát    |
-| 2    | Sửa combo                                                   | 110 dòng | chưa làm   |
+| 2    | Sửa combo                                                   | 110 dòng | đã code    |
 | 3    | Ngừng bán, bán lại combo; chặn ngừng bán dịch vụ (OQ-22)    | 120 dòng | chưa làm   |
 | 4    | Danh sách, tìm, lọc combo; hoàn tất card                    | 50 dòng  | chưa làm   |
 
