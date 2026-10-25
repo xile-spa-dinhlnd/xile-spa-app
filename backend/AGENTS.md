@@ -228,6 +228,8 @@ có ghi log). Trigger là rào chắn cuối: service vẫn nên tự kiểm tra
 
 ## Bảo mật
 
+Tài sản, mối đe dọa (`T-xx`), bề mặt tấn công, bí mật và checklist cho mỗi tính năng: `docs/security/`.
+
 - Mật khẩu băm Argon2 hoặc BCrypt. Không log mật khẩu, token, refresh token.
 - Refresh token **chỉ lưu bản băm** SHA-256 (`security/TokenHasher`). Access token và refresh token nằm
   trong cookie `HttpOnly`, `SameSite=Strict`, `Secure` (bật ở prod).

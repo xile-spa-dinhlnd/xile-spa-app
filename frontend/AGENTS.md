@@ -9,22 +9,22 @@ bằng oxlint (mặc định của Vite), format bằng Prettier. Recharts, Play
 Nguồn sự thật: `package.json` (đổi chỉ qua `npm install`, không sửa tay `package-lock.json`). Không có trong file đó là
 chưa có. Thêm thư viện: hỏi trước theo `../AGENTS.md` mục 3. Đổi, nâng bản chính thì sửa bảng trong cùng PR (quy tắc 11).
 
-| Thư viện | Bản | Dùng cho | Lưu ý API (tài liệu, ví dụ cũ hay viết theo bản trước) |
-| --- | --- | --- | --- |
-| React, React DOM | 19 | giao diện | Component hàm và hook; mục React và TypeScript |
-| TypeScript | 6 (`strict`) | kiểu | Lấy `npm run typecheck` làm chuẩn, không tin báo lỗi của editor (mục 7 của `../AGENTS.md`) |
-| Vite (+ `@vitejs/plugin-react`) | 8 | dev server, build | Alias `@/`, proxy `/api` trong `vite.config.ts` |
-| Ant Design, `@ant-design/icons` | 6 | component | `message`, `modal` lấy từ `App.useApp()`, không gọi `message` tĩnh; prop đổi tên so với bản 5 (`destroyOnHidden` thay `destroyOnClose`) |
-| TanStack Query | 5 | gọi API, cache | `useQuery({ queryKey, queryFn })` dạng object; tải lần đầu là `isPending` (bản 4 là `isLoading`); giữ trang cũ khi đổi trang bằng `placeholderData` |
-| React Router | 8 | route | Import từ `react-router`; không có `react-router-dom` |
-| React Hook Form, `@hookform/resolvers` | 7, 5 | form | Schema Zod qua `zodResolver` |
-| Zod | 4 | kiểm dữ liệu form | Câu báo lỗi viết `{ error: '...' }` như code hiện có (bản 3 là `{ message }`) |
-| dayjs | 1.11 | ngày giờ hiển thị | Locale `vi` nạp ở `app/providers.tsx`; không thêm `date-fns`, `moment` |
-| Vitest, jsdom | 5, 29 | test | `npm test`; mục Test và lệnh |
-| Testing Library (`react`, `user-event`, `jest-dom`) | 16, 14, 7 | test component | Tìm theo vai trò, nhãn như người dùng thấy |
-| oxlint | 1 | lint | Không phải ESLint; cấm comment `eslint-disable`, `oxlint-disable` (`scripts/check-lint-suppressions.mjs`) |
-| Prettier | 3 | format | `npm run format` |
-| Recharts, Playwright | chưa cài | dashboard (Sprint 5), test luồng | Cài khi có card cần, vẫn hỏi trước theo mục 3 |
+| Thư viện                                            | Bản          | Dùng cho                         | Lưu ý API (tài liệu, ví dụ cũ hay viết theo bản trước)                                                                                              |
+| --------------------------------------------------- | ------------ | -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| React, React DOM                                    | 19           | giao diện                        | Component hàm và hook; mục React và TypeScript                                                                                                      |
+| TypeScript                                          | 6 (`strict`) | kiểu                             | Lấy `npm run typecheck` làm chuẩn, không tin báo lỗi của editor (mục 7 của `../AGENTS.md`)                                                          |
+| Vite (+ `@vitejs/plugin-react`)                     | 8            | dev server, build                | Alias `@/`, proxy `/api` trong `vite.config.ts`                                                                                                     |
+| Ant Design, `@ant-design/icons`                     | 6            | component                        | `message`, `modal` lấy từ `App.useApp()`, không gọi `message` tĩnh; prop đổi tên so với bản 5 (`destroyOnHidden` thay `destroyOnClose`)             |
+| TanStack Query                                      | 5            | gọi API, cache                   | `useQuery({ queryKey, queryFn })` dạng object; tải lần đầu là `isPending` (bản 4 là `isLoading`); giữ trang cũ khi đổi trang bằng `placeholderData` |
+| React Router                                        | 8            | route                            | Import từ `react-router`; không có `react-router-dom`                                                                                               |
+| React Hook Form, `@hookform/resolvers`              | 7, 5         | form                             | Schema Zod qua `zodResolver`                                                                                                                        |
+| Zod                                                 | 4            | kiểm dữ liệu form                | Câu báo lỗi viết `{ error: '...' }` như code hiện có (bản 3 là `{ message }`)                                                                       |
+| dayjs                                               | 1.11         | ngày giờ hiển thị                | Locale `vi` nạp ở `app/providers.tsx`; không thêm `date-fns`, `moment`                                                                              |
+| Vitest, jsdom                                       | 5, 29        | test                             | `npm test`; mục Test và lệnh                                                                                                                        |
+| Testing Library (`react`, `user-event`, `jest-dom`) | 16, 14, 7    | test component                   | Tìm theo vai trò, nhãn như người dùng thấy                                                                                                          |
+| oxlint                                              | 1            | lint                             | Không phải ESLint; cấm comment `eslint-disable`, `oxlint-disable` (`scripts/check-lint-suppressions.mjs`)                                           |
+| Prettier                                            | 3            | format                           | `npm run format`                                                                                                                                    |
+| Recharts, Playwright                                | chưa cài     | dashboard (Sprint 5), test luồng | Cài khi có card cần, vẫn hỏi trước theo mục 3                                                                                                       |
 
 ## Cấu trúc
 

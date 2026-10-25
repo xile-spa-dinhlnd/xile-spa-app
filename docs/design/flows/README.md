@@ -126,6 +126,12 @@ Hành động: <mỗi nút: nhãn, có xác nhận không (tiêu đề, mô tả
 <Chỗ khác phải đổi theo: nơi gọi endpoint (frontend, test, Postman), method khác chạm cùng trạng thái, bản ghi tham
 chiếu tới (cả hai chiều). Mỗi dòng: file hoặc lớp, đổi gì. Không có thì "Không".>
 
+## Bảo mật
+
+<Theo `docs/security/security-checklist.md` phần A: tài sản chạm tới; bề mặt mới (endpoint không cần đăng nhập thì ghi
+lý do); mối đe dọa `T-xx` liên quan và kiểm soát; trường nhạy cảm không được ra log, audit, thông báo lỗi. Không chạm
+gì thì "Không" kèm lý do.>
+
 ## Hành vi và test
 
 Theo sáu nhóm của `AGENTS.md` mục 10. Lúc thiết kế ghi ca cần có; lúc khớp code ghi tên test thật.

@@ -35,6 +35,7 @@ Nhóm hai người: **Đình** và **Huy**, chia việc theo tính năng, Scrum 
 | Phiên bản nào chứa gì, mốc tới v1.0.0                   | `docs/roadmap.md`                                                                                                             |
 | Nhánh, commit, Pull Request, nhịp sprint                | `CONTRIBUTING.md`                                                                                                             |
 | Thử API bằng Postman                                    | `docs/postman/` (collection và environment dev)                                                                               |
+| Bảo mật, dữ liệu nhạy cảm, bí mật                       | `docs/security/` (`security-checklist.md` cho mọi card)                                                                       |
 | Dùng skill, hook của agent; luồng làm việc với AI       | `docs/guides/ai-agents.md`                                                                                                    |
 
 Quy tắc riêng của từng phần: `backend/AGENTS.md`, `frontend/AGENTS.md`.
@@ -110,7 +111,8 @@ Database dev: `docker compose up -d` ở gốc repo. Windows dùng `gradlew.bat`
 
 1. **Thiết kế trước khi code.** Đọc card trong backlog của sprint (`docs/backlog/`) và các mã FR / BR / OQ mà card
    trỏ tới, rồi viết **file luồng** `docs/design/flows/<module>/<tính-năng>.md` theo khung ở
-   `docs/design/flows/README.md`: điểm vào, sơ đồ, quy tắc, lỗi, chỗ bị ảnh hưởng, bảng test. Huy dùng `/plan-task`
+   `docs/design/flows/README.md`: điểm vào, sơ đồ, quy tắc, lỗi, chỗ bị ảnh hưởng, **bảo mật** (theo
+   `docs/security/security-checklist.md` phần A), bảng test. Huy dùng `/plan-task`
    của Antigravity; Đình dùng `/plan-feature` của Claude Code. Sửa lỗi dùng `/fix-bug` (tái hiện bằng test đỏ trước).
    Chờ người làm card duyệt. **Chuyển trạng thái card sang "Đang làm"** trong file backlog (và trên Trello).
 2. **Nhánh:** skill đầu tiên ghi file của card tự tạo nhánh `<loại>/<mã-card>-<mô-tả>` từ `origin/develop` khi đang
@@ -122,7 +124,8 @@ Database dev: `docker compose up -d` ở gốc repo. Windows dùng `gradlew.bat`
 5. Tự đọc lại diff, nêu rõ phần nào còn chưa chắc. Đình chạy `/self-review` (Claude Code) trước khi mở PR.
 6. **File luồng khớp code** trước khi mở PR: sơ đồ, lỗi, tên test thật, `Trạng thái: khớp code`, dòng lịch sử.
    Cập nhật tài liệu khác trong **cùng PR** nếu hành vi đổi (SRS, ERD, README), và các file AGENTS nếu đổi kiến
-   trúc hay quy ước (quy tắc 11).
+   trúc hay quy ước (quy tắc 11). Bảo mật: làm phần D của `docs/security/security-checklist.md` (cập nhật bề mặt tấn
+   công, bí mật, mô hình mối đe dọa nếu đổi).
 7. **Thêm hoặc sửa endpoint thì cập nhật Postman collection** `docs/postman/xile-spa.postman_collection.json`
    trong cùng PR: mỗi endpoint một request, có ví dụ body và kiểm tra mã trạng thái mong đợi.
 8. **Card xong thì chuyển trạng thái sang "Xong"** trong file backlog ngay trong PR của card đó.
@@ -154,6 +157,11 @@ Quy tắc sinh ra từ lỗi thật mới đáng giữ.
 - Chuyển method sang lớp khác mà để lại bản cũ không ai gọi, hoặc hai method repository làm cùng một việc: grep tên cũ, xóa.
 - Thêm ràng buộc trạng thái (ngừng dùng, đã chốt...) mà chỉ chặn ở một chỗ: liệt kê mọi method đưa bản ghi vào hoặc ra
   khỏi trạng thái đó, xét cả bản ghi tham chiếu tới (OQ-21: ngừng dùng nhóm, bán lại dịch vụ trong nhóm đã ngừng).
+- Test chỉ kiểm một phần kết quả: không kiểm từng trường của danh sách con, không đọc lại từ DB sau khi sửa, không
+  kiểm thứ tự khi API hứa sắp xếp (S2-07: bỏ `orphanRemoval` hay đảo chiều sắp xếp mà test vẫn xanh).
+- Tin rằng validation chặn hết đầu vào lạ: Jackson nhận `1.7` thành `1` cho trường `Long` tiền; `@NotBlank` và
+  `trim()` cho qua tên chỉ có NBSP hoặc zero-width; `null` trong danh sách gây 500 (dò ngày 25/10/2026). Thử bằng
+  đầu vào thật, đừng suy ra từ annotation.
 - Câu commit tiếng Anh hoặc dùng `fix` cho việc mới của card: theo CONTRIBUTING.md mục 3, dùng câu gợi ý ở cuối `/implement`, `/self-review` (mục 8).
 - Editor (Antigravity IDE, VS Code) mặc định dùng TypeScript 5.x đi kèm, chưa bật `strict` như TypeScript 6 của dự án, nên báo đỏ khác `npm run typecheck`: giữ `"strict": true` trong `frontend/tsconfig.app.json`, chọn "Use Workspace Version" trong editor, lấy `npm run typecheck` làm chuẩn.
 
@@ -208,11 +216,15 @@ toán, đăng nhập.
 | Nhóm ca               | Kiểm tra gì                                                                                                                                               |
 | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Ca chuẩn (happy)      | Đầu vào hợp lệ điển hình cho kết quả đúng, kể cả dữ liệu được lưu và `audit_log` được ghi                                                                 |
-| Dữ liệu sai           | Từng ràng buộc validation: trống, quá dài, sai định dạng, sai enum → 400 với `fieldErrors` đúng ô                                                         |
-| Ca biên               | Tiền 0 và số rất lớn; chuỗi chỉ có khoảng trắng; trùng tên khác hoa thường; danh sách rỗng, trang cuối; ngày đầu/cuối tháng, ngày đã chốt, ngày tương lai |
+| Dữ liệu sai           | Từng ràng buộc validation: trống, quá dài, sai định dạng, sai enum → 400 với `fieldErrors` đúng ô; sai kiểu: số thập phân hoặc chuỗi cho trường tiền, số lượng; `null` trong danh sách |
+| Ca biên               | Tiền 0 và số rất lớn; chuỗi chỉ có khoảng trắng, kể cả NBSP và ký tự vô hình (zero-width); trùng tên khác hoa thường hoặc khác loại khoảng trắng; danh sách rỗng, trang cuối, trang cực lớn; ngày đầu/cuối tháng, ngày đã chốt, ngày tương lai |
 | Lỗi nghiệp vụ         | Mỗi `ErrorCode` mà code có thể ném (409 trùng, 409 `DAY_CLOSED`, 404 không tồn tại...)                                                                    |
-| Quyền                 | Chưa đăng nhập → 401 (mỗi controller ít nhất một test)                                                                                                    |
+| Quyền, bảo mật        | Chưa đăng nhập → 401 (mỗi controller ít nhất một test); không gán được trường nhạy cảm qua body (id, trạng thái); lỗi không lộ chi tiết kỹ thuật, dữ liệu nhạy cảm không ra log |
 | Không có tác dụng phụ | Khi lỗi: không lưu, không ghi audit (`verify(..., never())` hoặc kiểm tra DB)                                                                             |
+
+Ca đầu vào bất thường dùng chung cho mọi API (JSON hỏng, sai Content-Type → 415, trang cực lớn, chuỗi rất dài) test
+một lần ở `common`, không lặp ở từng controller. Ca theo nghiệp vụ (tiền thập phân, tên vô hình, `null` trong danh
+sách) test ở từng endpoint có trường đó.
 
 Quy tắc chung:
 

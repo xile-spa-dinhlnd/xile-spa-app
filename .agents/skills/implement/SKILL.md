@@ -58,7 +58,9 @@ test" của file luồng: viết test, thử làm đỏ, chạy xanh. Test của
    (`AGENTS.md` mục 7).
 6. **Postman:** thêm hoặc sửa request trong `docs/postman/xile-spa.postman_collection.json` (body mẫu, kiểm tra mã
    trạng thái). Trường hợp lỗi chính cũng có request riêng.
-7. **Tài liệu:** SRS, ERD, README nếu hành vi đổi; `AGENTS.md` nếu đổi quy ước (AGENTS.md quy tắc 11).
+7. **Tài liệu:** SRS, ERD, README nếu hành vi đổi; `AGENTS.md` nếu đổi quy ước (AGENTS.md quy tắc 11). **Bảo mật:**
+   code theo mục "Bảo mật" của file luồng và phần B của `docs/security/security-checklist.md`; làm phần D (cập nhật
+   `docs/security/` nếu thêm endpoint công khai, bí mật, mối đe dọa).
 8. **File luồng khớp code** (chốt chặn): sửa sơ đồ, quy tắc, lỗi theo **code vừa viết**; bảng "Hành vi và test"
    ghi tên test thật đang có trong code (không ghi dự định); nhóm không áp dụng ghi "không áp dụng: <lý do>". Đổi
    trạng thái thành `khớp code`, thêm dòng lịch sử `<dd/MM/yyyy> | <tên người dùng> (Antigravity) | <card> | Khớp

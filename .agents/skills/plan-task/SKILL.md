@@ -31,6 +31,7 @@ Luồng của Đình dùng Claude `/plan-feature` thay cho skill này; Đình đ
    (tên lấy từ `git config --get user.name`). Chỗ SRS chưa rõ đưa vào "Câu hỏi mở", mỗi câu có **Đề xuất:**.
    Cần thư viện chưa có trong bảng "Thư viện" của `backend/AGENTS.md`, `frontend/AGENTS.md` thì cũng đưa vào "Câu hỏi
    mở", nêu đủ bốn điểm ở AGENTS.md mục 3 (mục đích, ưu nhược, uy tín, hiệu năng).
+   Viết mục "Bảo mật" theo `docs/security/security-checklist.md` phần A, ghi ca thử phần C vào bảng test.
    Card lớn thì viết mục "Các phần" theo mục "Chia phần" của `docs/design/flows/README.md`: mỗi phần một chức năng
    người dùng thấy, phần nền và nặng trước (thường là "Tạo"), nhẹ sau.
 7. **Chuyển card sang "Đang làm"** trong file backlog.
