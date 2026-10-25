@@ -150,6 +150,8 @@ Quy tắc sinh ra từ lỗi thật mới đáng giữ.
 - Gọi `AuditService.record` ngoài transaction (báo lỗi `MANDATORY`) hoặc truyền entity JPA làm `before`/`after`.
 - Frontend tự tính tiền, gọi `fetch` trực tiếp trong component, import sâu vào file bên trong feature khác.
 - Quên cập nhật Postman collection và trạng thái card trong `docs/backlog/` (mục 5, bước 7 và 8).
+- Request Postman dùng `{{biến}}` do thư mục khác tạo (S2-07, S3-08): mỗi thư mục tự tạo dữ liệu nó cần, chạy riêng
+  vẫn xanh; body bị từ chối trước khi đọc id (sai kiểu, sai Content-Type) thì ghi giá trị cố định.
 - Hai nhánh cùng lấy một số migration `V{n}`: báo số cho người kia trước (CONTRIBUTING.md mục 4).
 - Dùng `@Profile("!prod")` để chọn hành vi theo môi trường: thay bằng thuộc tính và `@ConditionalOnProperty` (backend/AGENTS.md mục Cấu hình).
 - Đổi hành vi một endpoint (tham số mặc định, trường trả về, mã lỗi) mà không tìm nơi gọi: grep URL trong

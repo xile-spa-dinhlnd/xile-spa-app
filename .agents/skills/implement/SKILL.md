@@ -28,6 +28,12 @@ kia) thì **dừng và hỏi**; được đồng ý thì sửa file luồng trư
 hay thêm vào `libs.versions.toml`. Viết code theo phiên bản và lưu ý ở bảng "Thư viện" của `backend/AGENTS.md`,
 `frontend/AGENTS.md`.
 
+**Không rẽ sang việc khác.** Trong `/implement` chỉ gọi `/write-tests` và `/new-migration`; không tự gọi `/fix-bug`,
+`/plan-task`, `/pre-pr-check`. Test đỏ ngoài dự kiến (test có sẵn, test của phần khác) thì **dừng và báo**: test nào,
+lỗi in ra, nghi nguyên nhân; không sửa cấu hình, hạ tầng test (`src/test/resources`, `support/`) hay test của phần
+khác chỉ để cho xanh (S3-08: chép cấu hình Jackson sang file test để test xanh). Thiết kế chỉ nói kết quả mà chưa nói
+cách làm thì chọn cách đơn giản nhất với code đang có, ghi vào dòng "Khác thiết kế" của báo cáo.
+
 ## Bước 0. Nhánh
 
 Tạo hoặc kiểm tra nhánh theo mục "Nhánh" của `.agents/rules/writer-role.md`, trước khi ghi file nào.
@@ -76,6 +82,8 @@ Một lần, không lặp lại:
 
 - Nhánh đang làm (và đã tạo mới hay chưa).
 - Mỗi bước của file luồng hoặc của khối sửa: đã làm hay chưa, khác kế hoạch chỗ nào và vì sao.
+- **Skill đã gọi** (ví dụ `/write-tests` 3 lần) và **Khác thiết kế**: cách làm tự chọn, test thêm ngoài bảng, test đỏ
+  ngoài dự kiến; không có thì ghi "không".
 - File đã sửa.
 - Lệnh test đã chạy, kết quả thật (số test qua, đỏ).
 - Bảng thử làm đỏ của `/write-tests` bước 4 (code đã sửa sai, test đỏ, lỗi in ra). Không có bảng thì không báo xong.

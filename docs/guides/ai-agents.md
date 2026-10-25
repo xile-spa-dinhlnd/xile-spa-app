@@ -123,13 +123,14 @@ nhánh `hotfix/*` theo CONTRIBUTING.md mục 6.
 
 ### Antigravity (`.agents/skills/`)
 
-Gõ `/<tên>` trong khung chat, hoặc nói việc cần làm; agent tự chọn skill theo mô tả.
+Gõ `/<tên>` trong khung chat, hoặc nói việc cần làm; agent tự chọn skill theo mô tả. `/plan-task`, `/fix-bug`,
+`/pre-pr-check` chỉ chạy khi người dùng gõ; trong `/implement` agent chỉ gọi `/write-tests`, `/new-migration`.
 
 | Skill            | Khi nào                        | Kết quả                                                                                                                     |
 | ---------------- | ------------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
 | `/plan-task`     | Bắt đầu card (Huy)             | Tạo nhánh; file luồng: điểm vào, sơ đồ Mermaid, quy tắc, lỗi, ảnh hưởng, bảng test; dừng chờ duyệt                          |
-| `/fix-bug`       | Có lỗi, test đỏ chưa rõ vì sao | Tạo nhánh `fix/`; test đỏ, nguyên nhân `file:dòng`, sơ đồ luồng cũ/mới, cách sửa; dừng chờ duyệt                            |
-| `/implement`     | File luồng đã duyệt, khối sửa  | Tạo nhánh nếu chưa có; code theo file luồng, mỗi tầng có `/write-tests`; file luồng khớp code; dừng                         |
+| `/fix-bug`       | Người dùng gõ, báo một lỗi     | Tạo nhánh `fix/`; test đỏ, nguyên nhân `file:dòng`, sơ đồ luồng cũ/mới, cách sửa; dừng chờ duyệt                            |
+| `/implement`     | File luồng đã duyệt, khối sửa  | Tạo nhánh nếu chưa có; code theo file luồng, mỗi tầng có `/write-tests`; test đỏ ngoài dự kiến thì dừng và báo; báo cáo có "Skill đã gọi", "Khác thiết kế"; dừng |
 | `/write-tests`   | Viết, bổ sung test             | Bảng ca test đủ sáu nhóm (AGENTS.md mục 10), test đã thử làm đỏ, kết quả chạy                                               |
 | `/new-migration` | Đổi schema                     | `V{n}__...sql` mới, entity, ERD, test schema                                                                                |
 | `/pre-pr-check`  | Chỉ khi người dùng gõ          | Kích thước PR, file code thiếu test; format, lint, test; checklist; câu commit, lệnh push, bản nháp PR, cách squash merge   |

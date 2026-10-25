@@ -1,6 +1,6 @@
 ---
 name: fix-bug
-description: Sửa lỗi có bằng chứng trong Xile Spa - tái hiện lỗi bằng test đỏ, chỉ ra nguyên nhân ở file và dòng cụ thể, vẽ luồng cũ và luồng mới nếu là lỗi luồng, đề xuất cách sửa rồi dừng chờ duyệt. Dùng khi người dùng báo lỗi, gõ /fix-bug [<file luồng của tính năng>] <mô tả lỗi>, hoặc test đang đỏ mà chưa rõ vì sao.
+description: Sửa lỗi có bằng chứng trong Xile Spa - tái hiện lỗi bằng test đỏ, chỉ ra nguyên nhân ở file và dòng cụ thể, vẽ luồng cũ và luồng mới nếu là lỗi luồng, đề xuất cách sửa rồi dừng chờ duyệt. Chỉ chạy khi người dùng tự gõ /fix-bug [<file luồng của tính năng>] <mô tả lỗi> hoặc nhờ điều tra một lỗi; không tự gọi khi test đỏ trong lúc /implement, /write-tests (khi đó dừng và báo theo /implement).
 ---
 
 # /fix-bug: chứng minh trước, sửa sau
