@@ -31,6 +31,13 @@ public enum ErrorCode {
             HttpStatus.CONFLICT,
             "Nhóm còn dịch vụ đang bán. Hãy ngừng bán hoặc chuyển các dịch vụ sang nhóm khác trước."),
 
+    // Combo (module catalog, FR-CMB)
+    COMBO_NAME_DUPLICATE(HttpStatus.CONFLICT, "Tên combo đã tồn tại."),
+    COMBO_ITEM_DUPLICATE(
+            HttpStatus.BAD_REQUEST,
+            "Mỗi dịch vụ chỉ được có một dòng trong combo, hãy tăng số lượng."),
+    COMBO_SERVICE_UNAVAILABLE(HttpStatus.BAD_REQUEST, "Dịch vụ không tồn tại hoặc đã ngừng bán."),
+
     // Nhân viên (module staff)
     STAFF_NAME_DUPLICATE(HttpStatus.CONFLICT, "Đã có nhân viên đang làm trùng tên."),
 

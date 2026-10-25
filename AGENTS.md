@@ -105,7 +105,8 @@ Database dev: `docker compose up -d` ở gốc repo. Windows dùng `gradlew.bat`
 2. **Nhánh:** skill đầu tiên ghi file của card tự tạo nhánh `<loại>/<mã-card>-<mô-tả>` từ `origin/develop` khi đang
    ở `develop` hoặc `main` (`.agents/rules/writer-role.md` mục "Nhánh"; mẫu tên ở CONTRIBUTING.md mục 2).
 3. Viết code theo đúng file luồng và quy tắc của `backend/AGENTS.md` hoặc `frontend/AGENTS.md` (`/implement <file
-   luồng>`). Thiết kế sai hoặc không làm được thì dừng, hỏi, sửa thiết kế trước.
+   luồng>`). Card lớn thì file luồng chia phần, code và soát từng phần (`/implement <file luồng> phần <N>`, mục "Chia
+   phần" của `docs/design/flows/README.md`). Thiết kế sai hoặc không làm được thì dừng, hỏi, sửa thiết kế trước.
 4. Viết test cho logic nghiệp vụ. Chạy build và test tại máy.
 5. Tự đọc lại diff, nêu rõ phần nào còn chưa chắc. Đình chạy `/self-review` (Claude Code) trước khi mở PR.
 6. **File luồng khớp code** trước khi mở PR: sơ đồ, lỗi, tên test thật, `Trạng thái: khớp code`, dòng lịch sử.

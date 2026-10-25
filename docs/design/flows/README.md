@@ -32,8 +32,28 @@ docs/design/flows/
 | `thiết kế (đã duyệt)` | Người làm card duyệt, câu hỏi đã chốt              | người viết thiết kế                              |
 | `khớp code`           | Code xong, file đã sửa theo code, có tên test thật | `/implement`, `/fix-bug`                         |
 
-Tính năng làm dở giữa hai lần (ví dụ backend đã merge, giao diện chưa làm) thì ghi trạng thái theo từng phần:
-`khớp code (backend, PR #41) · thiết kế (chờ duyệt) (giao diện)`.
+Tính năng làm dở giữa hai lần (ví dụ backend đã merge, giao diện chưa làm) thì ghi trạng thái theo từng tầng:
+`khớp code (backend, PR #41) · thiết kế (chờ duyệt) (giao diện)`. File chia phần (mục dưới) thì giữ `thiết kế (đã
+duyệt)` tới khi xong phần cuối; tiến độ từng phần ghi ở bảng "Các phần".
+
+## Chia phần
+
+Card lớn thì một lần `/implement` cả card làm agent kém đi ở phần cuối (test sơ sài, quên Postman, file luồng không
+khớp) và diff khó soát. Nên file luồng chia card thành **phần**, code và soát từng phần một, vẫn một nhánh một PR.
+
+- **Một phần là một chức năng người dùng thấy**, làm trọn từ entity tới test và Postman của chức năng đó: "Tạo combo",
+  "Sửa combo", "Ngừng bán, bán lại". Không chia theo tầng (entity hết rồi mới tới service).
+- **Thứ tự: phần nền và nặng trước, nhẹ sau.** Phần 1 thường là "Tạo" (và xem): đặt khuôn entity, DTO, mapper, hàm
+  tính tiền mà mọi phần sau dùng lại, nên soát kỹ nhất. Tiếp theo là phần có logic khó (sửa nhiều dòng, ràng buộc
+  trạng thái sang module khác), cuối là phần mỏng (danh sách, lọc). Phần sau chỉ thêm vào khuôn của phần trước.
+- **Khi nào chia:** code chính ước lượng quá khoảng 250 dòng, hoặc card có từ ba chức năng trở lên. Mỗi phần khoảng
+  100 đến 300 dòng. Card nhỏ hơn thì không cần mục "Các phần".
+- **Mỗi phần ghi:** chức năng, endpoint hoặc màn hình, lớp và method thêm theo tầng, các dòng của bảng "Hành vi và
+  test" thuộc phần, request Postman, ước lượng dòng. Không viết trước code của phần sau.
+- **Phần cuối** thêm việc hoàn tất card: các dòng "Ảnh hưởng" chưa thuộc phần nào, file luồng `khớp code`, backlog "Xong".
+- **Trạng thái phần** trong bảng "Các phần": `chưa làm` → `đã code` (`/implement ... phần <N>` xong, test xanh) →
+  `đã soát` (Đình: `/self-review phần <N>` sạch; Huy: tự đọc diff của phần). Phần trước chưa `đã soát` (Huy: chưa
+  `đã code`) thì không làm phần sau.
 
 Mỗi lần đổi file thì thêm một dòng vào bảng lịch sử: ngày (`dd/MM/yyyy`), người kèm agent đã viết, card hoặc PR,
 thay đổi gì.
@@ -114,6 +134,19 @@ Theo sáu nhóm của `AGENTS.md` mục 10. Lúc thiết kế ghi ca cần có; 
 | ------- | ---- | ----- | ----------- | ---- | ------------- | ----- | ------------------ |
 
 Thử tay (Postman, giao diện): <bước và kết quả mong đợi>.
+
+## Các phần
+
+<Chỉ có khi chia phần (mục "Chia phần" của README). Gõ `/implement <file này> phần <N>`, mỗi lần một phần.>
+
+| Phần | Chức năng          | Khoảng   | Trạng thái |
+| ---- | ------------------ | -------- | ---------- |
+| 1    | <Tạo và xem ...>   | <n> dòng | chưa làm   |
+| 2    | <Sửa ...>          | <n> dòng | chưa làm   |
+
+### Phần 1. <Tên chức năng>
+
+<Vì sao làm trước. Bảng tầng → lớp, method; dòng test; request Postman.>
 
 ## Câu hỏi mở
 

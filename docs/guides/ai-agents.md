@@ -64,7 +64,7 @@ flowchart TD
     B --> D{Duyệt thiết kế?}
     C --> D
     D -- cần sửa --> A
-    D -- duyệt --> E[Antigravity: /implement file luồng; tự tạo nhánh nếu chưa có]
+    D -- duyệt --> E[Antigravity: /implement file luồng, hoặc từng phần: /implement file luồng phần N; tự tạo nhánh nếu chưa có]
     E --> E2[Mỗi tầng: code rồi /write-tests, test xanh mới sang tầng sau]
     E2 --> E3[File luồng khớp code: sơ đồ, lỗi, tên test thật, dòng lịch sử]
     E3 --> F{Ai làm card?}
@@ -85,6 +85,9 @@ Ghi nhớ:
 
 - Thiết kế trước, code sau: file luồng `docs/design/flows/<module>/<tính-năng>.md` là đầu vào của `/implement` và phải
   khớp code khi mở PR (`docs/design/flows/README.md`).
+- Card lớn thì file luồng chia **phần**, mỗi phần một chức năng người dùng thấy, nền và nặng trước (thường là "Tạo").
+  Mỗi phần đi một vòng `/implement ... phần N` → soát (Đình: `/self-review phần N`; Huy: đọc diff) rồi mới sang phần
+  sau; hết phần cuối mới `/pre-pr-check`. Vẫn một nhánh một PR (`docs/design/flows/README.md` mục "Chia phần").
 - Agent tự tạo nhánh card ở skill đầu tiên ghi file, chỉ khi đang ở `develop` hoặc `main`. Ngoài việc đó, AI không
   commit, không push, không đổi nhánh; người làm card chạy mọi lệnh git (CONTRIBUTING.md mục 8).
 - Chỉ `/pre-pr-check` hướng dẫn git, và chỉ khi người dùng gõ. Các skill khác không đưa câu commit.
@@ -134,6 +137,7 @@ Câu mẫu:
 
 - `/plan-task S2-06` hoặc "Thiết kế card S2-06 quản lý nhóm dịch vụ".
 - `/implement docs/design/flows/catalog/service-group.md`
+- `/implement docs/design/flows/catalog/combo.md phần 1` (file chia phần, mỗi lần một phần)
 - `/fix-bug docs/design/flows/auth/login.md Sai mật khẩu 5 lần liên tiếp nhưng tài khoản không bị khóa tạm.`
 - `/pre-pr-check`
 

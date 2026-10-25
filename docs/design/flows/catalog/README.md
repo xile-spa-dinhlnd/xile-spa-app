@@ -21,3 +21,4 @@ Chung cho mọi tính năng của module:
 | ------------------------------- | ------------------ |
 | Bảng giá dịch vụ                | `service.md`       |
 | Quản lý nhóm dịch vụ            | `service-group.md` |
+| Combo                           | `combo.md`         |
