@@ -36,6 +36,7 @@ frontend/
 ├─ index.html, package.json, vite.config.ts (alias @/, proxy /api tới backend), tsconfig*.json
 ├─ .oxlintrc.json, .prettierrc.json
 ├─ scripts/check-lint-suppressions.mjs  # chạy trong `npm run lint`: chặn comment eslint-disable, oxlint-disable
+├─ scripts/check-css-tokens.mjs         # chạy trong `npm run lint`: chặn màu viết thẳng, !important trong *.module.css
 ├─ .env.example                  # chỉ VITE_API_BASE_URL..., không có bí mật
 ├─ playwright.config.ts          # thêm khi viết test luồng đầu tiên (S1-03)
 ├─ Dockerfile                    # thêm ở giai đoạn DevOps (D-02)
@@ -180,7 +181,8 @@ src/
   `.mt16`). Không selector lồng quá 2 cấp, không `!important`, không `:global` trừ khi phải ghi đè class của
   Ant Design (ghi chú lý do).
 - **Màu, khoảng cách, bo góc lấy từ biến** trong `tokens.css` (`var(--xl-space-md)`) hoặc token Ant Design; không
-  viết mã màu trực tiếp. Màu thương hiệu đổi ở một chỗ.
+  viết mã màu trực tiếp. Màu thương hiệu đổi ở một chỗ. `npm run lint` chặn mã màu, `rgb()`/`hsl()`, tên màu và
+  `!important` trong `*.module.css` (`scripts/check-css-tokens.mjs`): lint đỏ thì đổi sang biến, không lách.
 - Class đặt lên component Ant Design có thể thua selector mạnh hơn của Ant Design (`h4.ant-typography`,
   `div.ant-typography`, `.ant-drawer .ant-drawer-body`, `.ant-btn.ant-btn-icon-only`, `.ant-card:not(...)`): lồng
   dưới một lớp cha trong cùng module (`.header .title`) hoặc dùng token trong `theme.ts`, ghi chú lý do. Test
