@@ -12,7 +12,7 @@ chưa có. Thêm thư viện: hỏi trước theo `../AGENTS.md` mục 3. Đổi
 | Thư viện                                            | Bản          | Dùng cho                         | Lưu ý API (tài liệu, ví dụ cũ hay viết theo bản trước)                                                                                              |
 | --------------------------------------------------- | ------------ | -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
 | React, React DOM                                    | 19           | giao diện                        | Component hàm và hook; mục React và TypeScript                                                                                                      |
-| TypeScript                                          | 6 (`strict`) | kiểu                             | Lấy `npm run typecheck` làm chuẩn, không tin báo lỗi của editor (mục 7 của `../AGENTS.md`)                                                          |
+| TypeScript                                          | 6 (`strict`) | kiểu                             | Lấy `npm run typecheck` làm chuẩn, không tin báo lỗi của editor (mục React và TypeScript)                                                           |
 | Vite (+ `@vitejs/plugin-react`)                     | 8            | dev server, build                | Alias `@/`, proxy `/api` trong `vite.config.ts`                                                                                                     |
 | Ant Design, `@ant-design/icons`                     | 6            | component                        | `message`, `modal` lấy từ `App.useApp()`, không gọi `message` tĩnh; prop đổi tên so với bản 5 (`destroyOnHidden` thay `destroyOnClose`)             |
 | TanStack Query                                      | 5            | gọi API, cache                   | `useQuery({ queryKey, queryFn })` dạng object; tải lần đầu là `isPending` (bản 4 là `isLoading`); giữ trang cũ khi đổi trang bằng `placeholderData` |
@@ -132,6 +132,9 @@ Quy tắc:
   rồi thu hẹp (Zod `parse`, type guard). Không tắt chế độ strict của TypeScript. Import kiểu bằng `import type`.
   `npm run lint` tự chặn `any` (`typescript/no-explicit-any`), `@ts-ignore`, `@ts-nocheck` (`typescript/ban-ts-comment`)
   và comment `eslint-disable`, `oxlint-disable`: lint đỏ thì sửa code, không tắt quy tắc.
+- Editor (Antigravity IDE, VS Code) mặc định dùng TypeScript 5.x đi kèm, chưa bật `strict` như TypeScript 6 của dự
+  án, nên báo đỏ khác `npm run typecheck` (đã gặp): giữ `"strict": true` trong `tsconfig.app.json`, chọn "Use
+  Workspace Version" trong editor, lấy `npm run typecheck` làm chuẩn.
 - Hằng số và kiểu dữ liệu nghiệp vụ dùng union của chuỗi khớp enum backend (`type StaffRole = 'OWNER' |
 'THERAPIST'`), nhãn tiếng Việt trong một `Record<StaffRole, string>` (mẫu: `features/staff/types.ts`).
 - **State tối thiểu**: giá trị tính được từ props hoặc dữ liệu query thì tính trong lúc render, không `useState` +

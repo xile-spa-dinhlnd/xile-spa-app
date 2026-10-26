@@ -181,7 +181,8 @@ không phải lỗi).
 
 ## 6. Hỏi nhanh
 
-- **Agent làm sai cùng một kiểu nhiều lần?** Thêm một dòng vào `AGENTS.md` mục 4 hoặc mục 7, trong PR của card đang làm.
+- **Agent làm sai cùng một kiểu nhiều lần?** Thêm một dòng vào `AGENTS.md` mục 4 hoặc mục 7, hoặc vào
+  `backend/AGENTS.md`, `frontend/AGENTS.md` nếu lỗi chỉ dính một phần (`AGENTS.md` mục 6), trong PR của card đang làm.
 - **Muốn đổi skill?** Sửa `.agents/skills/<tên>/SKILL.md` trong một PR riêng (`docs` hoặc `chore`), ghi lý do.
 - **Antigravity hỏi có chạy lệnh git không?** Chỉ đồng ý với `status`, `log`, `diff`, `show`, `blame`, `branch`, và
   `git fetch origin` + `git switch -c <loại>/<mã-card>-<mô-tả> origin/develop` khi đang ở `develop` hoặc `main`.

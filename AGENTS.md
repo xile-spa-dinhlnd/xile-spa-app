@@ -135,25 +135,23 @@ Database dev: `docker compose up -d` ở gốc repo. Windows dùng `gradlew.bat`
 
 ## 6. Khi AI lặp lại cùng một lỗi
 
-Thêm **một dòng** vào mục 4 hoặc vào file quy tắc của phần liên quan, đừng viết thêm một bộ quy tắc mới.
+Thêm **một dòng** vào mục 4, mục 7 hoặc file quy tắc của phần liên quan, đừng viết thêm một bộ quy tắc mới.
 Quy tắc sinh ra từ lỗi thật mới đáng giữ.
+
+- **Đúng chỗ:** lỗi chỉ dính backend hoặc chỉ dính frontend ghi vào `backend/AGENTS.md`, `frontend/AGENTS.md`, cạnh
+  quy tắc cùng chủ đề. Mục 7 chỉ giữ lỗi dính nhiều phần (backend và frontend, Postman, tài liệu, quy trình).
+- **Giới hạn độ dài:** mọi agent nạp các file này ở mỗi phiên, nên `AGENTS.md` không quá khoảng 250 dòng,
+  `backend/AGENTS.md` và `frontend/AGENTS.md` không quá khoảng 320 dòng mỗi file. Thêm mà vượt thì gộp các dòng cùng
+  ý, hoặc bỏ dòng mà lint, test hay hook đã tự chặn; không nới giới hạn.
 
 ## 7. Điểm dễ gây lỗi trong repo
 
-Đã gặp thật, kiểm tra kỹ khi viết và khi review:
+Đã gặp thật, kiểm tra kỹ khi viết và khi review. Lỗi riêng của backend, frontend nằm ở file của phần đó (mục 6).
 
-- Spring Boot 4 dùng **Jackson 3**: import `tools.jackson.databind...`, không phải `com.fasterxml.jackson.databind...`.
-- Gọi `Instant.now()`, `LocalDate.now()`, `ZoneId.systemDefault()` không qua `Clock`: sai múi giờ, test không ổn định.
-- Test tích hợp `deleteAll()` bảng dùng chung hoặc đếm toàn bảng `audit_log`: làm đỏ test khác chạy chung database.
-- Test tích hợp đỏ hàng loạt với lỗi kết nối: Docker chưa bật, không phải code sai.
-- Mapper chép từ Request vào trường nhạy cảm (id, trạng thái, giá đã chốt): phải `ignore = true`, gán trong service.
-- Gọi `AuditService.record` ngoài transaction (báo lỗi `MANDATORY`) hoặc truyền entity JPA làm `before`/`after`.
-- Frontend tự tính tiền, gọi `fetch` trực tiếp trong component, import sâu vào file bên trong feature khác.
 - Quên cập nhật Postman collection và trạng thái card trong `docs/backlog/` (mục 5, bước 7 và 8).
 - Request Postman dùng `{{biến}}` do thư mục khác tạo (S2-07, S3-08): mỗi thư mục tự tạo dữ liệu nó cần, chạy riêng
   vẫn xanh; body bị từ chối trước khi đọc id (sai kiểu, sai Content-Type) thì ghi giá trị cố định.
 - Hai nhánh cùng lấy một số migration `V{n}`: báo số cho người kia trước (CONTRIBUTING.md mục 4).
-- Dùng `@Profile("!prod")` để chọn hành vi theo môi trường: thay bằng thuộc tính và `@ConditionalOnProperty` (backend/AGENTS.md mục Cấu hình).
 - Đổi hành vi một endpoint (tham số mặc định, trường trả về, mã lỗi) mà không tìm nơi gọi: grep URL trong
   `frontend/src`, `backend/src/test`, `docs/postman` và sửa theo trong cùng PR (S2-06: ô chọn nhóm hiện nhóm đã ngừng dùng).
 - Chuyển method sang lớp khác mà để lại bản cũ không ai gọi, hoặc hai method repository làm cùng một việc: grep tên cũ, xóa.
@@ -161,11 +159,7 @@ Quy tắc sinh ra từ lỗi thật mới đáng giữ.
   khỏi trạng thái đó, xét cả bản ghi tham chiếu tới (OQ-21: ngừng dùng nhóm, bán lại dịch vụ trong nhóm đã ngừng).
 - Test chỉ kiểm một phần kết quả: không kiểm từng trường của danh sách con, không đọc lại từ DB sau khi sửa, không
   kiểm thứ tự khi API hứa sắp xếp (S2-07: bỏ `orphanRemoval` hay đảo chiều sắp xếp mà test vẫn xanh).
-- Tin rằng validation chặn hết đầu vào lạ: Jackson nhận `1.7` thành `1` cho trường `Long` tiền; `@NotBlank` và
-  `trim()` cho qua tên chỉ có NBSP hoặc zero-width; `null` trong danh sách gây 500 (dò ngày 25/10/2026). Thử bằng
-  đầu vào thật, đừng suy ra từ annotation.
 - Câu commit tiếng Anh hoặc dùng `fix` cho việc mới của card: theo CONTRIBUTING.md mục 3, dùng câu gợi ý ở cuối `/implement`, `/self-review` (mục 8).
-- Editor (Antigravity IDE, VS Code) mặc định dùng TypeScript 5.x đi kèm, chưa bật `strict` như TypeScript 6 của dự án, nên báo đỏ khác `npm run typecheck`: giữ `"strict": true` trong `frontend/tsconfig.app.json`, chọn "Use Workspace Version" trong editor, lấy `npm run typecheck` làm chuẩn.
 
 ## 8. Vai trò từng agent
 

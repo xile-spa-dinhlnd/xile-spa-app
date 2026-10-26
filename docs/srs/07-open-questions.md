@@ -34,6 +34,7 @@ Cột **Ai quyết định** cho biết cần hỏi ai. Câu hỏi đã có quy�
 | OQ-18 | Tiệm có chịu phí cho kênh gửi tin tự động (Zalo ZNS cần Zalo OA, SMS brandname) không? Hiện nhóm đoán là không vì tiệm nhỏ; nếu không thì chỉ gửi thủ công (FR-AI-02) | FR-AI-02 | Chủ tiệm | Thấp (trước R3) | Open, chưa hỏi |
 | OQ-19 | Chủ tiệm có đồng ý cho hệ thống gửi tên gọi và lịch sử dịch vụ của khách sang mô hình AI không? Nếu tự host mô hình thì dữ liệu không rời máy chủ của tiệm | FR-AI-01, NFR-PRV-05 | Chủ tiệm | Thấp (trước R3) | Đình đồng ý; chờ chủ tiệm xác nhận |
 | OQ-20 | Chạy mô hình AI ở đâu: tự host bằng Ollama (Spring AI) trên máy riêng hay máy chủ mạnh hơn, hay gọi API bên ngoài? VPS hiện tại (4 GB RAM, NFR-PERF-03) không đủ chạy mô hình cùng hệ thống; VPS này phục vụ học tập và MVP cho người nhà dùng trước, khi sản phẩm được tin dùng sẽ có kinh phí thuê VPS mạnh hơn. Quyết định ghi thành ADR khi bắt đầu làm | FR-AI-05, C-01, NFR-PERF-03 | Nhóm | Thấp (trước R3) | Hướng dự kiến: dev chạy Ollama trên máy cá nhân; production tự host trên VPS mạnh hơn khi có kinh phí |
+| OQ-24 | Mã lỗi khi ghi bút toán vào ngày đã chốt: ERD mục 5.5 ghi `trg_adjustment_day_open` báo `XL002`, nhưng migration V1 gọi `assert_day_open` nên thực tế báo `XL001` (`backend/AGENTS.md` mục "Lỗi từ cơ sở dữ liệu" đã ghi theo V1). V1 không sửa được (quy tắc 2), nên đề xuất sửa ERD theo V1 | BR-07, BR-08, FR-CLS-04, ADR-0003 | Đình | Trung bình, trước card bút toán điều chỉnh | Open, thấy từ 06/10/2026 |
 
 ## Chi tiết OQ-03: lỗi trừ hai lần trong Excel và cách sửa
 

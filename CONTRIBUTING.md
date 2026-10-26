@@ -289,8 +289,12 @@ mình, mục 4); Huy có thể cùng xem để học.
 2. Chạy thử toàn bộ trên máy. Lỗi nhỏ thì sửa **ngay trên `release/v0.1.0`** (commit `fix: ...`).
    **Không** thêm tính năng mới vào nhánh release; tính năng mới vẫn vào `develop` như thường.
 3. Mở PR `release/v0.1.0` → `main`, tiêu đề `release: v0.1.0`, nội dung liệt kê các card của sprint.
-   Đình tự review → **Create a merge commit** (bypass, mục 4).
-4. Gắn tag trên `main`:
+   Đình tự review → **Create a merge commit** (bypass, mục 4). Mở bằng link thẳng
+   `https://github.com/xile-spa-dinhlnd/xile-spa-app/compare/main...release/v0.1.0`: GitHub mặc định chọn base là
+   `develop`, và lần v0.2.0 đã mở nhầm hai lần (PR #23 vào `develop`, PR #24 từ `develop` thay vì nhánh release).
+   Trước khi bấm tạo, xem lại dòng "base: main ← compare: release/v0.1.0".
+4. Chỉ gắn tag **sau khi** PR ở bước 3 đã merge, và trên `main` (lần v0.2.0 đã gắn nhầm trên `develop`). Kiểm tra
+   `git log -1` sau `git pull` là merge commit của PR release rồi mới gắn:
 
    ```bash
    git switch main

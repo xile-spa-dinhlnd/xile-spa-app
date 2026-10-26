@@ -14,7 +14,7 @@ plugin `spring-boot`). Không có trong file đó là chưa có. Thêm thư vi�
 | Spring Boot (Framework 7, Security 7) | 4.1 | nền ứng dụng | Starter tách nhỏ: `spring-boot-starter-webmvc`, `-flyway`; test starter theo phần (`-webmvc-test`, `-data-jpa-test`...) |
 | Gradle, Kotlin DSL | 9.7 | build | Version thư viện chỉ khai ở `libs.versions.toml`, không viết thẳng trong `build.gradle.kts` |
 | Spring Data JPA, Hibernate ORM | 7.4 | truy cập dữ liệu | `jakarta.persistence`; `ddl-auto` chỉ `validate` hoặc `none` (quy tắc 2) |
-| Jackson | 3.1 | JSON | Package `tools.jackson.databind`, không `com.fasterxml.jackson.databind` (mục 7 của `../AGENTS.md`) |
+| Jackson | 3.1 | JSON | Package `tools.jackson.databind`, không `com.fasterxml.jackson.databind` (đã gặp: ví dụ cũ trên mạng viết theo Jackson 2) |
 | Flyway (+ `flyway-database-postgresql`) | 12 | migration | `V{n}__...sql`, không sửa file đã có |
 | PostgreSQL JDBC | BOM | driver | Database PostgreSQL 16 (dev và Testcontainers) |
 | Spring Security OAuth2 JOSE (Nimbus JOSE JWT) | 10 | ký, kiểm JWT | Dùng `NimbusJwtEncoder`, `NimbusJwtDecoder` qua `security/`; không thêm jjwt hay tự viết HMAC |
@@ -292,12 +292,14 @@ database dev (lệnh ở `README.md` mục "Bật database") rồi chạy lại 
   - **Trigger, ràng buộc DB:** thêm vào `schema_smoke_test.sql`.
 - Assert bằng AssertJ (`assertThat`, `assertThatThrownBy(...).extracting("errorCode")`). Tiền viết `150_000L`.
 - Ca nhiều bộ dữ liệu cùng một kiểu (các chuỗi không hợp lệ, các mức tiền biên) dùng `@ParameterizedTest`.
+- Đầu vào lạ thử bằng request thật trong `...ControllerIT`, đừng suy ra từ annotation: đợt dò ngày 25/10/2026 thấy
+  Jackson nhận `1.7` thành `1` cho trường `Long` tiền, `@NotBlank` cho qua tên chỉ có NBSP, `null` trong danh sách
+  gây 500, dù test đều xanh (S3-08). Mẫu: `InputHandlingIT`.
 - Test tích hợp gắn `@IntegrationTest` (`src/test/java/com/xilespa/support`): chạy cả ứng dụng với Postgres 16
-  thật và MockMvc. Cần **Docker Desktop đang chạy**.
+  thật và MockMvc. Cần **Docker Desktop đang chạy**; đỏ hàng loạt với lỗi kết nối là Docker chưa bật, không phải code sai.
 - Chạy (trong `backend/`, cần JDK 21): `./gradlew spotlessApply test`. Chạy ứng dụng: `./gradlew bootRun`
   (profile `dev`, cần Postgres ở máy, card S0-05).
 - Chạy riêng một lớp hoặc một method test: `./gradlew test --tests 'com.xilespa.module.staff.service.StaffServiceTest'`
   (thêm `.tenMethod` cho một method; dùng `*` được, ví dụ `'*StaffControllerIT'`). Sửa lỗi thì chạy riêng test đỏ
   trước, xanh rồi mới chạy cả bộ.
 - Format: Spotless (google-java-format kiểu AOSP, thụt 4 khoảng). Chạy `spotlessApply` trước khi commit.
-- Spring Boot 4 dùng Jackson 3: import `tools.jackson.databind...`, không phải `com.fasterxml.jackson.databind...`.
