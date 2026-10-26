@@ -14,6 +14,10 @@ Test và lệnh. Mẫu trong repo: `StaffServiceTest`, `StaffControllerIT`, `mon
 file luồng của tính năng (`docs/design/flows/<module>/`). Liệt kê **mọi nhánh**: mỗi
 `if`, mỗi `throw new BusinessException(ErrorCode.X)`, mỗi annotation validation, mỗi trạng thái hiển thị.
 
+Gọi từ `/implement`: danh sách test là bảng "Hành vi và test" của file luồng (hoặc khối sửa), đúng tên test ở đó; chỉ
+test hành vi của phần đang làm. Ca biên tìm thêm được viết nếu thuộc phần đang làm, ghi vào dòng "Khác thiết kế" của
+báo cáo `/implement`; không đổi tên, không bỏ test có trong bảng.
+
 ## 2. Lập bảng ca test trước khi viết
 
 Trình bày bảng cho người dùng xem (không cần chờ duyệt nếu đang trong `/implement` đã duyệt):

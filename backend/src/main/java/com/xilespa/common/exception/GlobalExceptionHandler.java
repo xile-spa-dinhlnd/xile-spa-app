@@ -5,10 +5,14 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.transaction.TransactionSystemException;
+import org.springframework.util.ClassUtils;
+import org.springframework.web.HttpMediaTypeNotAcceptableException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -16,6 +20,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.exc.MismatchedInputException;
 
 /** Chuyển mọi exception thành {@link ApiError}. Không để lộ chi tiết kỹ thuật ra ngoài. */
 @RestControllerAdvice
@@ -48,8 +54,24 @@ public class GlobalExceptionHandler {
                 request);
     }
 
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    ResponseEntity<ApiError> handleNotReadable(
+            HttpMessageNotReadableException ex, HttpServletRequest request) {
+        log.debug("Lỗi đọc JSON body: {}", ex.getMessage());
+        MismatchedInputException mismatch = findMismatchedInputException(ex);
+        if (mismatch != null && mismatch.getPath() != null && !mismatch.getPath().isEmpty()) {
+            String field = buildFieldPath(mismatch.getPath());
+            String message = determineTypeMismatchMessage(mismatch.getTargetType());
+            return respond(
+                    ErrorCode.VALIDATION_FAILED,
+                    ErrorCode.VALIDATION_FAILED.defaultMessage(),
+                    List.of(new ApiError.FieldError(field, message)),
+                    request);
+        }
+        return respond(ErrorCode.BAD_REQUEST, request);
+    }
+
     @ExceptionHandler({
-        HttpMessageNotReadableException.class,
         MethodArgumentTypeMismatchException.class,
         MissingServletRequestParameterException.class
     })
@@ -65,6 +87,16 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     ResponseEntity<ApiError> handleMethodNotAllowed(HttpServletRequest request) {
         return respond(ErrorCode.METHOD_NOT_ALLOWED, request);
+    }
+
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    ResponseEntity<ApiError> handleUnsupportedMediaType(HttpServletRequest request) {
+        return respond(ErrorCode.UNSUPPORTED_MEDIA_TYPE, request);
+    }
+
+    @ExceptionHandler(HttpMediaTypeNotAcceptableException.class)
+    ResponseEntity<ApiError> handleNotAcceptable(HttpServletRequest request) {
+        return respond(ErrorCode.NOT_ACCEPTABLE, request);
     }
 
     @ExceptionHandler(AccessDeniedException.class)
@@ -107,6 +139,46 @@ public class GlobalExceptionHandler {
             List<ApiError.FieldError> fieldErrors,
             HttpServletRequest request) {
         return ResponseEntity.status(code.status())
+                .contentType(MediaType.APPLICATION_JSON)
                 .body(errors.create(code, message, fieldErrors, request.getRequestURI()));
+    }
+
+    private MismatchedInputException findMismatchedInputException(Throwable ex) {
+        Throwable current = ex;
+        while (current != null) {
+            if (current instanceof MismatchedInputException mismatched) {
+                return mismatched;
+            }
+            current = current.getCause();
+        }
+        return null;
+    }
+
+    private String buildFieldPath(List<JacksonException.Reference> path) {
+        StringBuilder sb = new StringBuilder();
+        for (JacksonException.Reference ref : path) {
+            if (ref.getPropertyName() != null) {
+                if (!sb.isEmpty()) {
+                    sb.append(".");
+                }
+                sb.append(ref.getPropertyName());
+            } else if (ref.getIndex() >= 0) {
+                sb.append("[").append(ref.getIndex()).append("]");
+            }
+        }
+        return sb.toString();
+    }
+
+    private String determineTypeMismatchMessage(Class<?> targetType) {
+        if (targetType != null) {
+            Class<?> resolved = ClassUtils.resolvePrimitiveIfNecessary(targetType);
+            if (Number.class.isAssignableFrom(resolved)) {
+                return "Phải là số nguyên";
+            }
+            if (Enum.class.isAssignableFrom(resolved)) {
+                return "Giá trị không hợp lệ";
+            }
+        }
+        return "Sai kiểu dữ liệu";
     }
 }

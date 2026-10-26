@@ -4,6 +4,7 @@ import com.xilespa.common.audit.AuditAction;
 import com.xilespa.common.audit.AuditService;
 import com.xilespa.common.exception.BusinessException;
 import com.xilespa.common.exception.ErrorCode;
+import com.xilespa.common.util.TextNormalizer;
 import com.xilespa.module.catalog.dto.request.ServiceGroupRequest;
 import com.xilespa.module.catalog.dto.response.ServiceGroupResponse;
 import com.xilespa.module.catalog.entity.ServiceGroup;
@@ -53,7 +54,7 @@ public class ServiceGroupService {
 
     @Transactional
     public ServiceGroupResponse create(ServiceGroupRequest request) {
-        String name = normalizeSpaces(request.name());
+        String name = TextNormalizer.normalizeName(request.name());
         ensureNameAvailable(name, 0L);
 
         ServiceGroup group = new ServiceGroup(name, request.sortOrder());
@@ -69,7 +70,7 @@ public class ServiceGroupService {
         ServiceGroup group = findGroup(id);
         ServiceGroupResponse before = mapper.toResponse(group);
 
-        String name = normalizeSpaces(request.name());
+        String name = TextNormalizer.normalizeName(request.name());
         ensureNameAvailable(name, id);
         group.update(name, request.sortOrder());
         saveChecked(group);
@@ -142,10 +143,5 @@ public class ServiceGroupService {
             }
             throw e;
         }
-    }
-
-    /** Cắt đầu cuối và gộp khoảng trắng liên tiếp, khớp với cách CSDL so sánh tên. */
-    private static String normalizeSpaces(String name) {
-        return name.trim().replaceAll("\\s+", " ");
     }
 }

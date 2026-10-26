@@ -1,6 +1,6 @@
 ---
 name: plan-task
-description: Thiết kế một card hoặc tính năng của Xile Spa trước khi code - tự tạo nhánh card, đọc yêu cầu và code hiện có, soát chỗ bị ảnh hưởng, rồi viết file luồng docs/design/flows/<module>/<tính-năng>.md (sơ đồ Mermaid, quy tắc, lỗi, bảng test) và dừng chờ duyệt. Dùng khi bắt đầu card mới, khi người dùng gõ /plan-task <tên task>, hoặc khi được nhờ lập kế hoạch cho một task.
+description: Thiết kế một card hoặc tính năng của Xile Spa trước khi code - tự tạo nhánh card, đọc yêu cầu và code hiện có, soát chỗ bị ảnh hưởng, rồi viết file luồng docs/design/flows/<module>/<tính-năng>.md (sơ đồ Mermaid, quy tắc, lỗi, bảng test) và dừng chờ duyệt. Chỉ chạy khi người dùng tự gõ /plan-task <tên task> hoặc nhờ thiết kế một card; không tự gọi trong /implement hay khi nhận khối "Sửa theo ..." (khối đó đã được duyệt).
 ---
 
 # /plan-task <tên task>: thiết kế trước khi code

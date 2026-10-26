@@ -1,6 +1,6 @@
 # Mô hình mối đe dọa
 
-Cập nhật: 25/10/2026 (v0.3.0, sau S2-07). Mỗi mối đe dọa có mã `T-xx`; file luồng và PR trỏ tới mã này.
+Cập nhật: 26/10/2026 (v0.3.0, sau S3-08). Mỗi mối đe dọa có mã `T-xx`; file luồng và PR trỏ tới mã này.
 
 ## Tài sản cần bảo vệ
 
@@ -36,12 +36,12 @@ Trạng thái: **có** (đã có code và test), **một phần**, **chưa** (k�
 | T-06 | Link đặt lại mật khẩu bị lộ | Lưu băm, hết hạn 30 phút, dùng một lần, tối đa 3 yêu cầu mỗi người trong một khoảng; đặt lại xong thu hồi mọi phiên | **có**; máy dev ghi link ra log là cố ý (OQ-10) |
 | T-07 | Người cầm thiết bị đang đăng nhập làm việc của chủ tiệm | Access token 15 phút, refresh 7 ngày; đăng xuất thu hồi phiên | **một phần**: **chưa phân quyền** (đăng nhập là được làm mọi thứ dù `UserRole` có `STAFF`). Hiện chỉ có tài khoản chủ tiệm; trước khi cho nhân viên tài khoản riêng phải có card phân quyền |
 | T-08 | Sửa số liệu tài chính rồi chối, sửa ngày đã chốt | `audit_log` cùng transaction, chỉ thêm (XL002); ngày `CLOSED` bất biến (XL001), sửa bằng bút toán (ADR-0003) | **có** (chốt sổ từ Sprint 4) |
-| T-09 | Đầu vào bất thường làm sai tiền hoặc gây 500 | Bean Validation, `GlobalExceptionHandler` | **một phần**: 7 lỗi đã tìm ra, sửa ở S3-08 (`docs/design/flows/common/input-hardening.md`) |
+| T-09 | Đầu vào bất thường làm sai tiền hoặc gây 500 | Bean Validation, `GlobalExceptionHandler`, `TextNormalizer`, `PageRequests` | **có**: đã chặn kiểu số chặt, chuẩn hóa tên/ký tự vô hình, null trong danh sách, kẹp phân trang ở S3-08 (`docs/design/flows/common/input-hardening.md`) |
 | T-10 | SQL injection | JPA và truy vấn có tham số; `likePattern` thoát `%`, `_`, `\` | **có**; cấm nối chuỗi vào câu SQL |
-| T-11 | Lộ dữ liệu khách nhạy cảm (log, audit, email, Sheets, AI) | NFR-PRV-02, 04, 05; `AuditService` che trường mật khẩu, token | **chưa** cho khách hàng: **phải chốt trước S3-01** ghi chú sức khỏe có vào `audit_log` không (BR-18 bắt ghi thay đổi, NFR-PRV-02 cấm đưa ra ngoài hồ sơ) |
+| T-11 | Lộ dữ liệu khách nhạy cảm (log, audit, email, Sheets, AI) | NFR-PRV-02, 04, 05; `AuditService` che trường mật khẩu, token | **chưa** cho khách hàng (S3-01): theo OQ-23, `audit_log` chỉ ghi ghi chú sức khỏe "đã thay đổi", không ghi nội dung; S3-01 phải có test kiểm tra nội dung không vào audit, log |
 | T-12 | Lộ bí mật qua repo, log, ảnh chụp | `secrets.md`; hook chặn agent đọc file bí mật; `application-prod.yml` không có giá trị mặc định; `JWT_SECRET` thiếu hoặc ngắn thì không khởi động | **có** |
 | T-13 | Làm cạn tài nguyên (BCrypt, body lớn, gọi dồn dập) | Khóa theo tài khoản; giới hạn quên mật khẩu theo người; `size` trang tối đa 100 | **một phần**: chưa giới hạn theo IP và kích thước body (Caddy, D-05) |
-| T-14 | Lộ chi tiết kỹ thuật qua lỗi | Lỗi 500 chỉ trả câu chung, chi tiết vào log; Actuator chỉ `health`, `show-details: never` | **một phần**: vài lỗi định dạng còn ra 500 (S3-08) |
+| T-14 | Lộ chi tiết kỹ thuật qua lỗi | Lỗi 500 chỉ trả câu chung, chi tiết vào log; Actuator chỉ `health`, `show-details: never` | **có**: mọi lỗi parser/kiểu/định dạng trả `ApiError` JSON chuẩn, không lộ stacktrace (S3-08) |
 | T-15 | File nhập độc hại (Excel ở S2-09) | Chưa có | **chưa**: khi làm S2-09 phải giới hạn kích thước file, chặn file nén bất thường, coi ô bắt đầu bằng `=` là chữ |
 | T-16 | Thư viện độc hại hoặc có lỗ hổng | Thêm thư viện phải hỏi trước, nêu uy tín (`AGENTS.md` mục 3); `package-lock.json` cố định phiên bản | **một phần**: chưa quét lỗ hổng tự động (đưa vào CI, S3-09) |
 | T-17 | Database bị truy cập trực tiếp | Dev: chỉ mở `127.0.0.1:5433`; prod: tường lửa, SSH bằng khóa (NFR-SEC-08) | **một phần**: phần prod làm ở đợt DevOps |

@@ -13,6 +13,8 @@ public enum ErrorCode {
     FORBIDDEN(HttpStatus.FORBIDDEN, "Bạn không có quyền thực hiện thao tác này."),
     NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy dữ liệu."),
     METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "Thao tác không được hỗ trợ."),
+    NOT_ACCEPTABLE(HttpStatus.NOT_ACCEPTABLE, "Hệ thống chỉ trả dữ liệu dạng JSON."),
+    UNSUPPORTED_MEDIA_TYPE(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "Dữ liệu gửi lên phải ở dạng JSON."),
     CONFLICT(HttpStatus.CONFLICT, "Dữ liệu đã thay đổi hoặc bị trùng, vui lòng thử lại."),
 
     // Xác thực và tài khoản (module auth)

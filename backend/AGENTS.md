@@ -52,8 +52,9 @@ backend/
    │  │  ├─ exception/                # ApiError, GlobalExceptionHandler, BusinessException,
    │  │  │                            #   ánh xạ XL001/XL002/XL004 (S0-07)
    │  │  ├─ audit/                    # GHI nhật ký: AuditService.record, AuditLog, AuditLogRepository, AuditAction
-   │  │  ├─ response/                 # PageResponse: định dạng chung cho API danh sách có phân trang
-   │  │  └─ util/                     # MoneyUtils, DateUtils (không tính nghiệp vụ)
+   │  │  ├─ response/                 # PageResponse, PageRequests (phân trang an toàn chống tràn số)
+   │  │  ├─ validation/               # @VisibleText, VisibleTextValidator (chống ký tự vô hình)
+   │  │  └─ util/                     # MoneyUtils, DateUtils, TextNormalizer (chuẩn hóa Unicode, khoảng trắng)
    │  └─ module/                      # mỗi thư mục con là một module nghiệp vụ
    │     ├─ auth/                     # FR-AUTH: đăng nhập, phiên, tài khoản
    │     ├─ catalog/                  # FR-SVC, FR-CMB: dịch vụ, nhóm dịch vụ, combo
@@ -101,7 +102,7 @@ catalog/
 ├─ enums/                             # enum dùng cho cột của entity, mỗi enum một file
 ├─ dto/
 │  ├─ request/
-│  │  ├─ ServiceItemRequest.java      # record + annotation kiểm tra (@NotBlank, @PositiveOrZero...)
+│  │  ├─ ServiceItemRequest.java      # record + annotation kiểm tra (@VisibleText, @PositiveOrZero...)
 │  │  └─ ServiceGroupRequest.java
 │  └─ response/
 │     ├─ ServiceItemResponse.java     # record
@@ -215,10 +216,12 @@ có ghi log). Trigger là rào chắn cuối: service vẫn nên tự kiểm tra
 ```
 
 - `code` lấy từ enum `ErrorCode` (`common/exception`); frontend xử lý theo `code`, hiển thị `message`.
-  Lỗi nghiệp vụ mới thì thêm mã vào `ErrorCode`, không trả chuỗi tự do.
+  Lỗi nghiệp vụ mới thì thêm mã vào `ErrorCode`, không trả chuỗi tự do. Các mã lỗi hệ thống/định dạng chuẩn:
+  `VALIDATION_FAILED` (400), `BAD_REQUEST` (400), `NOT_ACCEPTABLE` (406), `UNSUPPORTED_MEDIA_TYPE` (415).
 - Ném lỗi nghiệp vụ bằng `BusinessException` (hoặc lớp con trong `exception/` của module), không tự dựng
   `ResponseEntity` lỗi trong controller.
-- Thông báo lỗi validation viết tiếng Việt ngay trên annotation: `@NotBlank(message = "Tên không được để trống")`.
+- Thông báo lỗi validation viết tiếng Việt ngay trên annotation. Kiểm tra trường tên dùng
+  `@VisibleText(message = "Tên ... không được để trống")` thay cho `@NotBlank` để chặn ký tự vô hình.
 - Lỗi 500 không bao giờ trả chi tiết kỹ thuật; chi tiết chỉ ghi vào log.
 
 ## Chốt sổ và đồng thời
@@ -251,6 +254,7 @@ Tài sản, mối đe dọa (`T-xx`), bề mặt tấn công, bí mật và chec
 - `@Profile` chỉ dùng cho bean dành riêng dev hoặc test. Dữ liệu mẫu dev bật bằng thuộc tính `xile.dev-data.enabled`,
   không bằng `@Profile` (mục dưới).
 - Giá trị mặc định đặt một chỗ trong `application.yml`; `application-prod.yml` chỉ đọc biến môi trường, không có mặc định.
+- Test dùng hồ sơ `test` chồng lên `application.yml`, không tạo `src/test/resources/application.yml`, không chép khóa `spring.*` của file chính sang file test.
 
 ## Dữ liệu mẫu cho máy dev
 
@@ -271,7 +275,7 @@ database dev (lệnh ở `README.md` mục "Bật database") rồi chạy lại 
 - **Chỉ dữ liệu giả** (tên, SĐT, ghi chú không phải của khách thật, NFR-PRV-01). Nên có sẵn ca biên để thử giao diện:
   bản ghi ngừng dùng, giá 0, combo đắt hơn giá lẻ...
 - **Test** bằng Mockito như test service (mẫu `CatalogDevDataTest`): tạo đủ khi trống, không tạo lại bản ghi đã có.
-  Không chạy dữ liệu mẫu trong test tích hợp (`src/test/resources/application.yml` không bật).
+  Không chạy dữ liệu mẫu trong test tích hợp (`src/test/resources/application-test.yml` không bật).
 
 ## Test
 

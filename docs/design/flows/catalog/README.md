@@ -6,8 +6,9 @@ FR-CMB-05. Bảng `service_group`, `service`, `service_price_history`, `combo`, 
 Chung cho mọi tính năng của module:
 
 - **Tên không trùng**, không phân biệt hoa thường và khoảng trắng thừa: unique index trên `norm_name(name)` của CSDL
-  (`ux_service_group_name`, `ux_service_name`). Service gộp khoảng trắng (`normalizeSpaces`), kiểm tra trước bằng
-  `existsByNormalizedName(name, excludeId)` rồi `saveAndFlush` để bắt hai request cùng tên (lỗi unique → 409).
+  (`ux_service_group_name`, `ux_service_name`, `ux_combo_name`). Service chuẩn hóa bằng `TextNormalizer.normalizeName`
+  (`common/util`, S3-08), kiểm tra trước bằng `existsByNormalizedName(name, excludeId)` rồi `saveAndFlush` để bắt hai
+  request cùng tên (lỗi unique → 409).
 - **Không xóa cứng** (BR-19): không có endpoint `DELETE` (405). Ngừng dùng, ngừng bán là đánh dấu `active = false`;
   gọi lại khi đã ở trạng thái đó thì trả bản ghi như cũ, không ghi audit.
 - **Nhật ký** (BR-18): mọi thay đổi gọi `AuditService.record` trong cùng transaction, `entityType` là tên bảng

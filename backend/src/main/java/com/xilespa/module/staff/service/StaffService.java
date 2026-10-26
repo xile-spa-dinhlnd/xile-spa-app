@@ -4,7 +4,9 @@ import com.xilespa.common.audit.AuditAction;
 import com.xilespa.common.audit.AuditService;
 import com.xilespa.common.exception.BusinessException;
 import com.xilespa.common.exception.ErrorCode;
+import com.xilespa.common.response.PageRequests;
 import com.xilespa.common.response.PageResponse;
+import com.xilespa.common.util.TextNormalizer;
 import com.xilespa.module.staff.dto.request.StaffRequest;
 import com.xilespa.module.staff.dto.response.StaffResponse;
 import com.xilespa.module.staff.entity.Staff;
@@ -43,9 +45,10 @@ public class StaffService {
     public PageResponse<StaffResponse> search(
             String q, StaffRole role, Boolean active, int page, int size) {
         PageRequest pageable =
-                PageRequest.of(
-                        Math.max(page, 0),
-                        Math.clamp(size, 1, MAX_PAGE_SIZE),
+                PageRequests.of(
+                        page,
+                        size,
+                        MAX_PAGE_SIZE,
                         Sort.by(
                                 Sort.Order.desc("active"),
                                 Sort.Order.asc("fullName"),
@@ -61,7 +64,7 @@ public class StaffService {
 
     @Transactional
     public StaffResponse create(StaffRequest request) {
-        String fullName = normalizeSpaces(request.fullName());
+        String fullName = TextNormalizer.normalizeName(request.fullName());
         ensureNameAvailable(fullName, 0L);
         Staff staff = new Staff(fullName, request.role(), clock.instant());
         staffRepository.save(staff);
@@ -76,7 +79,7 @@ public class StaffService {
         Staff staff = findStaff(id);
         StaffResponse before = mapper.toResponse(staff);
 
-        String fullName = normalizeSpaces(request.fullName());
+        String fullName = TextNormalizer.normalizeName(request.fullName());
         if (staff.isActive()) {
             ensureNameAvailable(fullName, id);
         }
@@ -137,20 +140,19 @@ public class StaffService {
 
     /** Mẫu LIKE viết thường, thoát ký tự đặc biệt % _ \\ của người dùng; rỗng thì lấy tất cả. */
     static String likePattern(String q) {
-        if (q == null || q.isBlank()) {
+        if (q == null) {
+            return "%";
+        }
+        String normalized = TextNormalizer.normalizeName(q);
+        if (normalized.isEmpty()) {
             return "%";
         }
         String escaped =
-                q.trim()
+                normalized
                         .toLowerCase(Locale.ROOT)
                         .replace("\\", "\\\\")
                         .replace("%", "\\%")
                         .replace("_", "\\_");
         return "%" + escaped + "%";
-    }
-
-    /** Cắt đầu cuối và gộp khoảng trắng liên tiếp, khớp với cách CSDL so sánh tên. */
-    private static String normalizeSpaces(String name) {
-        return name.trim().replaceAll("\\s+", " ");
     }
 }

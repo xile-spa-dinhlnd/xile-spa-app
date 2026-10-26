@@ -1,12 +1,20 @@
 # Chặn đầu vào bất thường
 
-Trạng thái: thiết kế (chờ duyệt) · Card: S3-08 (sửa lỗi) · Yêu cầu: BR-01, BR-18, NFR-SEC, `AGENTS.md` mục 10
+Trạng thái: khớp code · Card: S3-08 (sửa lỗi) · Yêu cầu: BR-01, BR-18, NFR-SEC, `AGENTS.md` mục 10
 
 **Chia ba phần** (mục cuối "Các phần"): mỗi lần `/implement docs/design/flows/common/input-hardening.md phần <N>`.
 
 | Ngày       | Người         | Card / PR | Thay đổi                                             |
 | ---------- | ------------- | --------- | ---------------------------------------------------- |
 | 25/10/2026 | Đình (Claude) | S3-08     | Thiết kế từ đợt dò ca biên trên `develop` (`1ddffcb`) |
+| 25/10/2026 | Đình (Claude) | S3-08     | Đình chốt: ký tự vô hình trong tên bỏ lặng lẽ          |
+| 25/10/2026 | Đình (Claude) | S3-08     | Đình duyệt; `q` chưa giới hạn độ dài                    |
+| 25/10/2026 | Đình (Claude) | S3-08     | Tự soát phần 1 lần 1: test nạp `application.yml` thật (hồ sơ `test`); lỗi trả bằng `ResponseEntity` đặt sẵn JSON; thêm ca 406, id sai, số vượt `Long` |
+| 25/10/2026 | Đình (Claude) | S3-08     | Tự soát phần 1: 2 vòng, sạch                          |
+| 26/10/2026 | Đình (Claude) | S3-08     | Tự soát phần 2 lần 1: bỏ thêm ký tự điều khiển `Cc` (NUL gây 500), Hangul filler; test lưu tên sạch, `likePattern`; ghi chú S3-01 không dùng `normalizeName` |
+| 26/10/2026 | Đình (Claude) | S3-08     | Tự soát phần 2: 2 vòng, sạch                          |
+| 26/10/2026 | Đình (Antigravity) | S3-08 | Hoàn tất phần 3, khớp code toàn bộ card               |
+| 26/10/2026 | Đình (Claude) | S3-08     | Tự soát phần 3: 2 vòng, sạch; cả card 6 vòng; `EdgeProbeIT` ngày 25/10 chạy lại: 7 lỗi đã hết |
 
 Phần chung của module: `README.md` cùng thư mục.
 
@@ -34,7 +42,7 @@ Không thêm endpoint. Đổi hành vi của **mọi** API nhận body JSON ho�
 
 | Loại   | Chỗ đổi                                                                                       | Ghi chú                                     |
 | ------ | --------------------------------------------------------------------------------------------- | ------------------------------------------- |
-| Cấu hình | `application.yml`: `spring.jackson.deserialization.accept-float-as-int: false`, `spring.jackson.mapper.allow-coercion-of-scalars: false` | Đã thử trên bản sao: chặn đúng #1, 256 test hiện có vẫn xanh |
+| Cấu hình | `application.yml`: `spring.jackson.deserialization.accept-float-as-int: false`, `spring.jackson.mapper.allow-coercion-of-scalars: false` | Test chỉ thấy cấu hình này sau khi đổi sang hồ sơ `test` (mục "Test chạy với cấu hình thật"); đã thử: 270 test xanh |
 | common | `GlobalExceptionHandler`                                                                       | #5, #7 và câu lỗi theo ô cho #1              |
 | common | `common/util/TextNormalizer.normalizeName(String)` (mới)                                       | #2, #3; thay 4 bản `normalizeSpaces`        |
 | common | `common/validation/VisibleText` (annotation mới, kiểm bằng `TextNormalizer`)                   | #2; lỗi về `fieldErrors` như `@NotBlank`     |
@@ -75,16 +83,25 @@ flowchart TD
 `TextNormalizer.normalizeName`, theo thứ tự:
 
 1. Chuẩn hóa Unicode về **NFC** (gõ tiếng Việt kiểu tổ hợp trên macOS cho "Gội" khác chuỗi với "Gội" dựng sẵn).
-2. Bỏ ký tự định dạng vô hình (lớp Unicode `Cf`: zero-width U+200B đến U+200D, U+2060, BOM U+FEFF, ký tự điều khiển
-   chiều chữ như U+202E dùng để giả mạo tên).
-3. Đổi mọi khoảng trắng Unicode (lớp `Z` và `\s`: NBSP, khoảng trắng hẹp, khoảng trắng chữ Hán, tab, xuống dòng) thành
-   một khoảng trắng thường; gộp liên tiếp; cắt đầu cuối.
+2. Đổi mọi khoảng trắng Unicode (lớp `Z`, `\s` và NEL U+0085: NBSP, khoảng trắng hẹp, khoảng trắng chữ Hán, tab, xuống
+   dòng) thành một khoảng trắng thường.
+3. Bỏ **lặng lẽ** ký tự vô hình còn lại ở bất cứ đâu trong tên, không báo lỗi (Đình chốt 25/10/2026: người dùng
+   không nhìn thấy chúng, thường do dán từ web, Zalo; báo lỗi thì không biết sửa ở đâu):
+   - lớp `Cf`: zero-width U+200B đến U+200D, U+2060, BOM U+FEFF, gạch nối mềm U+00AD, ký tự điều khiển chiều chữ như
+     U+202E dùng để giả mạo tên;
+   - lớp `Cc` (ký tự điều khiển, sau bước 2 đã đổi tab, xuống dòng): NUL U+0000 làm PostgreSQL từ chối và trả 500
+     (tìm ra khi tự soát phần 2), BEL U+0007...;
+   - ký tự lấp chỗ trông như khoảng trống dù không thuộc `Z`: U+115F, U+1160, U+3164, U+FFA0 (Hangul filler), U+2800
+     (ô chữ nổi trống).
+4. Gộp khoảng trắng liên tiếp; cắt đầu cuối (bước cuối, để bước 3 không để lại hai khoảng trắng liền nhau).
 
 Giữ nguyên dấu tiếng Việt (dấu tổ hợp thuộc lớp `Mn`, không phải `Cf`): test bắt buộc có ca này.
 
 - Thay 4 bản `normalizeSpaces` riêng (`ServiceItemService`, `ServiceGroupService`, `StaffService`, `ComboService`)
   bằng `TextNormalizer.normalizeName`, xóa bản cũ (`AGENTS.md` mục 7: không để method cũ không ai gọi). `likePattern`
   (tìm kiếm) cũng chuẩn hóa từ khóa trước khi tạo mẫu LIKE.
+- Từ khóa tìm kiếm `q` **chưa giới hạn độ dài** (Đình chốt 25/10/2026): 5.000 ký tự vẫn trả 200, truy vấn có tham
+  số; gửi lặp chuỗi dài để rate limit ở Caddy (D-05) chặn.
 - `@VisibleText(message = "...")` thay cho `@NotBlank` ở `ServiceItemRequest.name`, `ServiceGroupRequest.name`,
   `StaffRequest.fullName`, `ComboRequest.name` (giữ câu thông báo hiện có). Hợp lệ khi `normalizeName` cho chuỗi khác
   rỗng; `null` là sai. `@Size` giữ nguyên.
@@ -104,8 +121,21 @@ Giữ nguyên dấu tiếng Việt (dấu tổ hợp thuộc lớp `Mn`, không 
 - `HttpMediaTypeNotSupportedException` → 415, mã mới `UNSUPPORTED_MEDIA_TYPE` ("Dữ liệu gửi lên phải ở dạng JSON.").
 - `HttpMediaTypeNotAcceptableException` → 406, mã mới `NOT_ACCEPTABLE` ("Hệ thống chỉ trả dữ liệu dạng JSON.").
 - `GlobalExceptionHandler` đặt rõ `Content-Type: application/json` cho mọi `ApiError` và không để việc chọn định dạng
-  theo `Accept` làm hỏng phản hồi lỗi. Kết quả mong đợi: `GET /api/catalog/services/999999` kèm
-  `Accept: application/xml` trả 406 hoặc 404 bằng JSON, **không bao giờ** để exception lọt ra ngoài.
+  theo `Accept` làm hỏng phản hồi lỗi. Cách làm: hàm `respond` chung trả `ResponseEntity` có
+  `contentType(MediaType.APPLICATION_JSON)` (Spring bỏ qua `Accept` khi Content-Type đã đặt sẵn; đã thử trên bản sao),
+  không tự ghi vào `HttpServletResponse`. Kết quả: `GET /api/catalog/services/999999` kèm `Accept: application/xml`
+  trả **404** `NOT_FOUND` bằng JSON; `GET /api/catalog/services` kèm `Accept: application/xml` trả **406**
+  `NOT_ACCEPTABLE` bằng JSON; **không bao giờ** để exception lọt ra ngoài.
+
+### Test chạy với cấu hình thật
+
+Cấu hình Jackson của mục trên nằm ở `src/main/resources/application.yml`. Trước card này,
+`src/test/resources/application.yml` trùng tên nên **che mất** file chính: test tích hợp chạy không có `ddl-auto:
+validate`, `open-in-view`, cấu hình Jackson, `server.error` (tìm ra khi tự soát phần 1: xóa cấu hình Jackson khỏi file
+chính mà test vẫn xanh). Sửa: đổi file test thành `application-test.yml` chỉ chứa giá trị riêng của test (`xile.*`),
+`@IntegrationTest` thêm `@ActiveProfiles("test")`; không chép lại khóa `spring.*` của file chính. `SchemaSmokeIT` đếm
+toàn bảng (V2 không có dịch vụ, tài khoản) nên chạy trên database mới
+(`@DirtiesContext(classMode = BEFORE_CLASS)`), không phụ thuộc thứ tự lớp test.
 
 ## Lỗi trả về
 
@@ -121,12 +151,13 @@ Giữ nguyên dấu tiếng Việt (dấu tổ hợp thuộc lớp `Mn`, không 
 
 | Chỗ | Đổi gì |
 | --- | ------ |
-| Huy | Báo trước: đổi `GlobalExceptionHandler`, Jackson toàn cục, `AuditLogQueryService` (phân trang). Request của `auth` chỉ có chuỗi nên không bị chặt hơn |
+| Huy | Báo trước: đổi `GlobalExceptionHandler`, Jackson toàn cục, `AuditLogQueryService` (phân trang). Request của `auth` chỉ có chuỗi nên không bị chặt hơn. Cấu hình test chuyển sang `application-test.yml` (hồ sơ `test`): nhánh đang mở của Huy có sửa `src/test/resources/application.yml` thì chuyển sang file mới |
+| `backend/AGENTS.md` mục Cấu hình, Dữ liệu mẫu | Test dùng hồ sơ `test` chồng lên `application.yml`; không tạo `src/test/resources/application.yml` (phần 1) |
 | `frontend/src` | Không đổi code: mọi form gửi số; `fieldErrors` mới tự gắn vào ô qua cách xử lý lỗi đã có. Grep lại `String(` cho trường tiền khi làm phần 1 |
 | `docs/postman` | Thêm vào thư mục lỗi: giá thập phân 400, tên chỉ NBSP 400, sai Content-Type 415, `items: [null]` 400 |
 | `backend/AGENTS.md` | Mục Cấu trúc (`common/util`, `common/validation`): `TextNormalizer`, `@VisibleText`, `PageRequests`; mục Lỗi: hai mã mới; tên request dùng `@VisibleText` thay `@NotBlank` |
 | `docs/design/flows/*` | `catalog/README.md`, `staff/README.md`: "Tên không trùng" trỏ về `TextNormalizer` |
-| Module sau (customer S3-01) | Tên khách, ghi chú dùng `@VisibleText`, `normalizeName`, `PageRequests` ngay từ đầu |
+| Module sau (customer S3-01) | Tên khách dùng `@VisibleText`, `normalizeName`, `PageRequests` ngay từ đầu. Ghi chú nhiều dòng **không** dùng `normalizeName` (gộp mất xuống dòng): S3-01 thiết kế cách giữ xuống dòng mà vẫn bỏ ký tự vô hình. `likePattern` sẽ có bản thứ ba ở module khách hàng: S3-01 chuyển nó vào `common` thay vì chép |
 
 ## Bảo mật
 
@@ -142,9 +173,10 @@ Ca dùng chung test một lần ở `common` (`AGENTS.md` mục 10); ca theo tr�
 
 | Hành vi | Tầng | Chuẩn | Dữ liệu sai | Biên | Lỗi nghiệp vụ | Quyền, bảo mật | Không tác dụng phụ |
 | ------- | ---- | ----- | ----------- | ---- | ------------- | -------------- | ------------------ |
-| Kiểu chặt (#1, #7) | IT `common/exception/InputHandlingIT` | `integerPriceIsAccepted` | `decimalPriceIsRejectedOnPriceField`, `stringNumberIsRejected`, `exponentNumberIsRejected`, `unknownEnumIsRejectedOnRoleField` | `decimalQuantityInNestedListPointsToItemField` (`items[0].quantity`) | không áp dụng | `typeErrorDoesNotLeakJacksonDetails` | `decimalPriceCreatesNothing` (không lưu, không audit) |
-| Body, định dạng (#5) | IT `InputHandlingIT` | không áp dụng | `malformedJsonIsBadRequest`, `emptyBodyIsBadRequest` | `textPlainBodyIs415`, `missingContentTypeIs415`, `xmlAcceptOnMissingResourceNeverEscapes` | không áp dụng | `unknownFieldsCannotSetIdOrActive` | không áp dụng |
-| `TextNormalizer` (#2, #3) | unit `TextNormalizerTest` | `plainNameIsTrimmedAndCollapsed` | không áp dụng | `nbspAndThinSpacesBecomeSpace`, `zeroWidthAndBomAreRemoved`, `bidiControlIsRemoved`, `decomposedVietnameseBecomesComposed`, `vietnameseDiacriticsAreKept`, `onlyInvisibleCharactersBecomeEmpty`, `tabsAndNewlinesBecomeSpace` | không áp dụng | không áp dụng | không áp dụng |
+| Kiểu chặt (#1, #7) | IT `common/exception/InputHandlingIT` | `integerPriceIsAccepted` | `decimalPriceIsRejectedOnPriceField`, `stringNumberIsRejected`, `exponentNumberIsRejected`, `unknownEnumIsRejectedOnRoleField` | `decimalQuantityInNestedListPointsToItemField` | không áp dụng: lỗi sai kiểu là lỗi validation 400 | `typeErrorDoesNotLeakJacksonDetails` | `decimalPriceCreatesNothing` |
+| Body, định dạng (#5) | IT `InputHandlingIT` | không áp dụng: body rỗng hoặc sai Content-Type không có ca chuẩn | `malformedJsonIsBadRequest`, `emptyBodyIsBadRequest`, `nonNumericIdIsBadRequest`, `numberBeyondLongIsBadRequest` | `textPlainBodyIs415`, `missingContentTypeIs415`, `xmlAcceptOnMissingResourceNeverEscapes` (đúng 404), `xmlAcceptOnListIs406` | không áp dụng: lỗi định dạng do framework xử lý | `unknownFieldsCannotSetIdOrActive` | không áp dụng: từ chối ở tầng parser trước khi vào service |
+| `TextNormalizer` (#2, #3) | unit `TextNormalizerTest` | `plainNameIsTrimmedAndCollapsed` | không áp dụng | `nbspAndThinSpacesBecomeSpace`, `zeroWidthAndBomAreRemoved`, `bidiControlIsRemoved`, `decomposedVietnameseBecomesComposed`, `vietnameseDiacriticsAreKept`, `onlyInvisibleCharactersBecomeEmpty`, `tabsAndNewlinesBecomeSpace`, `controlCharactersAreRemoved`, `nextLineBecomesSpace`, `hangulFillerAndBrailleBlankAreRemoved` | không áp dụng | không áp dụng | không áp dụng |
+| Lưu tên sạch, tìm kiếm chuẩn hóa (#2, #3) | IT ở 4 controller; unit `ServiceItemServiceTest`, `StaffServiceTest` | `nameIsStoredNormalized` (đọc lại từ DB) | không áp dụng | `nameWithNulCharacterIsSavedClean` (ở `ServiceItemControllerIT`, không 500), `likePatternNormalizesKeyword` | không áp dụng | không áp dụng | không áp dụng |
 | `@VisibleText` (#2) | unit `VisibleTextValidatorTest`; IT ở controller của dịch vụ, nhóm, nhân viên, combo | `normalNameIsValid` | `nameOfOnlyNbspIsRejected`, `nameOfOnlyZeroWidthIsRejected`, `nullIsRejected` | không áp dụng | không áp dụng | không áp dụng | `invisibleNameCreatesNothing` (ở `ServiceItemControllerIT`) |
 | Trùng tên với ký tự lạ (#3) | IT ở 4 controller | không áp dụng | không áp dụng | `nameDifferingOnlyByNbspIsDuplicate`, `nameWithTrailingZeroWidthIsDuplicate`, `decomposedNameIsDuplicate` | `*_NAME_DUPLICATE` | không áp dụng | không ghi audit |
 | `null` trong danh sách (#4) | IT `ComboControllerIT` | không áp dụng | `nullItemIsRejectedOnItemField` (tạo, tính thử) | không áp dụng | không áp dụng | không áp dụng | `nullItemCreatesNothing` |
@@ -159,15 +191,15 @@ Dữ liệu mẫu dev: không (tên mẫu đã là tên thường; `StaffDevData
 
 | Phần | Chức năng | Khoảng | Trạng thái |
 | ---- | --------- | ------ | ---------- |
-| 1 | Kiểu dữ liệu chặt, lỗi đúng ô, lỗi luôn JSON (#1, #5, #7) | 100 dòng | chưa làm |
-| 2 | Chuẩn hóa tên và `@VisibleText` ở 4 request (#2, #3) | 120 dòng | chưa làm |
-| 3 | `null` trong danh sách, `PageRequests` ở 4 service; hoàn tất card (#4, #6) | 60 dòng | chưa làm |
+| 1 | Kiểu dữ liệu chặt, lỗi đúng ô, lỗi luôn JSON (#1, #5, #7) | 100 dòng | đã soát |
+| 2 | Chuẩn hóa tên và `@VisibleText` ở 4 request (#2, #3) | 120 dòng | đã soát |
+| 3 | `null` trong danh sách, `PageRequests` ở 4 service; hoàn tất card (#4, #6) | 60 dòng | đã soát |
 
 ### Phần 1. Kiểu dữ liệu chặt, lỗi đúng ô, lỗi luôn JSON
 
 Nặng nhất vì đổi hành vi mọi API; làm trước để phần 2, 3 dùng chung cách trả `fieldErrors`. Tầng: cấu hình Jackson,
-`ErrorCode` (2 mã), `GlobalExceptionHandler`; test `InputHandlingIT` dòng "Kiểu chặt", "Body, định dạng"; Postman: giá
-thập phân, sai Content-Type. Backlog: S3-08 sang "Đang làm".
+`ErrorCode` (2 mã), `GlobalExceptionHandler`; hồ sơ test (mục "Test chạy với cấu hình thật"); test `InputHandlingIT`
+dòng "Kiểu chặt", "Body, định dạng"; Postman: giá thập phân, sai Content-Type. Backlog: S3-08 sang "Đang làm".
 
 ### Phần 2. Chuẩn hóa tên
 
@@ -178,12 +210,3 @@ dùng `@VisibleText`. Test: dòng `TextNormalizer`, `@VisibleText`, "Trùng tên
 
 `@NotNull` phần tử ở hai request combo; `PageRequests` thay 4 chỗ. Test: dòng "`null` trong danh sách", "Phân trang".
 Postman: `items: [null]`. Hoàn tất: các dòng "Ảnh hưởng" còn lại, file luồng `khớp code`, backlog "Xong".
-
-## Câu hỏi mở
-
-1. **Ký tự vô hình ở giữa tên thì bỏ đi lặng lẽ hay báo lỗi?** Ví dụ "Gội​đầu".
-   **Đề xuất: bỏ đi lặng lẽ.** Người dùng không nhìn thấy ký tự này (thường do dán từ web, Zalo), báo lỗi thì họ không
-   biết sửa ở đâu. Tên chỉ toàn ký tự vô hình thì vẫn báo lỗi vì sau khi bỏ không còn gì.
-2. **Có giới hạn độ dài từ khóa tìm kiếm `q` không?** Hiện 5.000 ký tự vẫn chạy bình thường (200, trả rỗng).
-   **Đề xuất: không giới hạn ở card này.** Không gây lỗi; truy vấn có tham số nên không có nguy cơ SQL injection. Khi
-   có rate limit ở reverse proxy (D-05) thì việc gửi chuỗi dài lặp lại đã được chặn ở đó.

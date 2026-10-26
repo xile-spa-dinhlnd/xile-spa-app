@@ -16,6 +16,10 @@ spring:
     locations: classpath:db/migration
   jackson:
     time-zone: Asia/Ho_Chi_Minh
+    deserialization:
+      accept-float-as-int: false
+    mapper:
+      allow-coercion-of-scalars: false
 
 management:
   endpoints:

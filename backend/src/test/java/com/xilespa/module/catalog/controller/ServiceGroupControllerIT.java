@@ -207,6 +207,80 @@ class ServiceGroupControllerIT {
     }
 
     @Test
+    void nameOfOnlyNbspIsRejected() throws Exception {
+        mockMvc.perform(send(post("/api/catalog/service-groups"), json("\u00A0\u00A0\u00A0", 10)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"))
+                .andExpect(
+                        jsonPath("$.fieldErrors[?(@.field == 'name')].message")
+                                .value("Tên nhóm dịch vụ không được để trống"));
+    }
+
+    @Test
+    void nameOfOnlyZeroWidthIsRejected() throws Exception {
+        mockMvc.perform(send(post("/api/catalog/service-groups"), json("\u200B\u200C\uFEFF", 10)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"))
+                .andExpect(
+                        jsonPath("$.fieldErrors[?(@.field == 'name')].message")
+                                .value("Tên nhóm dịch vụ không được để trống"));
+    }
+
+    @Test
+    void nameDifferingOnlyByNbspIsDuplicate() throws Exception {
+        create(prefix + "Nhóm Massage", 80);
+
+        mockMvc.perform(
+                        send(
+                                post("/api/catalog/service-groups"),
+                                json(prefix + "\u00A0Nhóm\u00A0Massage\u00A0", 81)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("SERVICE_GROUP_NAME_DUPLICATE"));
+    }
+
+    @Test
+    void nameWithTrailingZeroWidthIsDuplicate() throws Exception {
+        create(prefix + "Nhóm Trị Liệu", 82);
+
+        mockMvc.perform(
+                        send(
+                                post("/api/catalog/service-groups"),
+                                json(prefix + "Nhóm Trị Liệu\u200B", 83)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("SERVICE_GROUP_NAME_DUPLICATE"));
+    }
+
+    @Test
+    void decomposedNameIsDuplicate() throws Exception {
+        create(prefix + "Nhóm Gội NFD", 84);
+
+        mockMvc.perform(
+                        send(
+                                post("/api/catalog/service-groups"),
+                                json(prefix + "Nhóm G\u006F\u0323\u0302i NFD", 85)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("SERVICE_GROUP_NAME_DUPLICATE"));
+    }
+
+    @Test
+    void nameIsStoredNormalized() throws Exception {
+        String dirtyName = "  " + prefix + "\u00A0Nhóm\u200B  Chăm\u00A0Sóc   ";
+        String cleanName = prefix + "Nhóm Chăm Sóc";
+
+        String response =
+                mockMvc.perform(send(post("/api/catalog/service-groups"), json(dirtyName, 88)))
+                        .andExpect(status().isCreated())
+                        .andExpect(jsonPath("$.name").value(cleanName))
+                        .andReturn()
+                        .getResponse()
+                        .getContentAsString();
+
+        long id = ((Number) JsonPath.read(response, "$.id")).longValue();
+        var saved = groupRepository.findById(id).orElseThrow();
+        assertThat(saved.getName()).isEqualTo(cleanName);
+    }
+
+    @Test
     void validationFailsOnBlankOrInvalidData() throws Exception {
         mockMvc.perform(send(post("/api/catalog/service-groups"), json("", 10)))
                 .andExpect(status().isBadRequest())

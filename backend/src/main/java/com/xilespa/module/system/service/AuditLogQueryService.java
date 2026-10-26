@@ -2,6 +2,7 @@ package com.xilespa.module.system.service;
 
 import com.xilespa.common.audit.AuditLog;
 import com.xilespa.common.audit.AuditLogRepository;
+import com.xilespa.common.response.PageRequests;
 import com.xilespa.common.response.PageResponse;
 import com.xilespa.module.system.dto.response.AuditLogResponse;
 import com.xilespa.module.system.mapper.AuditLogMapper;
@@ -27,9 +28,10 @@ public class AuditLogQueryService {
     public PageResponse<AuditLogResponse> search(
             String entityType, String entityId, int page, int size) {
         PageRequest pageable =
-                PageRequest.of(
-                        Math.max(page, 0),
-                        Math.clamp(size, 1, MAX_PAGE_SIZE),
+                PageRequests.of(
+                        page,
+                        size,
+                        MAX_PAGE_SIZE,
                         Sort.by(Sort.Order.desc("occurredAt"), Sort.Order.desc("id")));
         Page<AuditLog> result;
         if (entityType == null || entityType.isBlank()) {

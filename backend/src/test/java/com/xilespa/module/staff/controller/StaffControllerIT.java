@@ -15,6 +15,7 @@ import com.xilespa.common.audit.AuditLogRepository;
 import com.xilespa.module.auth.entity.AppUser;
 import com.xilespa.module.auth.enums.UserRole;
 import com.xilespa.module.auth.repository.AppUserRepository;
+import com.xilespa.module.staff.repository.StaffRepository;
 import com.xilespa.security.UserPrincipal;
 import com.xilespa.support.IntegrationTest;
 import java.time.Clock;
@@ -42,6 +43,7 @@ class StaffControllerIT {
 
     @Autowired MockMvc mockMvc;
     @Autowired AppUserRepository userRepository;
+    @Autowired StaffRepository staffRepository;
     @Autowired AuditLogRepository auditLogRepository;
     @Autowired Clock clock;
 
@@ -95,6 +97,78 @@ class StaffControllerIT {
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value("STAFF_NAME_DUPLICATE"))
                 .andExpect(jsonPath("$.message").value("Đã có nhân viên đang làm trùng tên."));
+    }
+
+    @Test
+    void nameOfOnlyNbspIsRejected() throws Exception {
+        mockMvc.perform(send(post("/api/staff"), json("\u00A0\u00A0\u00A0", "THERAPIST")))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"))
+                .andExpect(
+                        jsonPath("$.fieldErrors[?(@.field == 'fullName')].message")
+                                .value("Tên nhân viên không được để trống"));
+    }
+
+    @Test
+    void nameOfOnlyZeroWidthIsRejected() throws Exception {
+        mockMvc.perform(send(post("/api/staff"), json("\u200B\u200C\uFEFF", "THERAPIST")))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"))
+                .andExpect(
+                        jsonPath("$.fieldErrors[?(@.field == 'fullName')].message")
+                                .value("Tên nhân viên không được để trống"));
+    }
+
+    @Test
+    void nameDifferingOnlyByNbspIsDuplicate() throws Exception {
+        create(prefix + "Thu Hà", "THERAPIST");
+
+        mockMvc.perform(
+                        send(
+                                post("/api/staff"),
+                                json(prefix + "\u00A0Thu\u00A0Hà\u00A0", "THERAPIST")))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("STAFF_NAME_DUPLICATE"));
+    }
+
+    @Test
+    void nameWithTrailingZeroWidthIsDuplicate() throws Exception {
+        create(prefix + "Thu Trang", "THERAPIST");
+
+        mockMvc.perform(send(post("/api/staff"), json(prefix + "Thu Trang\u200B", "THERAPIST")))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("STAFF_NAME_DUPLICATE"));
+    }
+
+    @Test
+    void decomposedNameIsDuplicate() throws Exception {
+        create(prefix + "Lan Gội", "THERAPIST");
+
+        // Dạng NFD của Gội
+        mockMvc.perform(
+                        send(
+                                post("/api/staff"),
+                                json(prefix + "Lan G\u006F\u0323\u0302i", "THERAPIST")))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("STAFF_NAME_DUPLICATE"));
+    }
+
+    @Test
+    void nameIsStoredNormalized() throws Exception {
+        String dirtyName = "  " + prefix + "\u00A0Nguyễn\u200B  Thị\u00A0Mai   ";
+        String cleanName = prefix + "Nguyễn Thị Mai";
+
+        String response =
+                mockMvc.perform(send(post("/api/staff"), json(dirtyName, "THERAPIST")))
+                        .andExpect(status().isCreated())
+                        .andExpect(jsonPath("$.fullName").value(cleanName))
+                        .andReturn()
+                        .getResponse()
+                        .getContentAsString();
+
+        long id = ((Number) JsonPath.read(response, "$.id")).longValue();
+        var saved = staffRepository.findById(id).orElseThrow();
+        assertThat(saved.getFullName()).isEqualTo(cleanName);
     }
 
     @Test

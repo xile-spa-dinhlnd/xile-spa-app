@@ -3078,6 +3078,206 @@
               }
             }
           ]
+        },
+        {
+          "name": "Tạo dịch vụ giá thập phân",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/catalog/services",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "catalog",
+                "services"
+              ]
+            },
+            "description": "BR-01, S3-08. Không nhận số thập phân cho trường tiền, trả 400 VALIDATION_FAILED với lỗi ở ô listPrice.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Dịch vụ test giá thập phân\",\n  \"groupId\": 1,\n  \"listPrice\": 100000.5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 400\", () => pm.response.to.have.status(400));",
+                  "const e = pm.response.json();",
+                  "pm.test(\"Mã lỗi VALIDATION_FAILED\", () => pm.expect(e.code).to.eql(\"VALIDATION_FAILED\"));",
+                  "pm.test(\"Báo lỗi ở ô listPrice: Phải là số nguyên\", () => {",
+                  "  const fe = e.fieldErrors.find(f => f.field === \"listPrice\");",
+                  "  pm.expect(fe).to.be.an(\"object\");",
+                  "  pm.expect(fe.message).to.eql(\"Phải là số nguyên\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Tạo dịch vụ sai Content-Type",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/plain"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/catalog/services",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "catalog",
+                "services"
+              ]
+            },
+            "description": "S3-08. Content-Type không phải JSON trả 415 UNSUPPORTED_MEDIA_TYPE kèm ApiError JSON.",
+            "body": {
+              "mode": "raw",
+              "raw": "name=DichVu",
+              "options": {
+                "raw": {
+                  "language": "text"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 415\", () => pm.response.to.have.status(415));",
+                  "const e = pm.response.json();",
+                  "pm.test(\"Mã lỗi UNSUPPORTED_MEDIA_TYPE\", () => pm.expect(e.code).to.eql(\"UNSUPPORTED_MEDIA_TYPE\"));",
+                  "pm.test(\"Thông báo yêu cầu JSON\", () => pm.expect(e.message).to.eql(\"Dữ liệu gửi lên phải ở dạng JSON.\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Tạo dịch vụ tên chỉ NBSP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/catalog/services",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "catalog",
+                "services"
+              ]
+            },
+            "description": "S3-08. Tên chỉ chứa ký tự vô hình/NBSP trả 400 VALIDATION_FAILED với lỗi ở ô name.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"\\u00A0\\u00A0\\u00A0\",\n  \"groupId\": 1,\n  \"listPrice\": 50000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 400\", () => pm.response.to.have.status(400));",
+                  "const e = pm.response.json();",
+                  "pm.test(\"Mã lỗi VALIDATION_FAILED\", () => pm.expect(e.code).to.eql(\"VALIDATION_FAILED\"));",
+                  "pm.test(\"Báo lỗi ở ô name: Tên dịch vụ không được để trống\", () => {",
+                  "  const fe = e.fieldErrors.find(f => f.field === \"name\");",
+                  "  pm.expect(fe).to.be.an(\"object\");",
+                  "  pm.expect(fe.message).to.eql(\"Tên dịch vụ không được để trống\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Tạo combo phần tử null",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/catalog/combos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "catalog",
+                "combos"
+              ]
+            },
+            "description": "S3-08. Danh sách items có phần tử null trả 400 VALIDATION_FAILED với lỗi ở items[0].",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Combo phần tử null\",\n  \"price\": 100000,\n  \"items\": [null]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 400\", () => pm.response.to.have.status(400));",
+                  "const e = pm.response.json();",
+                  "pm.test(\"Mã lỗi VALIDATION_FAILED\", () => pm.expect(e.code).to.eql(\"VALIDATION_FAILED\"));",
+                  "pm.test(\"Báo lỗi ở ô items[0]: Dòng dịch vụ không được để trống\", () => {",
+                  "  const fe = e.fieldErrors.find(f => f.field === \"items[0]\");",
+                  "  pm.expect(fe).to.be.an(\"object\");",
+                  "  pm.expect(fe.message).to.eql(\"Dòng dịch vụ không được để trống\");",
+                  "});"
+                ]
+              }
+            }
+          ]
         }
       ]
     },

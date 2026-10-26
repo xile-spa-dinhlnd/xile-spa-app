@@ -1,8 +1,8 @@
 package com.xilespa.module.catalog.dto.request;
 
+import com.xilespa.common.validation.VisibleText;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
@@ -10,7 +10,7 @@ import jakarta.validation.constraints.Size;
 import java.util.List;
 
 public record ComboRequest(
-        @NotBlank(message = "Tên combo không được để trống")
+        @VisibleText(message = "Tên combo không được để trống")
                 @Size(max = 150, message = "Tên combo tối đa 150 ký tự")
                 String name,
         @NotNull(message = "Vui lòng nhập giá combo")
@@ -22,5 +22,5 @@ public record ComboRequest(
                 Long tourFee,
         @NotEmpty(message = "Combo phải có ít nhất một dịch vụ")
                 @Size(max = 20, message = "Combo tối đa 20 dịch vụ")
-                @Valid
-                List<ComboItemRequest> items) {}
+                List<@NotNull(message = "Dòng dịch vụ không được để trống") @Valid ComboItemRequest>
+                        items) {}
