@@ -6,6 +6,7 @@ import type {
   ComboQuote,
   ComboQuoteRequest,
   ComboRequest,
+  ComboSearchParams,
   ServiceGroup,
   ServiceGroupRequest,
   ServiceItem,
@@ -19,6 +20,7 @@ export const catalogKeys = {
   serviceList: (params: ServiceSearchParams) => ['catalog', 'services', params] as const,
   groups: ['catalog', 'service-groups'] as const,
   combos: ['catalog', 'combos'] as const,
+  comboList: (params: ComboSearchParams) => ['catalog', 'combos', params] as const,
   comboQuote: (body: ComboQuoteRequest | null) => ['catalog', 'combos', 'quote', body] as const,
 }
 
@@ -143,6 +145,19 @@ export function useComboQuote(body: ComboQuoteRequest | null) {
   })
 }
 
+/** Danh sách combo: tìm, lọc, phân trang phía server (FR-CMB-04). */
+export function useCombos(params: ComboSearchParams) {
+  return useQuery({
+    queryKey: catalogKeys.comboList(params),
+    queryFn: ({ signal }) =>
+      api.get<PageResponse<Combo>>('/api/catalog/combos', {
+        signal,
+        query: { ...params },
+      }),
+    placeholderData: keepPreviousData,
+  })
+}
+
 function useInvalidateCombos() {
   const queryClient = useQueryClient()
   return () => queryClient.invalidateQueries({ queryKey: catalogKeys.combos })
@@ -153,6 +168,16 @@ export function useCreateCombo() {
   const invalidate = useInvalidateCombos()
   return useMutation({
     mutationFn: (body: ComboRequest) => api.post<Combo>('/api/catalog/combos', body),
+    onSuccess: invalidate,
+  })
+}
+
+/** Sửa combo (FR-CMB-01). */
+export function useUpdateCombo() {
+  const invalidate = useInvalidateCombos()
+  return useMutation({
+    mutationFn: ({ id, body }: { id: number; body: ComboRequest }) =>
+      api.put<Combo>(`/api/catalog/combos/${id}`, body),
     onSuccess: invalidate,
   })
 }

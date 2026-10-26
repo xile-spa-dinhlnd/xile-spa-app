@@ -1,0 +1,12 @@
+.comboCard {
+  margin-bottom: var(--xl-space-md);
+}
+
+/* Lồng dưới .comboCard để thắng div.ant-typography (0,1,1) */
+.comboCard .cardItems {
+  margin: var(--xl-space-xs) 0 var(--xl-space-sm);
+}
+
+.comboCard .cardLine {
+  margin-bottom: var(--xl-space-xs);
+}

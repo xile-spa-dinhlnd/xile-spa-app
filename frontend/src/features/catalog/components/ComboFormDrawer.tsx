@@ -1,19 +1,20 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { App, Button, Drawer, Form, Grid, Input, Space } from 'antd'
+import { Alert, App, Button, Drawer, Form, Grid, Input, Space } from 'antd'
 import { useEffect } from 'react'
 import { Controller, useForm, useWatch, type FieldPath } from 'react-hook-form'
 import { ApiError } from '@/shared/api/errors'
 import { MoneyInput } from '@/shared/components/MoneyInput'
 import { useDebounce } from '@/shared/hooks/useDebounce'
-import { useComboQuote, useCreateCombo } from '../api'
+import { useComboQuote, useCreateCombo, useUpdateCombo } from '../api'
 import { comboFormSchema, comboItemSchema, type ComboFormValues } from '../schemas'
-import type { ComboQuoteRequest } from '../types'
+import type { Combo, ComboQuoteRequest } from '../types'
 import { ComboItemsField } from './ComboItemsField'
 import { ComboPriceSummary } from './ComboPriceSummary'
 import styles from './ComboFormDrawer.module.css'
 
 interface ComboFormDrawerProps {
   open: boolean
+  combo?: Combo | null
   onClose: () => void
 }
 
@@ -24,12 +25,29 @@ const EMPTY: ComboFormValues = {
   items: [],
 }
 
-/** Form thêm combo (FR-CMB-01). Hiển thị lỗi từng ô và khối tính thử tổng giá lẻ/tiết kiệm. */
-export function ComboFormDrawer({ open, onClose }: ComboFormDrawerProps) {
+function toFormValues(combo?: Combo | null): ComboFormValues {
+  if (!combo) return EMPTY
+  return {
+    name: combo.name,
+    price: combo.price,
+    tourFee: combo.tourFee,
+    items: combo.items.map((i) => ({
+      serviceId: i.serviceId,
+      serviceName: i.serviceName,
+      serviceActive: i.serviceActive,
+      quantity: i.quantity,
+    })),
+  }
+}
+
+/** Form thêm và sửa combo (FR-CMB-01). Hiển thị lỗi từng ô và khối tính thử tổng giá lẻ/tiết kiệm. */
+export function ComboFormDrawer({ open, combo, onClose }: ComboFormDrawerProps) {
+  const isEdit = Boolean(combo)
   const screens = Grid.useBreakpoint()
   const { message } = App.useApp()
   const createCombo = useCreateCombo()
-  const saving = createCombo.isPending
+  const updateCombo = useUpdateCombo()
+  const saving = createCombo.isPending || updateCombo.isPending
 
   const {
     control,
@@ -39,14 +57,15 @@ export function ComboFormDrawer({ open, onClose }: ComboFormDrawerProps) {
     formState: { errors },
   } = useForm<ComboFormValues>({
     resolver: zodResolver(comboFormSchema),
-    defaultValues: EMPTY,
+    defaultValues: toFormValues(combo),
   })
 
   useEffect(() => {
-    if (open) reset(EMPTY)
-  }, [open, reset])
+    if (open) reset(toFormValues(combo))
+  }, [open, combo, reset])
 
   const watchedPrice = useWatch({ control, name: 'price' })
+  const priceChanged = isEdit && watchedPrice !== combo?.price
   const watchedItems = useWatch({ control, name: 'items' })
   const itemsList = watchedItems ?? []
 
@@ -88,8 +107,13 @@ export function ComboFormDrawer({ open, onClose }: ComboFormDrawerProps) {
     }
 
     try {
-      await createCombo.mutateAsync(body)
-      message.success('Đã thêm combo.')
+      if (combo) {
+        await updateCombo.mutateAsync({ id: combo.id, body })
+        message.success('Đã lưu thay đổi combo.')
+      } else {
+        await createCombo.mutateAsync(body)
+        message.success('Đã thêm combo.')
+      }
       onClose()
     } catch (error) {
       if (!(error instanceof ApiError)) {
@@ -97,7 +121,9 @@ export function ComboFormDrawer({ open, onClose }: ComboFormDrawerProps) {
         return
       }
 
-      if (error.code === 'COMBO_NAME_DUPLICATE') {
+      if (error.code === 'NOT_FOUND') {
+        message.error('Không tìm thấy combo.')
+      } else if (error.code === 'COMBO_NAME_DUPLICATE') {
         setError('name', { message: error.message })
       } else if (
         error.code === 'COMBO_ITEM_DUPLICATE' ||
@@ -143,7 +169,7 @@ export function ComboFormDrawer({ open, onClose }: ComboFormDrawerProps) {
 
   return (
     <Drawer
-      title="Thêm combo"
+      title={isEdit ? 'Sửa combo' : 'Thêm combo'}
       open={open}
       onClose={onClose}
       size={screens.md ? 480 : '100%'}
@@ -154,7 +180,7 @@ export function ComboFormDrawer({ open, onClose }: ComboFormDrawerProps) {
             Hủy
           </Button>
           <Button type="primary" size="large" loading={saving} onClick={() => onSubmit()}>
-            Tạo combo
+            {isEdit ? 'Lưu' : 'Tạo combo'}
           </Button>
         </Space>
       }
@@ -193,7 +219,12 @@ export function ComboFormDrawer({ open, onClose }: ComboFormDrawerProps) {
           label="Giá combo"
           required
           validateStatus={errors.price ? 'error' : undefined}
-          help={errors.price?.message}
+          help={
+            errors.price?.message ??
+            (priceChanged
+              ? 'Đổi giá combo không ảnh hưởng các giao dịch đã ghi trước đó.'
+              : undefined)
+          }
         >
           <Controller
             name="price"
@@ -248,6 +279,10 @@ export function ComboFormDrawer({ open, onClose }: ComboFormDrawerProps) {
             )}
           />
         </Form.Item>
+
+        {isEdit && !combo?.active && (
+          <Alert type="warning" showIcon title="Combo này đang ngừng bán." />
+        )}
 
         <button type="submit" hidden />
       </Form>

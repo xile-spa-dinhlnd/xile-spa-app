@@ -87,12 +87,13 @@ const mockServices: ServiceItem[] = [
 let fetchCalls: { url: string; method: string; body?: unknown }[] = []
 let quoteHandler: ((body: ComboQuoteRequest | undefined) => Response) | null = null
 let createHandler: ((body: ComboRequest | undefined) => Response) | null = null
+let updateHandler: ((id: number, body: ComboRequest | undefined) => Response) | null = null
 
-function renderDrawer(props: { open?: boolean; onClose?: () => void } = {}) {
+function renderDrawer(props: { open?: boolean; combo?: Combo | null; onClose?: () => void } = {}) {
   const onClose = props.onClose ?? vi.fn()
   const result = render(
     <Providers>
-      <ComboFormDrawer open={props.open ?? true} onClose={onClose} />
+      <ComboFormDrawer open={props.open ?? true} combo={props.combo} onClose={onClose} />
     </Providers>,
   )
   return { ...result, onClose }
@@ -102,6 +103,7 @@ beforeEach(() => {
   fetchCalls = []
   quoteHandler = null
   createHandler = null
+  updateHandler = null
 
   vi.stubGlobal(
     'fetch',
@@ -177,6 +179,37 @@ beforeEach(() => {
           updatedAt: '2026-10-26T10:00:00Z',
         }
         return json(created, 201)
+      }
+
+      if (url.pathname.startsWith('/api/catalog/combos/') && method === 'PUT') {
+        const idMatch = url.pathname.match(/\/api\/catalog\/combos\/(\d+)$/)
+        const id = idMatch ? Number(idMatch[1]) : 0
+        const updateReq = body as ComboRequest | undefined
+        if (updateHandler) return updateHandler(id, updateReq)
+        const updated: Combo = {
+          id,
+          name: updateReq?.name ?? '',
+          price: updateReq?.price ?? 0,
+          tourFee: updateReq?.tourFee ?? 0,
+          active: true,
+          items: (updateReq?.items ?? []).map((it) => {
+            const s = mockServices.find((srv) => srv.id === it.serviceId)
+            const listPrice = s ? s.listPrice : 150000
+            return {
+              serviceId: it.serviceId,
+              serviceName: s ? s.name : `Dịch vụ ${it.serviceId}`,
+              serviceActive: s ? s.active : true,
+              listPrice,
+              quantity: it.quantity,
+              lineTotal: listPrice * it.quantity,
+            }
+          }),
+          retailTotal: 380000,
+          savings: 0,
+          createdAt: '2026-10-26T10:00:00Z',
+          updatedAt: '2026-10-26T10:00:00Z',
+        }
+        return json(updated, 200)
       }
 
       return json({}, 404)
@@ -682,5 +715,190 @@ describe('ComboFormDrawer - Tính thử giá', () => {
       (c) => c.url === '/api/catalog/combos' && c.method === 'GET',
     )
     expect(comboListCalls.length).toBe(0)
+  })
+})
+
+describe('ComboFormDrawer - Sửa combo', () => {
+  const mockCombo: Combo = {
+    id: 100,
+    name: 'Combo Thư Giãn',
+    price: 400000,
+    tourFee: 60000,
+    active: true,
+    items: [
+      {
+        serviceId: 1,
+        serviceName: 'Gội đầu thảo dược',
+        serviceActive: true,
+        listPrice: 180000,
+        quantity: 1,
+        lineTotal: 180000,
+      },
+      {
+        serviceId: 2,
+        serviceName: 'Giãn cơ chân',
+        serviceActive: true,
+        listPrice: 200000,
+        quantity: 1,
+        lineTotal: 200000,
+      },
+    ],
+    retailTotal: 380000,
+    savings: -20000,
+    createdAt: '2026-10-11T03:00:00Z',
+    updatedAt: '2026-10-11T03:00:00Z',
+  }
+
+  it('mở sửa điền sẵn tên, giá, các dòng; lưu gửi PUT và báo Đã lưu thay đổi combo.', async () => {
+    const { onClose } = renderDrawer({ combo: mockCombo })
+
+    expect(screen.getByText('Sửa combo')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('Ví dụ: Combo Thư Giãn')).toHaveValue('Combo Thư Giãn')
+    expect(screen.getByLabelText('Giá combo')).toHaveValue('400.000')
+    expect(screen.getByLabelText('Tiền tour mặc định')).toHaveValue('60.000')
+    expect(screen.getByText('Gội đầu thảo dược')).toBeInTheDocument()
+    expect(screen.getByText('Giãn cơ chân')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Lưu' }))
+
+    expect(await screen.findByText('Đã lưu thay đổi combo.')).toBeInTheDocument()
+    expect(onClose).toHaveBeenCalled()
+
+    const putCall = fetchCalls.find(
+      (c) => c.url === '/api/catalog/combos/100' && c.method === 'PUT',
+    )
+    expect(putCall).toBeDefined()
+    expect(putCall?.body).toEqual({
+      name: 'Combo Thư Giãn',
+      price: 400000,
+      tourFee: 60000,
+      items: [
+        { serviceId: 1, quantity: 1 },
+        { serviceId: 2, quantity: 1 },
+      ],
+    })
+  })
+
+  it('bỏ một dòng và thêm dòng mới rồi lưu: body đúng thứ tự dòng trên form', async () => {
+    renderDrawer({ combo: mockCombo })
+
+    // Bỏ dòng thứ 2 (Giãn cơ chân)
+    const removeBtn = screen.getByRole('button', { name: 'Bỏ Giãn cơ chân' })
+    fireEvent.click(removeBtn)
+    expect(screen.queryByText('Giãn cơ chân')).not.toBeInTheDocument()
+
+    // Thêm dịch vụ thứ 3 (Xông hơi thảo dược)
+    const select = screen.getByRole('combobox', { name: 'Thêm dịch vụ vào combo' })
+    fireEvent.mouseDown(select)
+    const opt3 = await screen.findByText(/Xông hơi thảo dược/)
+    fireEvent.click(opt3)
+
+    // Bấm Lưu
+    fireEvent.click(screen.getByRole('button', { name: 'Lưu' }))
+
+    await waitFor(() => {
+      const putCall = fetchCalls.find(
+        (c) => c.url === '/api/catalog/combos/100' && c.method === 'PUT',
+      )
+      expect(putCall).toBeDefined()
+      expect(putCall?.body).toEqual({
+        name: 'Combo Thư Giãn',
+        price: 400000,
+        tourFee: 60000,
+        items: [
+          { serviceId: 1, quantity: 1 },
+          { serviceId: 3, quantity: 1 },
+        ],
+      })
+    })
+  })
+
+  it('đổi giá thì hiện gợi ý không ảnh hưởng giao dịch đã ghi', async () => {
+    renderDrawer({ combo: mockCombo })
+
+    const priceInput = screen.getByLabelText('Giá combo')
+    expect(
+      screen.queryByText('Đổi giá combo không ảnh hưởng các giao dịch đã ghi trước đó.'),
+    ).not.toBeInTheDocument()
+
+    fireEvent.change(priceInput, { target: { value: '450000' } })
+    expect(
+      await screen.findByText('Đổi giá combo không ảnh hưởng các giao dịch đã ghi trước đó.'),
+    ).toBeInTheDocument()
+
+    fireEvent.change(priceInput, { target: { value: '400000' } })
+    await waitFor(() => {
+      expect(
+        screen.queryByText('Đổi giá combo không ảnh hưởng các giao dịch đã ghi trước đó.'),
+      ).not.toBeInTheDocument()
+    })
+  })
+
+  it('combo có dịch vụ ngừng bán: dòng có nhãn Ngừng bán và gợi ý bỏ hoặc thay', async () => {
+    const comboWithInactive: Combo = {
+      ...mockCombo,
+      items: [
+        {
+          serviceId: 4,
+          serviceName: 'Ngâm chân muối khoáng',
+          serviceActive: false,
+          listPrice: 80000,
+          quantity: 1,
+          lineTotal: 80000,
+        },
+      ],
+    }
+
+    renderDrawer({ combo: comboWithInactive })
+
+    expect(screen.getByText('Ngâm chân muối khoáng')).toBeInTheDocument()
+    expect(screen.getByText('Ngừng bán')).toBeInTheDocument()
+    expect(
+      screen.getByText('Dịch vụ đã ngừng bán. Hãy bỏ hoặc thay dịch vụ này để lưu combo.'),
+    ).toBeInTheDocument()
+  })
+
+  it('sửa combo không còn: message.error Không tìm thấy combo.', async () => {
+    updateHandler = () =>
+      json(
+        {
+          code: 'NOT_FOUND',
+          message: 'Không tìm thấy combo.',
+          fieldErrors: [],
+        },
+        404,
+      )
+
+    const { onClose } = renderDrawer({ combo: mockCombo })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Lưu' }))
+
+    expect(await screen.findByText('Không tìm thấy combo.')).toBeInTheDocument()
+    expect(onClose).not.toHaveBeenCalled()
+  })
+
+  it('lỗi thì không đóng drawer', async () => {
+    updateHandler = () =>
+      json(
+        {
+          code: 'COMBO_NAME_DUPLICATE',
+          message: 'Tên combo đã tồn tại.',
+          fieldErrors: [],
+        },
+        409,
+      )
+
+    const { onClose } = renderDrawer({ combo: mockCombo })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Lưu' }))
+
+    expect(await screen.findByText('Tên combo đã tồn tại.')).toBeInTheDocument()
+    expect(onClose).not.toHaveBeenCalled()
+    expect(screen.getByPlaceholderText('Ví dụ: Combo Thư Giãn')).toHaveValue('Combo Thư Giãn')
+  })
+
+  it('combo đang ngừng bán hiển thị cảnh báo ở cuối form', async () => {
+    renderDrawer({ combo: { ...mockCombo, active: false } })
+    expect(screen.getByText('Combo này đang ngừng bán.')).toBeInTheDocument()
   })
 })
