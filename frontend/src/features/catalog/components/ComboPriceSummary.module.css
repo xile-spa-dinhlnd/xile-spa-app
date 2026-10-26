@@ -16,7 +16,6 @@
 }
 
 .title {
-  font-size: 14px;
   font-weight: 500;
   color: var(--xl-color-heading);
 }
@@ -33,14 +32,10 @@
 }
 
 .label {
-  font-size: 13px;
   color: var(--xl-color-text-secondary);
 }
 
 .value {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--xl-color-heading);
   text-align: right;
 }
 
@@ -51,5 +46,10 @@
 }
 
 .alert {
+  margin-top: var(--xl-space-xs);
+}
+
+.subText {
+  text-align: right;
   margin-top: var(--xl-space-xs);
 }

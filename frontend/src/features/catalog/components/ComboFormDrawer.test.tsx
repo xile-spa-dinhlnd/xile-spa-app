@@ -561,6 +561,24 @@ describe('ComboFormDrawer - Tính thử giá', () => {
         'Giá combo cao hơn tổng giá lẻ. Vẫn lưu được, nhưng khách mua lẻ sẽ rẻ hơn.',
       ),
     ).toBeInTheDocument()
+
+    // Ngoại lệ dùng class ant-typography-warning vì màu cảnh báo không có vai trò để tìm trong accessibility tree
+    const savingsValue = await screen.findByText('-20.000 đ')
+    expect(savingsValue).toBeInTheDocument()
+    expect(savingsValue).toHaveClass('ant-typography-warning')
+  })
+
+  it('hiện chú thích tính theo giá niêm yết hiện tại', async () => {
+    renderDrawer()
+
+    const select = screen.getByRole('combobox', { name: 'Thêm dịch vụ vào combo' })
+    fireEvent.mouseDown(select)
+    const opt1 = await screen.findByText(/Gội đầu thảo dược/)
+    fireEvent.click(opt1)
+
+    expect(
+      await screen.findByText('Tính theo giá niêm yết hiện tại của dịch vụ.'),
+    ).toBeInTheDocument()
   })
 
   it('gõ liên tục chỉ gọi tính thử một lần sau 300 ms', async () => {

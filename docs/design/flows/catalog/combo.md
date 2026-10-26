@@ -20,6 +20,8 @@ Trạng thái: khớp code (backend, S2-07) · thiết kế (đã duyệt) (giao
 | 26/10/2026 | Đình (Antigravity) | S2-08 | Phần 5: types, API, schemas, ComboItemsField, ComboPriceSummary, ComboFormDrawer, ComboListPage khung, route /combos, menu; test xanh 100% |
 | 26/10/2026 | Đình (Claude) | S2-08     | Tự soát phần 5, lần 1: ghi quyết định nút "Bán lại" vào "Màn hình", bảng test, thử tay; xóa "Câu hỏi mở"; số lượng trên dòng lấy từ kết quả tính thử; thêm test danh sách tải lại sau khi thêm |
 | 26/10/2026 | Đình (Antigravity) | S2-08 | Sửa theo tự soát phần 5 lần 1: debounce JSON string tránh render lặp, số lượng trên dòng lấy từ quote, bỏ chế độ sửa viết trước, Form.Item cho ô số lượng và items, bỏ màu hex và !important, thêm test debounce; 117 tests xanh |
+| 26/10/2026 | Đình (Antigravity) | S2-08 | Sửa theo tự soát phần 5 lần 2: màu tiết kiệm (success/warning) và chữ phụ trong ComboPriceSummary, bắt buộc các prop trạng thái, bỏ font-size, sửa chú thích FR-CMB-01; 118 tests xanh |
+| 26/10/2026 | Đình (Claude) | S2-08     | Tự soát phần 5: 3 vòng, sạch (render lặp do debounce object, số lượng dòng lấy từ `fields`, chế độ sửa giả viết trước) |
 
 Phần chung của module (tên không trùng, không xóa cứng, nhật ký, OQ-21): `README.md` cùng thư mục.
 
@@ -486,7 +488,7 @@ nền và nặng tới nhẹ: phần 1 đặt khuôn cho cả tính năng, phầ
 | 2    | Sửa combo                                                   | 110 dòng | đã soát    |
 | 3    | Ngừng bán, bán lại combo; chặn ngừng bán dịch vụ (OQ-22)    | 120 dòng | đã soát    |
 | 4    | Danh sách, tìm, lọc combo; hoàn tất card                    | 50 dòng  | đã soát    |
-| 5    | Giao diện: thêm combo, tính thử giá (S2-08)                 | 380 dòng | đã code    |
+| 5    | Giao diện: thêm combo, tính thử giá (S2-08)                 | 380 dòng | đã soát    |
 | 6    | Giao diện: danh sách, tìm, lọc, sửa combo (S2-08)           | 270 dòng | chưa làm   |
 | 7    | Giao diện: ngừng bán, bán lại; hoàn tất card S2-08          | 80 dòng  | chưa làm   |
 

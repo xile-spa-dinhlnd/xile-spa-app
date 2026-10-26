@@ -5,10 +5,10 @@ import styles from './ComboPriceSummary.module.css'
 
 interface ComboPriceSummaryProps {
   quote?: ComboQuote
-  isFetching?: boolean
-  isError?: boolean
-  onRetry?: () => void
-  price?: number
+  isFetching: boolean
+  isError: boolean
+  onRetry: () => void
+  price?: number | null
   itemCount: number
   hasInvalidQuantity: boolean
 }
@@ -67,19 +67,39 @@ export function ComboPriceSummary({
       </div>
 
       <div className={styles.summaryRow}>
-        <span className={styles.label}>Tổng giá lẻ</span>
-        <span className={styles.value}>{quote ? formatMoney(quote.retailTotal) : '—'}</span>
+        <Typography.Text type="secondary" className={styles.label}>
+          Tổng giá lẻ
+        </Typography.Text>
+        <Typography.Text strong className={styles.value}>
+          {quote ? formatMoney(quote.retailTotal) : '—'}
+        </Typography.Text>
       </div>
 
       <div className={styles.summaryRow}>
-        <span className={styles.label}>Giá combo</span>
-        <span className={styles.value}>{hasPrice ? formatMoney(price) : '—'}</span>
+        <Typography.Text type="secondary" className={styles.label}>
+          Giá combo
+        </Typography.Text>
+        <Typography.Text strong className={styles.value}>
+          {hasPrice ? formatMoney(price) : '—'}
+        </Typography.Text>
       </div>
 
       <div className={styles.summaryRow}>
-        <span className={styles.label}>Tiết kiệm</span>
+        <Typography.Text type="secondary" className={styles.label}>
+          Tiết kiệm
+        </Typography.Text>
         <span className={styles.value}>
-          {savings !== null && savings !== undefined ? formatMoney(savings) : '—'}
+          {savings !== null && savings !== undefined ? (
+            savings > 0 ? (
+              <Typography.Text type="success">{formatMoney(savings)}</Typography.Text>
+            ) : savings < 0 ? (
+              <Typography.Text type="warning">{formatMoney(savings)}</Typography.Text>
+            ) : (
+              <Typography.Text>{formatMoney(savings)}</Typography.Text>
+            )
+          ) : (
+            '—'
+          )}
         </span>
       </div>
 
@@ -91,6 +111,10 @@ export function ComboPriceSummary({
           className={styles.alert}
         />
       )}
+
+      <Typography.Text type="secondary" className={styles.subText}>
+        Tính theo giá niêm yết hiện tại của dịch vụ.
+      </Typography.Text>
     </div>
   )
 }
