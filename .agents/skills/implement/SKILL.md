@@ -76,6 +76,19 @@ test" của file luồng: viết test, thử làm đỏ, chạy xanh. Test của
 
 Chạy theo khối sửa thì chỉ làm các bước của khối, rồi bước 8 nếu khối có đổi hành vi so với file luồng.
 
+## Soát phạm vi trước khi báo
+
+Đã gặp thật ở S2-08: sửa ngoài khối (bỏ màu, chú thích mà thiết kế yêu cầu) và làm hỏng lại chỗ lần trước đã sửa (đầu
+trang quay về CSS tự viết). Trước khi báo cáo, chạy `git status --short` và `git diff --stat` (chỉ đọc) rồi so với
+**danh sách được phép**:
+
+- Khối sửa: các file khối nêu tên, file luồng, file test của chúng.
+- Phần N: các lớp, component, test ở bảng của phần N trong file luồng, cộng file luồng và backlog.
+- Cả card: mục "Cấu trúc code" và "Ảnh hưởng" của file luồng.
+
+File nằm ngoài danh sách thì bỏ thay đổi đó, hoặc giữ và ghi vào dòng "Ngoài phạm vi" của báo cáo kèm lý do. Với khối
+sửa, đọc lại mục "Giữ nguyên" và xem diff: điểm nào trong đó bị đổi thì trả lại như cũ.
+
 ## Báo cáo
 
 Một lần, không lặp lại:
@@ -87,9 +100,12 @@ Một lần, không lặp lại:
 - **Code mới và nơi gọi** (mọi lần chạy, kể cả từng phần): mỗi method, lớp, bản nạp chồng mới kèm chỗ gọi trong
   `src/main` (grep tên). Chỉ test gọi hoặc không ai gọi thì xóa trước khi báo (`AGENTS.md` mục 7, 9; S3-08: thêm
   `PageRequests.of` 3 tham số "để sau này dùng").
-- File đã sửa.
+- File đã sửa, và dòng **Ngoài phạm vi** theo mục "Soát phạm vi trước khi báo" (file ngoài danh sách được phép, lý
+  do giữ); không có thì ghi "không".
 - Lệnh test đã chạy, kết quả thật (số test qua, đỏ).
 - Bảng thử làm đỏ của `/write-tests` bước 4 (code đã sửa sai, test đỏ, lỗi in ra). Không có bảng thì không báo xong.
+  Chỉ ghi một hành vi "đã có test" hoặc "đã bao phủ" khi bảng có dòng làm sai đúng chỗ đó và test đỏ (S2-08: báo bảng
+  combo "bao phủ 100%" trong khi test chỉ chạy dạng thẻ điện thoại).
 - Cách thử bằng Postman hoặc giao diện, kết quả mong đợi.
 - **Câu commit gợi ý** cho đúng thay đổi của lần chạy này, theo CONTRIBUTING.md mục 3 (AGENTS.md mục 8): dòng đầu
   `<loại>(<phạm vi>): <mô tả tiếng Việt có dấu>`, dòng `Refs: <mã card>, <FR/BR/OQ>`; chạy theo phần thì ghi "phần

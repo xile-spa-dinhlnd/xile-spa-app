@@ -145,7 +145,7 @@ export function useComboQuote(body: ComboQuoteRequest | null) {
   })
 }
 
-/** Danh sách combo: tìm, lọc, phân trang phía server (FR-CMB-04). */
+/** Danh sách combo: tìm, lọc, phân trang phía server (FR-CMB-01). */
 export function useCombos(params: ComboSearchParams) {
   return useQuery({
     queryKey: catalogKeys.comboList(params),
@@ -172,7 +172,7 @@ export function useCreateCombo() {
   })
 }
 
-/** Sửa combo (FR-CMB-01). */
+/** Sửa combo (FR-CMB-04). */
 export function useUpdateCombo() {
   const invalidate = useInvalidateCombos()
   return useMutation({

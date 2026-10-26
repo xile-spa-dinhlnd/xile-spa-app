@@ -18,7 +18,7 @@ export interface ComboCardListProps {
   onEdit: (combo: Combo) => void
 }
 
-/** Danh sách thẻ combo cho màn hình điện thoại (FR-CMB-04). */
+/** Danh sách thẻ combo cho màn hình điện thoại (FR-CMB-01). */
 export function ComboCardList({
   combos,
   loading,

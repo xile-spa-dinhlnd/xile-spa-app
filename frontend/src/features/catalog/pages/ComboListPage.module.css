@@ -1,18 +1,5 @@
 .header {
   margin-bottom: var(--xl-space-lg);
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--xl-space-md);
-}
-
-@media (min-width: 768px) {
-  .header {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--xl-space-md);
-  }
 }
 
 /* Lồng dưới .header để thắng `h3.ant-typography` (0,1,1). */

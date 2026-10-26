@@ -2,7 +2,7 @@ import { Tag, Typography } from 'antd'
 import { formatMoney } from '@/shared/lib/money'
 import type { ComboItem } from '../types'
 
-/** Định dạng danh sách thành phần theo thứ tự backend trả về (FR-CMB-04). */
+/** Định dạng danh sách thành phần theo thứ tự backend trả về (FR-CMB-01). */
 export function formatComboItems(items: ComboItem[]): string {
   if (!items || items.length === 0) return '—'
   return items

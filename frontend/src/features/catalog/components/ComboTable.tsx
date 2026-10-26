@@ -17,7 +17,7 @@ export interface ComboTableProps {
   onEdit: (combo: Combo) => void
 }
 
-/** Bảng danh sách combo cho màn hình máy tính và iPad (FR-CMB-04). */
+/** Bảng danh sách combo cho màn hình máy tính và iPad (FR-CMB-01). */
 export function ComboTable({
   combos,
   loading,

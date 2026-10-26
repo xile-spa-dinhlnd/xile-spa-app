@@ -42,7 +42,10 @@ export function ComboListPage() {
     setPage(0)
   }
 
-  const emptyText = (
+  // Khi lỗi tải: không hiển thị trạng thái trống (Empty) để tránh trùng thông điệp với Alert lỗi (UX Guidelines mục 2).
+  const emptyText = combosQuery.isError ? (
+    <></>
+  ) : (
     <Empty description={hasFilters ? 'Không có combo khớp bộ lọc hiện tại' : 'Chưa có combo nào'}>
       {hasFilters && (
         <Button icon={<ClearOutlined />} onClick={clearFilters}>
@@ -66,14 +69,14 @@ export function ComboListPage() {
 
   return (
     <div>
-      <div className={styles.header}>
+      <Flex justify="space-between" align="center" wrap gap={12} className={styles.header}>
         <Typography.Title level={3} className={styles.title}>
           Combo
         </Typography.Title>
         <Button type="primary" icon={<PlusOutlined />} size="large" onClick={openCreate}>
           Thêm combo
         </Button>
-      </div>
+      </Flex>
 
       <Flex wrap gap={8} className={styles.filterBar}>
         <Input

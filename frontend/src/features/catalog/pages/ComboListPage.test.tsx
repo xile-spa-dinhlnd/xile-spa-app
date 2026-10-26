@@ -120,7 +120,7 @@ let failList = false
 let listUrls: URL[] = []
 
 beforeEach(() => {
-  combosList = [...mockCombos]
+  combosList = structuredClone(mockCombos)
   failList = false
   listUrls = []
 
@@ -192,6 +192,28 @@ beforeEach(() => {
         return json(newCombo, 201)
       }
 
+      const matchPut = url.pathname.match(/^\/api\/catalog\/combos\/(\d+)$/)
+      if (matchPut && init?.method === 'PUT') {
+        const comboId = Number(matchPut[1])
+        const body = JSON.parse(String(init.body)) as ComboRequest
+        const existing = combosList.find((c) => c.id === comboId)
+        if (!existing) return json({ code: 'NOT_FOUND', message: 'Không tìm thấy combo' }, 404)
+        existing.name = body.name
+        existing.price = body.price
+        if (body.tourFee !== undefined) existing.tourFee = body.tourFee ?? 0
+        existing.items = body.items.map((it) => ({
+          serviceId: it.serviceId,
+          serviceName: 'Gội đầu thảo dược',
+          serviceActive: true,
+          listPrice: 180000,
+          quantity: it.quantity,
+          lineTotal: 180000 * it.quantity,
+        }))
+        existing.retailTotal = existing.items.reduce((acc, curr) => acc + curr.lineTotal, 0)
+        existing.savings = existing.retailTotal - existing.price
+        return json(existing, 200)
+      }
+
       if (url.pathname === '/api/catalog/services') {
         return json({
           content: [
@@ -241,6 +263,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  vi.useRealTimers()
   vi.unstubAllGlobals()
 })
 
@@ -457,22 +480,25 @@ describe('ComboListPage - Danh sách, tìm, lọc', () => {
     expect(screen.queryByRole('button', { name: /Xóa bộ lọc/ })).not.toBeInTheDocument()
   })
 
-  it(
-    'lỗi tải hiện Không tải được danh sách combo và Thử lại gọi lại API',
-    { timeout: 15000 },
-    async () => {
-      failList = true
-      renderPage()
+  it('lỗi tải hiện Không tải được danh sách combo và Thử lại gọi lại API', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+    failList = true
+    renderPage()
 
-      const alert = await screen.findByRole('alert', {}, { timeout: 8000 })
-      expect(within(alert).getByText('Không tải được danh sách combo')).toBeInTheDocument()
+    // Cho qua các lần thử lại của TanStack Query (1s, 2s, ...)
+    await vi.advanceTimersByTimeAsync(10000)
+    vi.useRealTimers()
 
-      failList = false
-      fireEvent.click(within(alert).getByRole('button', { name: 'Thử lại' }))
+    const alert = await screen.findByRole('alert')
+    expect(within(alert).getByText('Không tải được danh sách combo')).toBeInTheDocument()
+    // Không kèm trạng thái trống khi đang lỗi tải
+    expect(screen.queryByText('Chưa có combo nào')).not.toBeInTheDocument()
 
-      expect(await screen.findByText('Combo Thư Giãn')).toBeInTheDocument()
-    },
-  )
+    failList = false
+    fireEvent.click(within(alert).getByRole('button', { name: 'Thử lại' }))
+
+    expect(await screen.findByText('Combo Thư Giãn')).toBeInTheDocument()
+  })
 
   it('bấm Sửa mở drawer với dữ liệu điền sẵn', async () => {
     renderPage()
@@ -486,5 +512,69 @@ describe('ComboListPage - Danh sách, tìm, lọc', () => {
     expect(within(drawer).getByPlaceholderText('Ví dụ: Combo Thư Giãn')).toHaveValue(
       'Combo Thư Giãn',
     )
+  })
+
+  it('sửa combo xong thì danh sách tải lại', async () => {
+    renderPage()
+    expect(await screen.findByText('Combo Thư Giãn')).toBeInTheDocument()
+
+    const listCallsBefore = listUrls.length
+
+    // Bấm Sửa ở "Combo Thư Giãn"
+    const editBtns = screen.getAllByRole('button', { name: /Sửa/ })
+    fireEvent.click(editBtns[0])
+
+    const drawer = await screen.findByRole('dialog')
+    expect(within(drawer).getByText('Sửa combo')).toBeInTheDocument()
+
+    // Đổi giá thành 350.000
+    const priceInput = within(drawer).getByLabelText('Giá combo')
+    fireEvent.change(priceInput, { target: { value: '350000' } })
+
+    // Bấm Lưu
+    fireEvent.click(within(drawer).getByRole('button', { name: 'Lưu' }))
+
+    // Danh sách được tải lại (có GET /combos sau PUT)
+    await waitFor(() => {
+      expect(listUrls.length).toBeGreaterThan(listCallsBefore)
+    })
+    expect(await screen.findByText('350.000 đ')).toBeInTheDocument()
+  })
+
+  it('máy tính hiện bảng với cột tiền đã định dạng và thành phần dưới tên', async () => {
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn().mockImplementation((query: string) => ({
+        matches: true,
+        media: query,
+        onchange: null,
+        addListener: () => {},
+        removeListener: () => {},
+        addEventListener: () => {},
+        removeEventListener: () => {},
+        dispatchEvent: () => false,
+      })),
+    )
+
+    renderPage()
+
+    // Hàng "Combo Thư Giãn" có các giá trị đã định dạng và thành phần dưới tên
+    const relaxRow = await screen.findByRole('row', { name: /Combo Thư Giãn/ })
+    expect(within(relaxRow).getByText('400.000 đ')).toBeInTheDocument()
+    expect(within(relaxRow).getByText('480.000 đ')).toBeInTheDocument()
+    expect(within(relaxRow).getByText('80.000 đ')).toBeInTheDocument()
+    expect(within(relaxRow).getByText('60.000 đ')).toBeInTheDocument()
+    expect(within(relaxRow).getByText('Gội đầu thảo dược, Giãn cơ chân × 2')).toBeInTheDocument()
+
+    // Tiêu đề các cột tiền
+    expect(screen.getByRole('columnheader', { name: 'Giá combo' })).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: 'Tổng giá lẻ' })).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: 'Tiết kiệm' })).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: 'Tiền tour' })).toBeInTheDocument()
+
+    // Hàng "Combo Da Sáng" có tiết kiệm âm -50.000 đ mang class ant-typography-warning
+    const brightRow = screen.getByRole('row', { name: /Combo Da Sáng/ })
+    const warningEl = within(brightRow).getByText('-50.000 đ')
+    expect(warningEl).toHaveClass('ant-typography-warning')
   })
 })
