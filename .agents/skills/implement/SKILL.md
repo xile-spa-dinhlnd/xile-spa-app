@@ -84,6 +84,9 @@ Một lần, không lặp lại:
 - Mỗi bước của file luồng hoặc của khối sửa: đã làm hay chưa, khác kế hoạch chỗ nào và vì sao.
 - **Skill đã gọi** (ví dụ `/write-tests` 3 lần) và **Khác thiết kế**: cách làm tự chọn, test thêm ngoài bảng, test đỏ
   ngoài dự kiến; không có thì ghi "không".
+- **Code mới và nơi gọi** (mọi lần chạy, kể cả từng phần): mỗi method, lớp, bản nạp chồng mới kèm chỗ gọi trong
+  `src/main` (grep tên). Chỉ test gọi hoặc không ai gọi thì xóa trước khi báo (`AGENTS.md` mục 7, 9; S3-08: thêm
+  `PageRequests.of` 3 tham số "để sau này dùng").
 - File đã sửa.
 - Lệnh test đã chạy, kết quả thật (số test qua, đỏ).
 - Bảng thử làm đỏ của `/write-tests` bước 4 (code đã sửa sai, test đỏ, lỗi in ra). Không có bảng thì không báo xong.
