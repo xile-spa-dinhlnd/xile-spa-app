@@ -19,6 +19,7 @@ Trạng thái: khớp code (backend, S2-07) · thiết kế (đã duyệt) (giao
 | 26/10/2026 | Đình (Antigravity) | S2-08 | Đình duyệt thiết kế S2-08, chốt Câu hỏi mở 2 theo đề xuất gộp |
 | 26/10/2026 | Đình (Antigravity) | S2-08 | Phần 5: types, API, schemas, ComboItemsField, ComboPriceSummary, ComboFormDrawer, ComboListPage khung, route /combos, menu; test xanh 100% |
 | 26/10/2026 | Đình (Claude) | S2-08     | Tự soát phần 5, lần 1: ghi quyết định nút "Bán lại" vào "Màn hình", bảng test, thử tay; xóa "Câu hỏi mở"; số lượng trên dòng lấy từ kết quả tính thử; thêm test danh sách tải lại sau khi thêm |
+| 26/10/2026 | Đình (Antigravity) | S2-08 | Sửa theo tự soát phần 5 lần 1: debounce JSON string tránh render lặp, số lượng trên dòng lấy từ quote, bỏ chế độ sửa viết trước, Form.Item cho ô số lượng và items, bỏ màu hex và !important, thêm test debounce; 117 tests xanh |
 
 Phần chung của module (tên không trùng, không xóa cứng, nhật ký, OQ-21): `README.md` cùng thư mục.
 

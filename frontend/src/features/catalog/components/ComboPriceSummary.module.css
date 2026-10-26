@@ -22,8 +22,6 @@
 }
 
 .emptyHint {
-  font-size: 13px;
-  color: var(--xl-color-text-secondary);
   margin: 0;
 }
 
@@ -46,19 +44,10 @@
   text-align: right;
 }
 
-.subText {
-  font-size: 12px;
-  color: var(--xl-color-text-muted);
-  text-align: right;
-  margin-top: var(--xl-space-xs);
-}
-
 .errorBox {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 13px;
-  color: #ff4d4f;
 }
 
 .alert {

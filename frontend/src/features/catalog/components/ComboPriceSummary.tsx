@@ -5,18 +5,15 @@ import styles from './ComboPriceSummary.module.css'
 
 interface ComboPriceSummaryProps {
   quote?: ComboQuote
-  isFetching: boolean
-  isError: boolean
-  onRetry: () => void
-  price?: number | null
+  isFetching?: boolean
+  isError?: boolean
+  onRetry?: () => void
+  price?: number
   itemCount: number
   hasInvalidQuantity: boolean
 }
 
-/**
- * Khối tổng giá lẻ và mức tiết kiệm của combo (FR-CMB-03).
- * Mọi số liệu do backend tính (POST /api/catalog/combos/quote), giao diện chỉ hiển thị và định dạng.
- */
+/** Khối hiển thị tổng giá lẻ, giá combo và mức tiết kiệm (FR-CMB-03). */
 export function ComboPriceSummary({
   quote,
   isFetching,
@@ -29,7 +26,9 @@ export function ComboPriceSummary({
   if (itemCount === 0) {
     return (
       <div className={styles.container}>
-        <p className={styles.emptyHint}>Chọn dịch vụ để xem tổng giá lẻ.</p>
+        <Typography.Text type="secondary" className={styles.emptyHint}>
+          Chọn dịch vụ để xem tổng giá lẻ.
+        </Typography.Text>
       </div>
     )
   }
@@ -37,7 +36,9 @@ export function ComboPriceSummary({
   if (hasInvalidQuantity) {
     return (
       <div className={styles.container}>
-        <p className={styles.emptyHint}>Nhập số lượng từ 1 đến 99 để tính tổng.</p>
+        <Typography.Text type="secondary" className={styles.emptyHint}>
+          Nhập số lượng từ 1 đến 99 để tính tổng.
+        </Typography.Text>
       </div>
     )
   }
@@ -46,7 +47,7 @@ export function ComboPriceSummary({
     return (
       <div className={styles.container}>
         <div className={styles.errorBox}>
-          <span>Không tính được tổng giá lẻ.</span>
+          <Typography.Text type="danger">Không tính được tổng giá lẻ.</Typography.Text>
           <Button type="link" size="small" onClick={onRetry}>
             Thử lại
           </Button>
@@ -78,17 +79,7 @@ export function ComboPriceSummary({
       <div className={styles.summaryRow}>
         <span className={styles.label}>Tiết kiệm</span>
         <span className={styles.value}>
-          {savings === null || savings === undefined ? (
-            '—'
-          ) : savings >= 0 ? (
-            <Typography.Text type="success" strong>
-              {formatMoney(savings)}
-            </Typography.Text>
-          ) : (
-            <Typography.Text type="warning" strong>
-              {formatMoney(savings)}
-            </Typography.Text>
-          )}
+          {savings !== null && savings !== undefined ? formatMoney(savings) : '—'}
         </span>
       </div>
 
@@ -100,8 +91,6 @@ export function ComboPriceSummary({
           className={styles.alert}
         />
       )}
-
-      <div className={styles.subText}>Tính theo giá niêm yết hiện tại của dịch vụ.</div>
     </div>
   )
 }

@@ -1,11 +1,11 @@
 import { CloseOutlined } from '@ant-design/icons'
-import { Button, InputNumber, Select, Spin, Tag, Typography } from 'antd'
+import { Button, Form, InputNumber, Select, Spin, Tag, Typography } from 'antd'
 import { useState } from 'react'
 import { Controller, useFieldArray, type Control, type FieldErrors } from 'react-hook-form'
 import { useDebounce } from '@/shared/hooks/useDebounce'
 import { formatMoney } from '@/shared/lib/money'
 import { useServices } from '../api'
-import { MAX_COMBO_ITEMS, type ComboFormValues } from '../schemas'
+import { MAX_COMBO_ITEMS, MAX_COMBO_QUANTITY, type ComboFormValues } from '../schemas'
 import type { ComboQuote } from '../types'
 import styles from './ComboItemsField.module.css'
 
@@ -57,10 +57,6 @@ export function ComboItemsField({ control, errors, quote }: ComboItemsFieldProps
     setSearchText('')
   }
 
-  const itemsError =
-    errors.items?.message ||
-    (errors.items as { root?: { message?: string } } | undefined)?.root?.message
-
   return (
     <div className={styles.container}>
       <div className={styles.selectWrapper}>
@@ -68,10 +64,12 @@ export function ComboItemsField({ control, errors, quote }: ComboItemsFieldProps
           id="combo-select-service"
           aria-label="Thêm dịch vụ vào combo"
           placeholder="Chọn dịch vụ để thêm"
-          showSearch
-          filterOption={false}
-          searchValue={searchText}
-          onSearch={setSearchText}
+          virtual={false}
+          showSearch={{
+            filterOption: false,
+            searchValue: searchText,
+            onSearch: setSearchText,
+          }}
           value={undefined}
           onSelect={handleSelectService}
           disabled={isMaxReached}
@@ -85,19 +83,24 @@ export function ComboItemsField({ control, errors, quote }: ComboItemsFieldProps
               </div>
             ) : servicesQuery.isError ? (
               <div className={styles.selectError}>
-                <span>Không tải được danh sách dịch vụ</span>
+                <Typography.Text type="danger">Không tải được danh sách dịch vụ</Typography.Text>
                 <Button type="link" size="small" onClick={() => servicesQuery.refetch()}>
                   Thử lại
                 </Button>
               </div>
             ) : (
-              <span>Không có dịch vụ đang bán khớp tên này</span>
+              <Typography.Text type="secondary">
+                Không có dịch vụ đang bán khớp tên này
+              </Typography.Text>
             )
           }
         />
 
-        {isMaxReached && <div className={styles.hintText}>Combo tối đa 20 dịch vụ.</div>}
-        {itemsError && <div className={styles.errorText}>{itemsError}</div>}
+        {isMaxReached && (
+          <Typography.Text type="secondary" className={styles.hintText}>
+            Combo tối đa 20 dịch vụ.
+          </Typography.Text>
+        )}
       </div>
 
       {fields.length > 0 && (
@@ -127,38 +130,45 @@ export function ComboItemsField({ control, errors, quote }: ComboItemsFieldProps
                 </div>
 
                 {isInactive && (
-                  <div className={styles.warningText}>
-                    Dịch vụ đã ngừng bán. Hãy bỏ hoặc thay dịch vụ này để lưu combo.
+                  <div className={styles.warningContainer}>
+                    <Typography.Text type="warning">
+                      Dịch vụ đã ngừng bán. Hãy bỏ hoặc thay dịch vụ này để lưu combo.
+                    </Typography.Text>
                   </div>
                 )}
 
                 <div className={styles.itemControls}>
                   <div className={styles.qtyWrapper}>
-                    <Controller
-                      name={`items.${index}.quantity`}
-                      control={control}
-                      render={({ field: qtyField }) => (
-                        <InputNumber<number>
-                          value={qtyField.value}
-                          onChange={(v) => qtyField.onChange(v ?? null)}
-                          onBlur={qtyField.onBlur}
-                          min={1}
-                          max={99}
-                          precision={0}
-                          inputMode="numeric"
-                          aria-label={`Số lượng ${field.serviceName || 'dịch vụ'}`}
-                          className={styles.qtyInput}
-                          status={rowQtyError ? 'error' : undefined}
-                        />
-                      )}
-                    />
-                    {rowQtyError && <div className={styles.errorText}>{rowQtyError}</div>}
+                    <Form.Item
+                      validateStatus={rowQtyError ? 'error' : undefined}
+                      help={rowQtyError}
+                      className={styles.qtyFormItem}
+                    >
+                      <Controller
+                        name={`items.${index}.quantity`}
+                        control={control}
+                        render={({ field: qtyField }) => (
+                          <InputNumber<number>
+                            value={qtyField.value}
+                            onChange={(v) => qtyField.onChange(v ?? null)}
+                            onBlur={qtyField.onBlur}
+                            min={1}
+                            max={MAX_COMBO_QUANTITY}
+                            precision={0}
+                            inputMode="numeric"
+                            aria-label={`Số lượng ${field.serviceName || 'dịch vụ'}`}
+                            className={styles.qtyInput}
+                            status={rowQtyError ? 'error' : undefined}
+                          />
+                        )}
+                      />
+                    </Form.Item>
                   </div>
 
                   <div className={styles.itemCalculation}>
                     {quoteItem ? (
                       <span>
-                        {formatMoney(quoteItem.listPrice)} × {field.quantity} ={' '}
+                        {formatMoney(quoteItem.listPrice)} × {quoteItem.quantity} ={' '}
                         <strong>{formatMoney(quoteItem.lineTotal)}</strong>
                       </span>
                     ) : (

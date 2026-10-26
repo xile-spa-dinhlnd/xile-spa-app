@@ -128,17 +128,17 @@ export function useSetServiceActive() {
   })
 }
 
-/** Gọi API tính thử giá combo trực tiếp (FR-CMB-03). */
-export function comboQuote(body: ComboQuoteRequest) {
-  return api.post<ComboQuote>('/api/catalog/combos/quote', body)
-}
-
 /** Tính thử tổng giá lẻ và mức tiết kiệm của combo (FR-CMB-03). */
-export function useComboQuote(body: ComboQuoteRequest | null, options?: { enabled?: boolean }) {
+export function useComboQuote(body: ComboQuoteRequest | null) {
   return useQuery({
     queryKey: catalogKeys.comboQuote(body),
-    queryFn: ({ signal }) => api.post<ComboQuote>('/api/catalog/combos/quote', body!, { signal }),
-    enabled: Boolean(body) && (options?.enabled ?? true),
+    queryFn: ({ signal }) => {
+      if (!body) {
+        throw new Error('ComboQuoteRequest body is required')
+      }
+      return api.post<ComboQuote>('/api/catalog/combos/quote', body, { signal })
+    },
+    enabled: body !== null,
     placeholderData: keepPreviousData,
   })
 }

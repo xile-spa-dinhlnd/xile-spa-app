@@ -67,17 +67,32 @@ const mockServices: ServiceItem[] = [
     createdAt: '2026-10-11T03:00:00Z',
     updatedAt: '2026-10-11T03:00:00Z',
   },
+  ...Array.from({ length: 21 }, (_, idx) => {
+    const pad = String(idx + 1).padStart(2, '0')
+    return {
+      id: 10 + idx,
+      name: `DV ${pad}`,
+      groupId: 1,
+      groupName: 'Gội đầu',
+      durationMinutes: 30,
+      listPrice: 100000,
+      tourFee: 10000,
+      active: true,
+      createdAt: '2026-10-11T03:00:00Z',
+      updatedAt: '2026-10-11T03:00:00Z',
+    }
+  }),
 ]
 
 let fetchCalls: { url: string; method: string; body?: unknown }[] = []
 let quoteHandler: ((body: ComboQuoteRequest | undefined) => Response) | null = null
 let createHandler: ((body: ComboRequest | undefined) => Response) | null = null
 
-function renderDrawer(props: { open?: boolean; combo?: Combo | null; onClose?: () => void } = {}) {
+function renderDrawer(props: { open?: boolean; onClose?: () => void } = {}) {
   const onClose = props.onClose ?? vi.fn()
   const result = render(
     <Providers>
-      <ComboFormDrawer open={props.open ?? true} combo={props.combo} onClose={onClose} />
+      <ComboFormDrawer open={props.open ?? true} onClose={onClose} />
     </Providers>,
   )
   return { ...result, onClose }
@@ -105,7 +120,7 @@ beforeEach(() => {
         return json({
           content: items,
           page: 0,
-          size: 20,
+          size: items.length,
           totalElements: items.length,
           totalPages: 1,
         })
@@ -171,6 +186,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.unstubAllGlobals()
+  vi.useRealTimers()
 })
 
 describe('ComboFormDrawer - Thêm combo', () => {
@@ -241,33 +257,18 @@ describe('ComboFormDrawer - Thêm combo', () => {
   })
 
   it('đủ 20 dòng thì khóa ô chọn dịch vụ', async () => {
-    // Tạo sẵn combo có 20 dòng
-    const items20 = Array.from({ length: 20 }, (_, idx) => ({
-      serviceId: idx + 1,
-      serviceName: `Dịch vụ ${idx + 1}`,
-      serviceActive: true,
-      listPrice: 100000,
-      quantity: 1,
-      lineTotal: 100000,
-    }))
-    const combo20: Combo = {
-      id: 1,
-      name: 'Combo 20 món',
-      price: 1500000,
-      tourFee: 0,
-      active: true,
-      items: items20,
-      retailTotal: 2000000,
-      savings: 500000,
-      createdAt: '2026-10-26T10:00:00Z',
-      updatedAt: '2026-10-26T10:00:00Z',
+    renderDrawer()
+
+    const select = screen.getByRole('combobox', { name: 'Thêm dịch vụ vào combo' })
+    for (let i = 1; i <= 20; i++) {
+      fireEvent.mouseDown(select)
+      const pad = String(i).padStart(2, '0')
+      const opt = await screen.findByText(new RegExp(`DV ${pad}`))
+      fireEvent.click(opt)
     }
 
-    renderDrawer({ combo: combo20 })
-
-    expect(screen.getByText('Combo tối đa 20 dịch vụ.')).toBeInTheDocument()
-    const select = screen.getByRole('combobox', { name: 'Thêm dịch vụ vào combo' })
-    expect(select).toBeDisabled()
+    expect(await screen.findByText('Combo tối đa 20 dịch vụ.')).toBeInTheDocument()
+    expect(screen.getByRole('combobox', { name: 'Thêm dịch vụ vào combo' })).toBeDisabled()
   })
 
   it('dịch vụ đã chọn bị khóa trong ô chọn', async () => {
@@ -422,7 +423,17 @@ describe('ComboFormDrawer - Thêm combo', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Tạo combo' }))
 
-    expect(await screen.findByText('Số lượng tối đa là 99')).toBeInTheDocument()
+    await waitFor(() => {
+      const qty2Input = screen.getByLabelText('Số lượng Giãn cơ chân')
+      const row2Container = (qty2Input.closest('.ant-form-item') ??
+        qty2Input.closest('div')) as HTMLElement
+      expect(within(row2Container).getByText('Số lượng tối đa là 99')).toBeInTheDocument()
+    })
+
+    const qty1Input = screen.getByLabelText('Số lượng Gội đầu thảo dược')
+    const row1Container = (qty1Input.closest('.ant-form-item') ??
+      qty1Input.closest('div')) as HTMLElement
+    expect(within(row1Container).queryByText('Số lượng tối đa là 99')).not.toBeInTheDocument()
   })
 
   it('fieldErrors trường lạ hiện bằng message.error', async () => {
@@ -453,7 +464,7 @@ describe('ComboFormDrawer - Thêm combo', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Tạo combo' }))
 
-    expect(await screen.findByText('unknownField: Trường này không hợp lệ')).toBeInTheDocument()
+    expect(await screen.findByText('Trường này không hợp lệ')).toBeInTheDocument()
   })
 })
 
@@ -472,20 +483,25 @@ describe('ComboFormDrawer - Tính thử giá', () => {
     const opt2 = await screen.findByText(/Giãn cơ chân/)
     fireEvent.click(opt2)
 
-    // Nhập giá combo: 300.000 đ
-    fireEvent.change(screen.getByLabelText('Giá combo'), { target: { value: '300000' } })
+    // Đổi số lượng dịch vụ 2 thành 2 (để kiểm tra kết quả tính thử quoteItem.quantity)
+    const qty2Input = await screen.findByLabelText('Số lượng Giãn cơ chân')
+    fireEvent.change(qty2Input, { target: { value: '2' } })
+
+    // Nhập giá combo: 500.000 đ
+    fireEvent.change(screen.getByLabelText('Giá combo'), { target: { value: '500000' } })
 
     // Đợi quote query chạy và hiển thị kết quả
     await waitFor(() => {
-      // Tổng giá lẻ: 180.000 + 200.000 = 380.000 đ
-      expect(screen.getByText('380.000 đ')).toBeInTheDocument()
-      // Tiết kiệm: 380.000 - 300.000 = 80.000 đ
+      // Tổng giá lẻ: 180.000 + 200.000 * 2 = 580.000 đ
+      expect(screen.getByText('580.000 đ')).toBeInTheDocument()
+      // Tiết kiệm: 580.000 - 500.000 = 80.000 đ
       expect(screen.getByText('80.000 đ')).toBeInTheDocument()
     })
 
-    // Thành tiền từng dòng
+    // Thành tiền từng dòng: lấy từ quoteItem
     expect(screen.getByText('180.000 đ × 1 =')).toBeInTheDocument()
-    expect(screen.getByText('200.000 đ × 1 =')).toBeInTheDocument()
+    expect(screen.getByText('200.000 đ × 2 =')).toBeInTheDocument()
+    expect(screen.getByText('400.000 đ')).toBeInTheDocument()
   })
 
   it('số lượng trống thì không gọi tính thử và hiện gợi ý nhập số lượng', async () => {
@@ -518,11 +534,15 @@ describe('ComboFormDrawer - Tính thử giá', () => {
     const opt1 = await screen.findByText(/Gội đầu thảo dược/)
     fireEvent.click(opt1)
 
-    const summary = await screen.findByText('Tổng kết giá')
-    const summaryContainer = summary.closest('div')?.parentElement
-    expect(summaryContainer).toBeDefined()
-    expect(await within(summaryContainer!).findByText('180.000 đ')).toBeInTheDocument()
-    expect(within(summaryContainer!).getAllByText('—').length).toBe(2)
+    const retailLabel = await screen.findByText('Tổng giá lẻ')
+    const retailRow = retailLabel.closest('div')!
+    await waitFor(() => {
+      expect(within(retailRow).getByText('180.000 đ')).toBeInTheDocument()
+    })
+
+    const savingsLabel = await screen.findByText('Tiết kiệm')
+    const savingsRow = savingsLabel.closest('div')!
+    expect(within(savingsRow).getByText('—')).toBeInTheDocument()
   })
 
   it('tiết kiệm âm hiện cảnh báo giá combo cao hơn tổng giá lẻ', async () => {
@@ -541,6 +561,52 @@ describe('ComboFormDrawer - Tính thử giá', () => {
         'Giá combo cao hơn tổng giá lẻ. Vẫn lưu được, nhưng khách mua lẻ sẽ rẻ hơn.',
       ),
     ).toBeInTheDocument()
+  })
+
+  it('gõ liên tục chỉ gọi tính thử một lần sau 300 ms', async () => {
+    renderDrawer()
+
+    const select = screen.getByRole('combobox', { name: 'Thêm dịch vụ vào combo' })
+    fireEvent.mouseDown(select)
+    const opt1 = await screen.findByText(/Gội đầu thảo dược/)
+    fireEvent.click(opt1)
+
+    // Đợi quote ban đầu hoàn tất
+    await waitFor(() => {
+      const calls = fetchCalls.filter((c) => c.url === '/api/catalog/combos/quote')
+      expect(calls.length).toBeGreaterThan(0)
+    })
+    const callsBefore = fetchCalls.filter((c) => c.url === '/api/catalog/combos/quote').length
+
+    // Bật fake timers để kiểm tra debounce của việc gõ giá
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+
+    const priceInput = screen.getByLabelText('Giá combo')
+
+    // Gõ liên tục 3 lần cách nhau 100ms
+    fireEvent.change(priceInput, { target: { value: '200000' } })
+    await vi.advanceTimersByTimeAsync(100)
+
+    fireEvent.change(priceInput, { target: { value: '250000' } })
+    await vi.advanceTimersByTimeAsync(100)
+
+    fireEvent.change(priceInput, { target: { value: '300000' } })
+    await vi.advanceTimersByTimeAsync(100)
+
+    // Chưa đủ 300ms tính từ lần gõ cuối (mới 100ms)
+    const callsDuring = fetchCalls.filter((c) => c.url === '/api/catalog/combos/quote').length
+    expect(callsDuring).toBe(callsBefore)
+
+    // Tiến thêm 350ms (vượt mốc 300ms từ lần gõ cuối)
+    await vi.advanceTimersByTimeAsync(350)
+
+    vi.useRealTimers()
+
+    await waitFor(() => {
+      const callsAfter = fetchCalls.filter((c) => c.url === '/api/catalog/combos/quote')
+      expect(callsAfter.length).toBe(callsBefore + 1)
+      expect((callsAfter[callsAfter.length - 1].body as ComboQuoteRequest)?.price).toBe(300000)
+    })
   })
 
   it('tính thử lỗi thì hiện Không tính được tổng giá lẻ và Thử lại, vẫn lưu được', async () => {
@@ -567,7 +633,14 @@ describe('ComboFormDrawer - Tính thử giá', () => {
     fireEvent.change(screen.getByLabelText('Giá combo'), { target: { value: '200000' } })
 
     expect(await screen.findByText('Không tính được tổng giá lẻ.')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Thử lại' })).toBeInTheDocument()
+    const retryBtn = screen.getByRole('button', { name: 'Thử lại' })
+    expect(retryBtn).toBeInTheDocument()
+
+    const quoteCallsBefore = fetchCalls.filter((c) => c.url === '/api/catalog/combos/quote').length
+    fireEvent.click(retryBtn)
+    expect(fetchCalls.filter((c) => c.url === '/api/catalog/combos/quote').length).toBe(
+      quoteCallsBefore + 1,
+    )
 
     // Bấm Tạo combo vẫn lưu được
     fireEvent.click(screen.getByRole('button', { name: 'Tạo combo' }))

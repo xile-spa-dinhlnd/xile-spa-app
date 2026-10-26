@@ -15,22 +15,7 @@
 }
 
 .hintText {
-  font-size: 13px;
-  color: var(--xl-color-text-secondary);
-  line-height: 1.4;
-}
-
-.errorText {
-  font-size: 14px;
-  color: #ff4d4f;
-  line-height: 1.4;
-}
-
-.warningText {
-  font-size: 13px;
-  color: #d46b08;
-  margin-top: var(--xl-space-xs);
-  line-height: 1.4;
+  margin-top: 2px;
 }
 
 .itemList {
@@ -80,9 +65,13 @@
     0;
 }
 
+.warningContainer {
+  margin-top: var(--xl-space-xs);
+}
+
 .itemControls {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: var(--xl-space-md);
   flex-wrap: wrap;
@@ -91,7 +80,10 @@
 .qtyWrapper {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+}
+
+.qtyFormItem {
+  margin-bottom: 0;
 }
 
 .qtyInput {
@@ -99,10 +91,10 @@
 }
 
 .itemCalculation {
-  font-size: 13px;
   color: var(--xl-color-text-secondary);
   text-align: right;
   flex: 1;
+  padding-top: var(--xl-space-xs);
 }
 
 .spinContainer {
@@ -115,6 +107,4 @@
   align-items: center;
   justify-content: space-between;
   padding: var(--xl-space-xs);
-  font-size: 13px;
-  color: #ff4d4f;
 }
