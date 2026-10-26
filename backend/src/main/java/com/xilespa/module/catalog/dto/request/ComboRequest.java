@@ -22,5 +22,5 @@ public record ComboRequest(
                 Long tourFee,
         @NotEmpty(message = "Combo phải có ít nhất một dịch vụ")
                 @Size(max = 20, message = "Combo tối đa 20 dịch vụ")
-                @Valid
-                List<ComboItemRequest> items) {}
+                List<@NotNull(message = "Dòng dịch vụ không được để trống") @Valid ComboItemRequest>
+                        items) {}

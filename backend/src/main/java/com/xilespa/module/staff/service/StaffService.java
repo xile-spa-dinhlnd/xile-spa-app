@@ -4,6 +4,7 @@ import com.xilespa.common.audit.AuditAction;
 import com.xilespa.common.audit.AuditService;
 import com.xilespa.common.exception.BusinessException;
 import com.xilespa.common.exception.ErrorCode;
+import com.xilespa.common.response.PageRequests;
 import com.xilespa.common.response.PageResponse;
 import com.xilespa.common.util.TextNormalizer;
 import com.xilespa.module.staff.dto.request.StaffRequest;
@@ -44,9 +45,10 @@ public class StaffService {
     public PageResponse<StaffResponse> search(
             String q, StaffRole role, Boolean active, int page, int size) {
         PageRequest pageable =
-                PageRequest.of(
-                        Math.max(page, 0),
-                        Math.clamp(size, 1, MAX_PAGE_SIZE),
+                PageRequests.of(
+                        page,
+                        size,
+                        MAX_PAGE_SIZE,
                         Sort.by(
                                 Sort.Order.desc("active"),
                                 Sort.Order.asc("fullName"),

@@ -431,4 +431,16 @@ class InputHandlingIT {
         ServiceItem created = serviceItemRepository.findById(createdId).orElseThrow();
         assertThat(created.isActive()).isTrue();
     }
+
+    @Test
+    void hugePageReturnsEmptyPage() throws Exception {
+        mockMvc.perform(
+                        get("/api/catalog/services")
+                                .with(loggedIn)
+                                .param("page", String.valueOf(Integer.MAX_VALUE))
+                                .param("size", "20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content").isEmpty());
+    }
 }

@@ -303,6 +303,41 @@ class ComboControllerIT {
     }
 
     @Test
+    void nullItemIsRejectedOnItemField() throws Exception {
+        // Tạo combo có phần tử null trong items
+        mockMvc.perform(
+                        send(
+                                post("/api/catalog/combos"),
+                                comboJson(prefix + "Combo Null Item", 100_000L, 0L, "[null]")))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"))
+                .andExpect(
+                        jsonPath("$.fieldErrors[?(@.field == 'items[0]')].message")
+                                .value("Dòng dịch vụ không được để trống"));
+
+        // Tính thử (quote) có phần tử null trong items
+        mockMvc.perform(send(post("/api/catalog/combos/quote"), quoteJson(100_000L, "[null]")))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"))
+                .andExpect(
+                        jsonPath("$.fieldErrors[?(@.field == 'items[0]')].message")
+                                .value("Dòng dịch vụ không được để trống"));
+    }
+
+    @Test
+    void nullItemCreatesNothing() throws Exception {
+        long countBefore = comboRepository.count();
+
+        mockMvc.perform(
+                        send(
+                                post("/api/catalog/combos"),
+                                comboJson(prefix + "Combo Null Item", 100_000L, 0L, "[null]")))
+                .andExpect(status().isBadRequest());
+
+        assertThat(comboRepository.count()).isEqualTo(countBefore);
+    }
+
+    @Test
     void namesDifferingOnlyByCaseOrSpacesAreDuplicates() throws Exception {
         String items = "[{\"serviceId\": " + service1.getId() + ", \"quantity\": 1}]";
         createCombo(prefix + "COMBO THƯ GIÃN", 100_000L, items);

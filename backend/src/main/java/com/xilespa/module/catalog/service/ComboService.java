@@ -4,6 +4,7 @@ import com.xilespa.common.audit.AuditAction;
 import com.xilespa.common.audit.AuditService;
 import com.xilespa.common.exception.BusinessException;
 import com.xilespa.common.exception.ErrorCode;
+import com.xilespa.common.response.PageRequests;
 import com.xilespa.common.response.PageResponse;
 import com.xilespa.common.util.TextNormalizer;
 import com.xilespa.module.catalog.dto.request.ComboItemRequest;
@@ -63,11 +64,7 @@ public class ComboService {
     @Transactional(readOnly = true)
     public PageResponse<ComboResponse> search(String q, Boolean active, int page, int size) {
         String namePattern = ServiceItemService.likePattern(q);
-        PageRequest pageable =
-                PageRequest.of(
-                        Math.max(page, 0),
-                        Math.clamp(size, 1, MAX_PAGE_SIZE),
-                        Sort.by("name", "id"));
+        PageRequest pageable = PageRequests.of(page, size, MAX_PAGE_SIZE, Sort.by("name", "id"));
         Page<Combo> pageResult = comboRepository.search(namePattern, active, pageable);
         if (pageResult.isEmpty()) {
             return PageResponse.from(pageResult, this::toResponse);

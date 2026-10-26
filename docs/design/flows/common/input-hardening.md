@@ -1,6 +1,6 @@
 # Chặn đầu vào bất thường
 
-Trạng thái: thiết kế (đã duyệt) · Card: S3-08 (sửa lỗi) · Yêu cầu: BR-01, BR-18, NFR-SEC, `AGENTS.md` mục 10
+Trạng thái: khớp code · Card: S3-08 (sửa lỗi) · Yêu cầu: BR-01, BR-18, NFR-SEC, `AGENTS.md` mục 10
 
 **Chia ba phần** (mục cuối "Các phần"): mỗi lần `/implement docs/design/flows/common/input-hardening.md phần <N>`.
 
@@ -13,6 +13,8 @@ Trạng thái: thiết kế (đã duyệt) · Card: S3-08 (sửa lỗi) · Yêu 
 | 25/10/2026 | Đình (Claude) | S3-08     | Tự soát phần 1: 2 vòng, sạch                          |
 | 26/10/2026 | Đình (Claude) | S3-08     | Tự soát phần 2 lần 1: bỏ thêm ký tự điều khiển `Cc` (NUL gây 500), Hangul filler; test lưu tên sạch, `likePattern`; ghi chú S3-01 không dùng `normalizeName` |
 | 26/10/2026 | Đình (Claude) | S3-08     | Tự soát phần 2: 2 vòng, sạch                          |
+| 26/10/2026 | Đình (Antigravity) | S3-08 | Hoàn tất phần 3, khớp code toàn bộ card               |
+| 26/10/2026 | Đình (Claude) | S3-08     | Tự soát phần 3: 2 vòng, sạch; cả card 6 vòng; `EdgeProbeIT` ngày 25/10 chạy lại: 7 lỗi đã hết |
 
 Phần chung của module: `README.md` cùng thư mục.
 
@@ -191,7 +193,7 @@ Dữ liệu mẫu dev: không (tên mẫu đã là tên thường; `StaffDevData
 | ---- | --------- | ------ | ---------- |
 | 1 | Kiểu dữ liệu chặt, lỗi đúng ô, lỗi luôn JSON (#1, #5, #7) | 100 dòng | đã soát |
 | 2 | Chuẩn hóa tên và `@VisibleText` ở 4 request (#2, #3) | 120 dòng | đã soát |
-| 3 | `null` trong danh sách, `PageRequests` ở 4 service; hoàn tất card (#4, #6) | 60 dòng | chưa làm |
+| 3 | `null` trong danh sách, `PageRequests` ở 4 service; hoàn tất card (#4, #6) | 60 dòng | đã soát |
 
 ### Phần 1. Kiểu dữ liệu chặt, lỗi đúng ô, lỗi luôn JSON
 

@@ -4,6 +4,7 @@ import com.xilespa.common.audit.AuditAction;
 import com.xilespa.common.audit.AuditService;
 import com.xilespa.common.exception.BusinessException;
 import com.xilespa.common.exception.ErrorCode;
+import com.xilespa.common.response.PageRequests;
 import com.xilespa.common.response.PageResponse;
 import com.xilespa.common.util.TextNormalizer;
 import com.xilespa.module.catalog.dto.request.ServiceItemRequest;
@@ -54,10 +55,8 @@ public class ServiceItemService {
             String q, Long groupId, Boolean active, int page, int size) {
         String namePattern = likePattern(q);
         PageRequest pageable =
-                PageRequest.of(
-                        Math.max(page, 0),
-                        Math.clamp(size, 1, MAX_PAGE_SIZE),
-                        Sort.by("group.sortOrder", "name", "id"));
+                PageRequests.of(
+                        page, size, MAX_PAGE_SIZE, Sort.by("group.sortOrder", "name", "id"));
         return PageResponse.from(
                 serviceRepository.search(namePattern, groupId, active, pageable),
                 mapper::toResponse);

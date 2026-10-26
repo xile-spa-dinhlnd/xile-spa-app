@@ -3227,6 +3227,57 @@
               }
             }
           ]
+        },
+        {
+          "name": "Tạo combo phần tử null",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/catalog/combos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "catalog",
+                "combos"
+              ]
+            },
+            "description": "S3-08. Danh sách items có phần tử null trả 400 VALIDATION_FAILED với lỗi ở items[0].",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Combo phần tử null\",\n  \"price\": 100000,\n  \"items\": [null]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trạng thái 400\", () => pm.response.to.have.status(400));",
+                  "const e = pm.response.json();",
+                  "pm.test(\"Mã lỗi VALIDATION_FAILED\", () => pm.expect(e.code).to.eql(\"VALIDATION_FAILED\"));",
+                  "pm.test(\"Báo lỗi ở ô items[0]: Dòng dịch vụ không được để trống\", () => {",
+                  "  const fe = e.fieldErrors.find(f => f.field === \"items[0]\");",
+                  "  pm.expect(fe).to.be.an(\"object\");",
+                  "  pm.expect(fe.message).to.eql(\"Dòng dịch vụ không được để trống\");",
+                  "});"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
