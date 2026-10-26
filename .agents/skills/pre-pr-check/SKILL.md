@@ -43,6 +43,10 @@ cd backend && ./gradlew spotlessApply test
 cd frontend && npm run format && npm run lint && npm run typecheck && npm test
 ```
 
+Luôn chạy thêm ở gốc repo (dưới một giây): `node tools/context-check/check.mjs`. Báo lỗi (đường dẫn ở mục 2 của
+`AGENTS.md` không còn, file AGENTS quá giới hạn dòng, thiếu file nạp quy tắc) thì sửa tài liệu theo `AGENTS.md` mục 6,
+không nới giới hạn. Đổi file trong `tools/` thì chạy thêm `node --test "tools/**/*.test.mjs"`.
+
 Ghi kết quả thật: số test qua, đỏ, bỏ qua. Test backend cần Docker đang chạy; không chạy được thì nói rõ, không
 ghi là "đã qua". Có test đỏ thì dừng, phân tích bằng cách của `/fix-bug`, không báo sẵn sàng.
 

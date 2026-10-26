@@ -31,11 +31,11 @@ Nhóm hai người: **Đình** và **Huy**, chia việc theo tính năng, Scrum 
 | Google Sheets, nguồn dữ liệu gốc                        | `docs/adr/0002-source-of-truth-and-sheets-mirror.md`                                                                          |
 | Thuật ngữ, tên trường                                   | `docs/srs/06-data-dictionary.md`                                                                                              |
 | Chưa rõ nghiệp vụ, thấy mâu thuẫn                       | `docs/srs/07-open-questions.md` (mã OQ) — **hỏi lại, đừng tự quyết**                                                          |
-| Card đang làm, phạm vi sprint                           | `docs/backlog/sprint-0-1.md`                                                                                                  |
+| Card đang làm, phạm vi sprint                           | file sprint mới nhất trong `docs/backlog/`                                                                                    |
 | Phiên bản nào chứa gì, mốc tới v1.0.0                   | `docs/roadmap.md`                                                                                                             |
 | Nhánh, commit, Pull Request, nhịp sprint                | `CONTRIBUTING.md`                                                                                                             |
 | Thử API bằng Postman                                    | `docs/postman/` (collection và environment dev)                                                                               |
-| Bảo mật, dữ liệu nhạy cảm, bí mật                       | `docs/security/` (`security-checklist.md` cho mọi card)                                                                       |
+| Bảo mật, dữ liệu nhạy cảm, bí mật                       | `docs/security/` (`docs/security/security-checklist.md` cho mọi card)                                                         |
 | Dùng skill, hook của agent; luồng làm việc với AI       | `docs/guides/ai-agents.md`                                                                                                    |
 
 Quy tắc riêng của từng phần: `backend/AGENTS.md`, `frontend/AGENTS.md`.
@@ -72,7 +72,8 @@ Cần JDK 21, Node 22+, Docker Desktop **đang chạy** (database dev và test t
 | Chạy riêng một lớp test    | `./gradlew test --tests 'com.xilespa.module.staff.service.StaffServiceTest'`           | `npx vitest run src/shared/lib/money.test.ts`                     |
 | Chạy riêng một method test | `./gradlew test --tests 'com.xilespa.module.staff.service.StaffServiceTest.tenMethod'` | `npx vitest run src/shared/lib/money.test.ts -t "tên test"`       |
 | Chạy ứng dụng              | `./gradlew bootRun` (profile `dev`)                                                    | `npm run dev` (http://localhost:5173)                             |
-| Test của hook agent        | `node --test tools/agent-hooks/hooks.test.mjs` (chạy ở gốc repo)                       |                                                                   |
+| Test của tool cho agent    | `node --test "tools/**/*.test.mjs"` (chạy ở gốc repo)                                  |                                                                   |
+| Kiểm tra context của agent | `node tools/context-check/check.mjs` (chạy ở gốc repo; mục 6)                          |                                                                   |
 
 Database dev: `docker compose up -d` ở gốc repo. Windows dùng `gradlew.bat` thay cho `./gradlew`.
 
@@ -142,7 +143,8 @@ Quy tắc sinh ra từ lỗi thật mới đáng giữ.
   quy tắc cùng chủ đề. Mục 7 chỉ giữ lỗi dính nhiều phần (backend và frontend, Postman, tài liệu, quy trình).
 - **Giới hạn độ dài:** mọi agent nạp các file này ở mỗi phiên, nên `AGENTS.md` không quá khoảng 250 dòng,
   `backend/AGENTS.md` và `frontend/AGENTS.md` không quá khoảng 320 dòng mỗi file. Thêm mà vượt thì gộp các dòng cùng
-  ý, hoặc bỏ dòng mà lint, test hay hook đã tự chặn; không nới giới hạn.
+  ý, hoặc bỏ dòng mà lint, test hay hook đã tự chặn; không nới giới hạn. `tools/context-check` kiểm điều này cùng
+  đường dẫn ở mục 2 và các file nạp quy tắc ở mục 8 (lệnh ở mục 3, chạy trong `/pre-pr-check`).
 
 ## 7. Điểm dễ gây lỗi trong repo
 

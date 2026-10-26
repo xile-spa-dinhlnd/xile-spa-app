@@ -163,6 +163,10 @@ Skill `plan-sprint` trong tài khoản claude.ai của Đình: gọi khi bắt �
 
 Mã nguồn: `tools/agent-hooks/` (Node, không cần cài thêm). Test: `node --test tools/agent-hooks/hooks.test.mjs`.
 
+Cạnh hook có `tools/context-check/check.mjs` (không phải hook, chạy trong `/pre-pr-check`): kiểm đường dẫn ở bảng mục 2
+của `AGENTS.md`, giới hạn dòng của các file AGENTS (`AGENTS.md` mục 6) và file nạp quy tắc của thư mục con (mục 8). Báo
+lỗi thì sửa tài liệu, không nới giới hạn trong script.
+
 | Hook         | Khi nào                       | Làm gì                                                                                                                                                                                                                                                    |
 | ------------ | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `guard.mjs`  | Trước mỗi lệnh, đọc, sửa file | Chặn git ngoài nhóm chỉ đọc (trừ Antigravity tạo nhánh card từ `develop`/`main`); `gh` làm đổi GitHub; xóa hàng loạt; `docker compose down -v`; đọc, sửa `.env`, khóa; sửa migration đã có trên `develop`; sửa file sinh tự động; sửa cấu hình hook                                                            |
