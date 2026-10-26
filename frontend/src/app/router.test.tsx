@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { _resetRefreshStateForTests } from '@/shared/api/client'
@@ -106,5 +106,60 @@ describe('router', () => {
     renderAt('/khong-ton-tai')
 
     expect(await screen.findByText('Không tìm thấy trang')).toBeInTheDocument()
+  })
+
+  it('chưa đăng nhập vào /combos thì về trang đăng nhập', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockImplementation((url: string) => {
+        if (url.includes('/api/auth/me') || url.includes('/api/auth/refresh')) {
+          return Promise.resolve(mockResponse({ code: 'UNAUTHORIZED' }, 401))
+        }
+        return Promise.resolve(mockResponse({}))
+      }),
+    )
+
+    renderAt('/combos')
+
+    expect(await screen.findByRole('button', { name: 'Đăng nhập' })).toBeInTheDocument()
+  })
+
+  it('menu có mục Combo, bấm vào mở trang Combo', async () => {
+    window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+      matches: true,
+      media: query,
+      onchange: null,
+      addListener: () => {},
+      removeListener: () => {},
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      dispatchEvent: () => false,
+    }))
+
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockImplementation((url: string) => {
+        if (url.includes('/api/auth/me')) {
+          return Promise.resolve(mockResponse(mockOwnerUser, 200))
+        }
+        if (url.includes('/actuator/health')) {
+          return Promise.resolve(mockResponse({ status: 'UP' }, 200))
+        }
+        if (url.includes('/api/catalog/services')) {
+          return Promise.resolve(
+            mockResponse({ content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 }),
+          )
+        }
+        return Promise.resolve(mockResponse({}))
+      }),
+    )
+
+    renderAt('/')
+
+    const comboMenuItem = await screen.findByRole('menuitem', { name: /Combo/ })
+    fireEvent.click(comboMenuItem)
+
+    expect(await screen.findByRole('heading', { name: 'Combo' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Thêm combo/ })).toBeInTheDocument()
   })
 })

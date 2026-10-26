@@ -2,6 +2,10 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import { api } from '@/shared/api/client'
 import type { PageResponse } from '@/shared/api/page'
 import type {
+  Combo,
+  ComboQuote,
+  ComboQuoteRequest,
+  ComboRequest,
   ServiceGroup,
   ServiceGroupRequest,
   ServiceItem,
@@ -14,6 +18,8 @@ export const catalogKeys = {
   services: ['catalog', 'services'] as const,
   serviceList: (params: ServiceSearchParams) => ['catalog', 'services', params] as const,
   groups: ['catalog', 'service-groups'] as const,
+  combos: ['catalog', 'combos'] as const,
+  comboQuote: (body: ComboQuoteRequest | null) => ['catalog', 'combos', 'quote', body] as const,
 }
 
 /** Danh sách dịch vụ: tìm, lọc, phân trang phía server (FR-SVC-01). */
@@ -118,6 +124,35 @@ export function useSetServiceActive() {
   return useMutation({
     mutationFn: ({ id, active }: { id: number; active: boolean }) =>
       api.post<ServiceItem>(`/api/catalog/services/${id}/${active ? 'activate' : 'deactivate'}`),
+    onSuccess: invalidate,
+  })
+}
+
+/** Gọi API tính thử giá combo trực tiếp (FR-CMB-03). */
+export function comboQuote(body: ComboQuoteRequest) {
+  return api.post<ComboQuote>('/api/catalog/combos/quote', body)
+}
+
+/** Tính thử tổng giá lẻ và mức tiết kiệm của combo (FR-CMB-03). */
+export function useComboQuote(body: ComboQuoteRequest | null, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: catalogKeys.comboQuote(body),
+    queryFn: ({ signal }) => api.post<ComboQuote>('/api/catalog/combos/quote', body!, { signal }),
+    enabled: Boolean(body) && (options?.enabled ?? true),
+    placeholderData: keepPreviousData,
+  })
+}
+
+function useInvalidateCombos() {
+  const queryClient = useQueryClient()
+  return () => queryClient.invalidateQueries({ queryKey: catalogKeys.combos })
+}
+
+/** Tạo combo mới (FR-CMB-01). */
+export function useCreateCombo() {
+  const invalidate = useInvalidateCombos()
+  return useMutation({
+    mutationFn: (body: ComboRequest) => api.post<Combo>('/api/catalog/combos', body),
     onSuccess: invalidate,
   })
 }

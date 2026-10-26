@@ -1,0 +1,66 @@
+.container {
+  border: 1px solid var(--xl-color-border);
+  border-radius: var(--xl-radius-md);
+  padding: var(--xl-space-md);
+  background-color: var(--xl-color-bg-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: var(--xl-space-sm);
+  margin-top: var(--xl-space-xs);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--xl-color-heading);
+}
+
+.emptyHint {
+  font-size: 13px;
+  color: var(--xl-color-text-secondary);
+  margin: 0;
+}
+
+.summaryRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--xl-space-md);
+}
+
+.label {
+  font-size: 13px;
+  color: var(--xl-color-text-secondary);
+}
+
+.value {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--xl-color-heading);
+  text-align: right;
+}
+
+.subText {
+  font-size: 12px;
+  color: var(--xl-color-text-muted);
+  text-align: right;
+  margin-top: var(--xl-space-xs);
+}
+
+.errorBox {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  color: #ff4d4f;
+}
+
+.alert {
+  margin-top: var(--xl-space-xs);
+}

@@ -1,0 +1,120 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.selectWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--xl-space-xs);
+}
+
+.selectInput {
+  width: 100%;
+}
+
+.hintText {
+  font-size: 13px;
+  color: var(--xl-color-text-secondary);
+  line-height: 1.4;
+}
+
+.errorText {
+  font-size: 14px;
+  color: #ff4d4f;
+  line-height: 1.4;
+}
+
+.warningText {
+  font-size: 13px;
+  color: #d46b08;
+  margin-top: var(--xl-space-xs);
+  line-height: 1.4;
+}
+
+.itemList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--xl-space-sm);
+  margin-top: var(--xl-space-sm);
+}
+
+.itemCard {
+  border: 1px solid var(--xl-color-border);
+  border-radius: var(--xl-radius-md);
+  padding: var(--xl-space-sm) var(--xl-space-md);
+  background-color: var(--xl-color-bg-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: var(--xl-space-xs);
+}
+
+.itemHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--xl-space-sm);
+}
+
+.itemTitleGroup {
+  display: flex;
+  align-items: center;
+  gap: var(--xl-space-xs);
+  flex-wrap: wrap;
+}
+
+.itemName {
+  font-weight: 500;
+  color: var(--xl-color-heading);
+}
+
+.removeButton {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: calc(-1 * var(--xl-space-xs)) calc(-1 * var(--xl-space-xs)) calc(-1 * var(--xl-space-xs))
+    0;
+}
+
+.itemControls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--xl-space-md);
+  flex-wrap: wrap;
+}
+
+.qtyWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.qtyInput {
+  width: 90px;
+}
+
+.itemCalculation {
+  font-size: 13px;
+  color: var(--xl-color-text-secondary);
+  text-align: right;
+  flex: 1;
+}
+
+.spinContainer {
+  padding: var(--xl-space-sm);
+  text-align: center;
+}
+
+.selectError {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--xl-space-xs);
+  font-size: 13px;
+  color: #ff4d4f;
+}

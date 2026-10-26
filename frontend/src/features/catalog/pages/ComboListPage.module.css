@@ -1,0 +1,33 @@
+.pageContainer {
+  padding: var(--xl-space-lg);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--xl-space-md);
+  margin-bottom: var(--xl-space-lg);
+}
+
+.title {
+  margin: 0 !important;
+  color: var(--xl-color-heading);
+}
+
+.addButton {
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .addButton {
+    width: auto;
+  }
+}
