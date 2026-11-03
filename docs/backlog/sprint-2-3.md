@@ -45,40 +45,35 @@ phát hành v0.3.0.
 
 ## 2. Sprint 3: Khách hàng và giao dịch phần 1 (03–16/11, v0.4.0)
 
-Mục tiêu: có khách hàng và tạo được giao dịch hằng ngày qua API (màn nhập giao dịch S3-05 dời sang Sprint 4).
+Mục tiêu: có khách hàng và nhập được giao dịch hằng ngày.
 
 **Chốt lại ngày 03/11/2026** (Đình duyệt, đã ghi lên Trello): chỉnh điểm; tách S3-04 (8 điểm) thành S3-04, S3-10,
-S3-11; S3-06 chỉ làm backend, phần giao diện chuyển vào S3-05; dời S3-03 và S3-05 sang Sprint 4 (mục 2.1); S3-09 lên
-3 điểm, giao Đình. S3-08 xong ở cuối Sprint 2, không tính vào tổng Sprint 3.
+S3-11; S3-06 chỉ làm backend, phần giao diện chuyển vào S3-05; S3-09 lên 3 điểm, giao Đình. Cùng ngày Đình quyết định
+giữ S3-03 và S3-05 trong Sprint 3 (không dời sang Sprint 4). S3-08 xong ở cuối Sprint 2, không tính vào tổng Sprint 3.
 
 | Mã    | Card                                  | Điểm | Nhãn    | Người làm | Cột Trello      | Nội dung dán vào card                                                                                                                                                                                                                   |
 | ----- | ------------------------------------- | ---- | ------- | --------- | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | S3-01 | Khách hàng backend                    | 5    | BE      | Huy       | Sprint Backlog  | FR-CUS-01, 02. Tạo, sửa, tìm nhanh theo tên hoặc SĐT; chuẩn hóa SĐT và không trùng (BR-10); ghi chú sức khỏe là dữ liệu nhạy cảm, không ra log (NFR-PRV-02); `audit_log` chỉ ghi ghi chú sức khỏe "đã thay đổi", không ghi nội dung (OQ-23); khách vãng lai theo OQ-08; ghi audit; Postman. Dùng sẵn của S3-08 (`docs/design/flows/common/input-hardening.md`): tên khách `@VisibleText` + `TextNormalizer.normalizeName`, phân trang `PageRequests`; ghi chú nhiều dòng **không** dùng `normalizeName` (gộp mất xuống dòng), thiết kế cách giữ xuống dòng mà vẫn bỏ ký tự vô hình; `likePattern` chuyển vào `common` thay vì chép bản thứ ba                       |
 | S3-02 | Khách hàng giao diện                  | 3    | FE      | Huy       | Sprint Backlog  | FR-CUS-01, 02. Danh sách, form, ô tìm nhanh làm thành component dùng lại khi nhập giao dịch (S3-05)                                                                                                                                      |
+| S3-03 | Hồ sơ khách 360                       | 5    | BE, FE  | Huy       | Sprint Backlog  | FR-CUS-03. Lịch sử giao dịch, số lần đến, tổng chi tiêu, AOV, ngày đầu và cuối, số ngày chưa quay lại; tính khi truy vấn, không lưu (BR-11). Làm cuối sprint vì cần dữ liệu giao dịch (S3-04) |
 | S3-04 | Giao dịch backend: tạo giao dịch      | 5    | BE      | Đình      | Sprint Backlog  | FR-VIS-01, 02, 03, 09. Giao dịch nhiều dòng (dịch vụ hoặc combo); chụp tên và giá lúc bán (BR-03); giảm giá % theo dòng bằng `calc_discount` (BR-04); kiểm tra dữ liệu khi nhập (thiếu dịch vụ, thiếu thanh toán, giảm giá ngoài 0–100, ngày không hợp lệ); khách vãng lai để trống khách (OQ-08); `businessDate` bắt buộc gửi lên (ngày mặc định theo giờ chốt làm ở S3-11); một hình thức thanh toán theo cột hiện có `visit.payment_method` (S3-06 chuyển sang `visit_payment`); xem lại giao dịch theo id; ghi audit; Postman |
 | S3-10 | Người làm và tiền tour theo dòng      | 3    | BE      | Đình      | Sprint Backlog  | FR-VIS-05, 06, OQ-06. Chọn người thực hiện cho từng dòng bán: chỉ nhân viên đang làm, chặn người đã nghỉ (AGENTS.md mục 7: xét mọi method đưa nhân viên vào dòng bán). Tiền tour tự điền từ dịch vụ hoặc `combo.tour_fee`, sửa tay được, chụp lại theo dòng (BR-03); chủ tiệm làm thì tour = 0. Ghi audit; Postman. Cần S3-04 |
-| S3-06 | Thanh toán nhiều hình thức           | 3    | BE      | Đình      | Sprint Backlog  | FR-VIS-04, OQ-07. **Chỉ backend** (phần giao diện chuyển sang S3-05 ở Sprint 4). Migration V3: bảng `visit_payment` (hình thức, số tiền), bỏ `visit.payment_method`, sửa các view đang dùng cột này (`visit_item_amounts`, `v_daily_summary`); tổng các dòng thanh toán phải bằng số phải trả (backend kiểm tra); cập nhật ERD; Postman. Làm sau S3-04 và S3-10, trước S3-11 |
+| S3-06 | Thanh toán nhiều hình thức           | 3    | BE      | Đình      | Sprint Backlog  | FR-VIS-04, OQ-07. **Chỉ backend** (phần giao diện chuyển vào S3-05). Migration V3: bảng `visit_payment` (hình thức, số tiền), bỏ `visit.payment_method`, sửa các view đang dùng cột này (`visit_item_amounts`, `v_daily_summary`); tổng các dòng thanh toán phải bằng số phải trả (backend kiểm tra); cập nhật ERD; Postman. Làm sau S3-04 và S3-10, trước S3-11 |
 | S3-11 | Ngày làm việc và đối soát tháng 9     | 3    | BE      | Đình      | Sprint Backlog  | OQ-02, OQ-03, BR-02. Ngày làm việc mặc định theo giờ chốt 04:00 (`xile.business-day.cutoff`, dùng `Clock`): giao dịch nhập trước 04:00 thuộc ngày hôm trước; người dùng đổi được ngày khi ngày đó chưa chốt. Test ca biên quanh 04:00; ngày đã chốt trả 409 `DAY_CLOSED` (trigger `lock_business_day`). Test tích hợp đối soát: nhập một ngày mẫu từ `THÁNG 9 NĂM 2026 - SOURCE.xlsx` rồi so `v_daily_summary` với bảng đối soát (OQ-03). Dữ liệu mẫu chỉ giữ dịch vụ và số tiền, không đưa tên, SĐT khách thật vào repo (AGENTS.md mục 4, quy tắc 6). Làm sau S3-06 vì view tổng kết đổi theo `visit_payment` |
+| S3-05 | Giao diện nhập giao dịch nhanh        | 5    | FE      | Đình      | Sprint Backlog  | FR-VIS-01 đến 06, 09, một phần FR-VIS-10. Tối ưu điện thoại và iPad, khoảng 5 lần chạm cho một giao dịch thường (NFR-USA-06); không tính tiền ở giao diện, hiển thị số backend trả về. Gồm cả phần giao diện thanh toán chuyển từ S3-06: mặc định một hình thức, có nút "Chia hai hình thức". Dùng ô tìm khách của S3-02. Cần backend S3-04, S3-10, S3-06 |
 | S3-07 | Phiên hết hạn: về trang đăng nhập     | 2    | FE      | Huy       | Sprint Backlog  | FR-AUTH-02. Khi làm mới phiên thất bại, `notifySessionExpired` (`shared/api/client.ts`) chưa có nơi đăng ký `onSessionExpired`, nên trang đang mở chỉ hiện lỗi 401; người dùng chỉ về `/login` khi query `me` chạy lại (tới 5 phút) hoặc tải lại trang (`docs/design/flows/auth/session-refresh.md`). Đăng ký listener một lần ở tầng app (`AppLayout` hoặc `app/providers.tsx`): xóa cache TanStack Query, chuyển về `/login?from=<trang hiện tại>`, báo "Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại."; hủy đăng ký khi unmount. Test Vitest: refresh 401 thì chuyển trang và xóa cache; refresh thành công thì không chuyển; nhiều request 401 cùng lúc chỉ chuyển và báo một lần. Cập nhật sơ đồ trong `session-refresh.md`. Một PR, khoảng 150 dòng. Làm sớm trong sprint |
 | S3-08 | Chặn đầu vào bất thường              | 3    | BE      | Đình      | Xong            | Sửa 7 lỗi tìm ra khi dò ca biên ngày 25/10/2026, thiết kế ở `docs/design/flows/common/input-hardening.md` (chia 3 phần): tiền, số lượng nhận số thập phân và chuỗi số (cắt mất phần lẻ); tên chỉ có NBSP hoặc ký tự vô hình; tên trông giống hệt vẫn qua kiểm tra trùng; `null` trong danh sách combo gây 500; sai Content-Type, `Accept` không phải JSON gây 500; `page` cực lớn gây 500; enum sai không có `fieldErrors`. Đổi `GlobalExceptionHandler`, Jackson toàn cục và phân trang của `AuditLogQueryService`: báo Huy trước. Làm trước S3-01 để khách hàng dùng ngay `TextNormalizer`, `@VisibleText` |
 | S3-09 | CI: GitHub Actions cho mỗi PR          | 3    | DevOps  | Đình      | Sprint Backlog  | Workflow chạy khi mở hoặc cập nhật PR vào `develop`: backend `./gradlew spotlessCheck test` (Testcontainers chạy được trên runner GitHub), frontend `npm ci`, `format:check`, `lint`, `typecheck`, `test`, tool cho agent `node --test "tools/**/*.test.mjs"` và `node tools/context-check/check.mjs`. Bật quy tắc nhánh: PR vào `develop` phải xanh mới merge. Lý do: "toàn bộ test phải pass" hiện chỉ dựa vào người chạy tay |
 
-**Tổng điểm:** 27 (Huy 10, Đình 17), trong năng lực 28. Nếu Huy xong sớm thì kéo S3-03 vào (đầu danh sách mục 2.1).
+**Tổng điểm:** 37 (Huy 15, Đình 22), quá năng lực 28 khoảng 9 điểm. Đình chốt giữ cả hai card ngày 03/11/2026 để khỏi
+dời sang Sprint 4; nếu chậm thì S3-03 và S3-05 là hai card lùi trước.
 
 **Phụ thuộc:** S3-04 cần nhân viên (S2-05) và combo (S2-07). Thứ tự giao dịch: S3-04 → S3-10 → S3-06 → S3-11. Khách
-hàng không bắt buộc trong giao dịch, nên S3-01 và S3-04 làm song song được.
+hàng không bắt buộc trong giao dịch, nên S3-01 và S3-04 làm song song được. S3-05 cần backend S3-04, S3-10, S3-06 và
+dùng ô tìm khách của S3-02; S3-03 cần dữ liệu giao dịch (S3-04).
 
-**Xong khi:** tạo được qua API (test S3-11, Postman) một ngày bán hàng mẫu tháng 9 và ra đúng số trong bảng đối soát
-(OQ-03); phát hành v0.4.0.
-
-### 2.1. Dời sang Sprint 4 (chốt 03/11/2026)
-
-Giữ mã cũ vì các card khác và tài liệu đang trỏ tới. Trên Trello hai card này ở Product Backlog.
-
-| Mã    | Card                                  | Điểm | Nhãn    | Người làm | Cột Trello      | Nội dung dán vào card                                                                                                                                                                                                                   |
-| ----- | ------------------------------------- | ---- | ------- | --------- | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| S3-03 | Hồ sơ khách 360                       | 5    | BE, FE  | Huy       | Product Backlog | **Dời sang Sprint 4**; đầu danh sách kéo vào nếu Sprint 3 dư thời gian. FR-CUS-03. Lịch sử giao dịch, số lần đến, tổng chi tiêu, AOV, ngày đầu và cuối, số ngày chưa quay lại; tính khi truy vấn, không lưu (BR-11). Cần dữ liệu giao dịch (S3-04) |
-| S3-05 | Giao diện nhập giao dịch nhanh        | 5    | FE      | Đình      | Product Backlog | **Dời sang Sprint 4**. FR-VIS-01 đến 06, 09, một phần FR-VIS-10. Tối ưu điện thoại và iPad, khoảng 5 lần chạm cho một giao dịch thường (NFR-USA-06); không tính tiền ở giao diện, hiển thị số backend trả về. Gồm cả phần giao diện thanh toán chuyển từ S3-06: mặc định một hình thức, có nút "Chia hai hình thức". Dùng ô tìm khách của S3-02 |
+**Xong khi:** nhập được một ngày bán hàng mẫu tháng 9 và ra đúng số trong bảng đối soát (OQ-03, test S3-11); phát
+hành v0.4.0.
 
 ---
 
@@ -100,5 +95,5 @@ sau, không tự quyết nghiệp vụ.
 ## 4. Sau Sprint 3 (xem `docs/roadmap.md`)
 
 - **Sprint 4 (v0.5.0):** giao dịch phần 2 (sửa, hủy, danh sách theo ngày, nhập nhanh hoàn chỉnh), chi phí, chốt sổ
-  và bút toán điều chỉnh; cộng S3-03 và S3-05 dời từ Sprint 3 (10 điểm, mục 2.1). Cần OQ-16.
+  và bút toán điều chỉnh. Cần OQ-16.
 - **Sprint 5 (v0.6.0):** dashboard. Cần OQ-14.
