@@ -17,7 +17,7 @@ Chỉ ghi mốc và phạm vi. Card chi tiết ở [backlog](backlog/sprint-0-1.
 | --------- | ------ | ------------------- | -------- | ---------- |
 | v0.1.0 | Sprint 0 | 01–06/10/2026 | Nền móng: khung backend, frontend, database, quy trình | Đã phát hành |
 | v0.2.0 | Sprint 1 | 06–11/10/2026 | Đăng nhập, bảng giá dịch vụ, nhật ký thay đổi | Đã phát hành |
-| v0.3.0 | Sprint 2 | 20/10–02/11 | Hoàn thiện tài khoản, nhân viên, nhóm dịch vụ, combo, nhập bảng giá | Đang làm |
+| v0.3.0 | Sprint 2 | 20/10–02/11 | Hoàn thiện tài khoản, nhân viên, nhóm dịch vụ, combo | Đang làm |
 | v0.4.0 | Sprint 3 | 03–16/11 | Khách hàng cơ bản, nhập giao dịch (phần 1) | Dự kiến |
 | v0.5.0 | Sprint 4 | 17–30/11 | Giao dịch (phần 2), chi phí, chốt sổ và bút toán | Dự kiến |
 | v0.6.0 | Sprint 5 | 01–14/12 | Dashboard, hoàn thiện cho dùng thử | Dự kiến |
@@ -43,8 +43,8 @@ kiểm thử lược đồ và ánh xạ lỗi XL với Postgres thật, Git Flo
 
 - **Card:** S2-01 đến S2-09, chi tiết ở [backlog Sprint 2 và 3](backlog/sprint-2-3.md).
 - **Phạm vi:** FR-AUTH-03, 04, 05 (quên, đổi mật khẩu, chống dò) · FR-STF-01 · FR-SVC-05 · FR-CMB-01 đến 05 ·
-  FR-IMP-01 (nhập bảng giá từ Excel) · chuyển JWT sang JwtEncoder/JwtDecoder (nợ kỹ thuật từ S1-01). FR-IMP-01 và
-  phần JWT là "làm nếu dư thời gian".
+  chuyển JWT sang JwtEncoder/JwtDecoder (nợ kỹ thuật từ S1-01, "làm nếu dư thời gian"). FR-IMP-01 (nhập bảng giá từ
+  Excel, card S2-09) dời sang giai đoạn DevOps và dùng thử ngày 03/11/2026.
 - **Xong khi:** chủ tiệm tự đặt lại được mật khẩu qua email; bảng giá, combo và nhân viên đã đủ để nhập giao dịch.
 - **Câu hỏi mở:** OQ-10 đã chốt 11/10 (tên miền xilespa; email dev ghi log, production qua SMTP).
 
@@ -75,7 +75,9 @@ kiểm thử lược đồ và ánh xạ lỗi XL với Postgres thật, Git Flo
 ### v0.7.0 → v0.9.x — Giai đoạn DevOps và dùng thử
 
 - **Phạm vi:** card D-01 đến D-07 ([backlog](backlog/sprint-0-1.md) mục 5): CI, Docker hóa, VPS, Caddy và HTTPS,
-  sao lưu hằng đêm (FR-SYS-02, NFR-REL-01), tự động deploy. Nhập dữ liệu cũ nếu cần (OQ-12).
+  sao lưu hằng đêm (FR-SYS-02, NFR-REL-01), tự động deploy. Nhập bảng giá từ Excel (FR-IMP-01, card S2-09) ngay
+  trước khi chủ tiệm dùng thử, cùng dữ liệu cũ nếu cần (OQ-12); lý do dời ở
+  [backlog Sprint 2 và 3](backlog/sprint-2-3.md) mục 4.
 - **Cách làm:** chia bước nhỏ, làm cặp. Có thể bắt đầu D-01 (CI) và D-02 (Docker) song song từ Sprint 4–5.
 - Mỗi lần deploy lên VPS gắn một tag `v0.7.0`, `v0.8.0`... Lỗi phát hiện khi dùng thử sửa bằng `v0.x.y`.
 
@@ -110,3 +112,4 @@ OQ-15, OQ-17 (lương), OQ-18 đến OQ-20 (AI). Phần AI cần VPS mạnh hơn
 | 06/10/2026 | Bản đầu tiên, sau khi phát hành v0.1.0 |
 | 11/10/2026 | Duyệt kế hoạch Sprint 2 và 3 (`backlog/sprint-2-3.md`); chốt OQ-02, 06, 07, 08, 10; thêm card S3-06 |
 | 15/10/2026 | Đánh dấu v0.2.0 đã phát hành (11/10). Chủ tiệm chỉ xem demo tổng thể khi có MVP (giai đoạn dùng thử); sprint review là nội bộ Đình và Huy. D-01 (CI) giữ ở giai đoạn DevOps |
+| 03/11/2026 | Dời FR-IMP-01 (nhập bảng giá từ Excel, S2-09) từ v0.3.0 sang giai đoạn DevOps và dùng thử |

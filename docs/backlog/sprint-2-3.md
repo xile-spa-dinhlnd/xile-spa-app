@@ -27,14 +27,15 @@ Excel) để Sprint 3 nhập được giao dịch. Mỗi card gồm cả backend
 | S2-06 | Quản lý nhóm dịch vụ                         | 2    | BE, FE  | Đình      | Xong            | FR-SVC-05. Thêm, sửa tên và thứ tự, ngừng dùng nhóm; tên không trùng (`ux_service_group_name`); ghi audit                                                                                                            |
 | S2-07 | Combo backend                                | 5    | BE      | Đình      | Xong            | FR-CMB-01 đến 05. Giá combo, dịch vụ thành phần và số lượng; tiền tour mặc định của combo (OQ-06, mặc định 0); backend tính tổng giá lẻ và mức tiết kiệm (giao diện chỉ hiển thị); sửa không ảnh hưởng giao dịch đã ghi; ngừng bán, bán lại; ghi audit; Postman             |
 | S2-08 | Combo giao diện                              | 3    | FE      | Đình      | Xong            | FR-CMB-01 đến 05. Danh sách, form chọn dịch vụ thành phần, hiển thị tổng giá lẻ, giá combo, mức tiết kiệm; dùng `MoneyInput`                                                                                          |
-| S2-09 | Nhập bảng giá từ Excel                       | 3    | BE, FE  | Đình      | Đang làm        | FR-IMP-01. Đọc sheet `LIST K XOÁ`, xem trước rồi mới lưu, báo lỗi theo dòng; thêm Apache POI, ghi ADR-0001. **Làm nếu dư thời gian**                                                                                  |
+| S2-09 | Nhập bảng giá từ Excel                       | 3    | BE, FE  | Đình      | Dời             | FR-IMP-01. Đọc sheet `LIST K XOÁ`, xem trước rồi mới lưu, báo lỗi theo dòng; thêm Apache POI, ghi ADR-0001; file nhập theo T-15 (giới hạn kích thước, chặn file nén bất thường, ô bắt đầu bằng `=` coi là chữ). **Dời ngày 03/11/2026** sang giai đoạn DevOps và dùng thử (v0.7), xem mục 4 |
 | S2-10 | Chuyển style inline sang CSS Modules        | 3    | FE      | Đình      | Xong            | Nợ kỹ thuật (Đình chốt 22/10/2026, `frontend/AGENTS.md` mục CSS). Chuyển 112 chỗ `style={{}}` trong 14 file (`AppLayout`, các trang và form của `auth`, `catalog`, `staff`, `dashboard`, `MoneyInput`) sang `<Component>.module.css` cạnh component; màu, khoảng cách dùng biến trong `src/styles/tokens.css`. Giao diện không đổi (chụp trước/sau cỡ máy tính và điện thoại); `npm test` xanh nguyên. Chỉ giữ `style` cho giá trị tính lúc chạy |
 
 **Tổng điểm:** khoảng 33 (Huy 14, Đình 19), quá năng lực 28. S2-04 và S2-09 là "làm nếu dư thời gian"; nếu
 S1-06 bị dời sang Sprint 2 thì bỏ hai card này trước. S2-10 thêm ngày 22/10/2026, Đình tự nhận; chưa kịp thì dời
 sang đầu Sprint 3. S3-08 (3 điểm) kéo sớm vào cuối Sprint 2 ngày 25/10/2026: sửa lỗi bảo mật đã có trên `develop`,
 và S3-01 của Huy cần `TextNormalizer`, `@VisibleText` ngay ngày đầu Sprint 3. Đình làm S3-08 rồi S2-08; S2-09 vẫn
-là "làm nếu dư thời gian".
+là "làm nếu dư thời gian". Hết Sprint 2, S2-09 chưa bắt đầu; ngày 03/11/2026 Đình chốt dời sang giai đoạn DevOps và
+dùng thử, không đưa vào Sprint 3 (lý do ở mục 4).
 
 **Phụ thuộc:** S2-08 cần S2-07. S2-09 cần S2-06 (nhóm dịch vụ) và module catalog (S1-05).
 
@@ -103,3 +104,9 @@ sau, không tự quyết nghiệp vụ.
 - **Sprint 4 (v0.5.0):** giao dịch phần 2 (sửa, hủy, danh sách theo ngày, nhập nhanh hoàn chỉnh), chi phí, chốt sổ
   và bút toán điều chỉnh. Cần OQ-16.
 - **Sprint 5 (v0.6.0):** dashboard. Cần OQ-14.
+- **Giai đoạn DevOps và dùng thử (v0.7):** S2-09 nhập bảng giá từ Excel (FR-IMP-01), làm ngay trước khi chủ tiệm dùng
+  thử. Lý do dời (Đình chốt 03/11/2026): Sprint 3 đã 45 điểm so với năng lực 28; nhập bảng giá là việc một lần lúc
+  bắt đầu dùng thật (cơ sở dữ liệu là nguồn chính, ADR-0002), nhập sớm thì giá trong Excel có thể đổi và phải nhập
+  lại; cột của dịch vụ, combo, tiền tour còn có thể đổi trong Sprint 3–4; phần chung của việc nhập file (Apache POI,
+  xem trước, báo lỗi theo dòng, T-15) làm một lần cùng FR-IMP-02 và dữ liệu cũ (OQ-12). Xuất bảng giá chưa có trong
+  SRS: hỏi chủ tiệm trước khi thêm card.
