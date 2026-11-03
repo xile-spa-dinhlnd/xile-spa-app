@@ -124,7 +124,8 @@ nhánh `hotfix/*` theo CONTRIBUTING.md mục 6.
 ### Antigravity (`.agents/skills/`)
 
 Gõ `/<tên>` trong khung chat, hoặc nói việc cần làm; agent tự chọn skill theo mô tả. `/plan-task`, `/fix-bug`,
-`/pre-pr-check` chỉ chạy khi người dùng gõ; trong `/implement` agent chỉ gọi `/write-tests`, `/new-migration`.
+`/pre-pr-check`, `/frontend-design` chỉ chạy khi người dùng gõ; trong `/implement` agent chỉ gọi `/write-tests`,
+`/new-migration` và `antd` (tự bật khi đụng code antd).
 
 | Skill            | Khi nào                        | Kết quả                                                                                                                     |
 | ---------------- | ------------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
@@ -134,6 +135,8 @@ Gõ `/<tên>` trong khung chat, hoặc nói việc cần làm; agent tự chọn
 | `/write-tests`   | Viết, bổ sung test             | Bảng ca test đủ sáu nhóm (AGENTS.md mục 10), test đã thử làm đỏ, kết quả chạy                                               |
 | `/new-migration` | Đổi schema                     | `V{n}__...sql` mới, entity, ERD, test schema                                                                                |
 | `/pre-pr-check`  | Chỉ khi người dùng gõ          | Kích thước PR, file code thiếu test; format, lint, test; checklist; câu commit, lệnh push, bản nháp PR, cách squash merge   |
+| `antd`           | Tự bật khi viết, sửa component antd | Tra API, demo, token đúng antd 6 bằng `@ant-design/cli` trước khi viết; `antd lint` file đã sửa. Bản chép đã chặn tự cài, tự nâng CLI và gửi báo lỗi. Mỗi máy tự cài một lần: `npm install -g @ant-design/cli` |
+| `/frontend-design` | Chỉ khi người dùng gõ, card định hướng giao diện | Đề xuất bảng màu, phông, thang chữ, bo góc, độ dày đặc rồi dừng chờ duyệt; duyệt xong chỉ sửa `theme.ts`, `tokens.css`, `ux-guidelines.md` mục 5 |
 
 Câu mẫu:
 
