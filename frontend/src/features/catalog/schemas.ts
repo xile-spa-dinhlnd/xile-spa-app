@@ -45,3 +45,45 @@ export const serviceGroupSchema = z.object({
 })
 
 export type ServiceGroupFormValues = z.infer<typeof serviceGroupSchema>
+
+export const MAX_COMBO_ITEMS = 20
+export const MAX_COMBO_QUANTITY = 99
+
+export const comboItemSchema = z.object({
+  serviceId: z.number({ error: 'Vui lòng chọn dịch vụ' }),
+  serviceName: z.string().optional(),
+  serviceActive: z.boolean().optional(),
+  quantity: z
+    .number({ error: 'Vui lòng nhập số lượng' })
+    .int('Số lượng phải là số nguyên')
+    .min(1, 'Số lượng tối thiểu là 1')
+    .max(MAX_COMBO_QUANTITY, 'Số lượng tối đa là 99'),
+})
+
+export type ComboItemFormValues = z.infer<typeof comboItemSchema>
+
+/** Kiểm tra form combo ở giao diện (S2-08), khớp với ComboRequest của backend. */
+export const comboFormSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(1, 'Tên combo không được để trống')
+    .max(150, 'Tên combo tối đa 150 ký tự'),
+  price: z
+    .number({ error: 'Vui lòng nhập giá combo' })
+    .int('Giá combo phải là số nguyên')
+    .min(0, 'Giá combo không được âm')
+    .max(MAX_MONEY, 'Giá combo tối đa 1.000.000.000 đ'),
+  tourFee: z
+    .number()
+    .int('Tiền tour phải là số nguyên')
+    .min(0, 'Tiền tour không được âm')
+    .max(MAX_MONEY, 'Tiền tour tối đa 1.000.000.000 đ')
+    .nullable(),
+  items: z
+    .array(comboItemSchema)
+    .min(1, 'Combo phải có ít nhất một dịch vụ')
+    .max(MAX_COMBO_ITEMS, 'Combo tối đa 20 dịch vụ'),
+})
+
+export type ComboFormValues = z.infer<typeof comboFormSchema>

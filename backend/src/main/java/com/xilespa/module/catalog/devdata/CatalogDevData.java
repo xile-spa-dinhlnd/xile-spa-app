@@ -3,6 +3,7 @@ package com.xilespa.module.catalog.devdata;
 import com.xilespa.module.catalog.dto.request.ComboItemRequest;
 import com.xilespa.module.catalog.dto.request.ComboRequest;
 import com.xilespa.module.catalog.dto.request.ServiceItemRequest;
+import com.xilespa.module.catalog.dto.response.ComboResponse;
 import com.xilespa.module.catalog.dto.response.ServiceGroupResponse;
 import com.xilespa.module.catalog.dto.response.ServiceItemResponse;
 import com.xilespa.module.catalog.service.ComboService;
@@ -122,8 +123,50 @@ public class CatalogDevData implements ApplicationRunner {
         Map<String, Long> serviceIdByName = new HashMap<>();
         int createdServices = seedServices(groupIdByName, serviceIdByName);
         int createdCombos = seedCombos(serviceIdByName);
+        if (seedHotStoneCombo(groupIdByName, serviceIdByName)) {
+            createdServices++;
+            createdCombos++;
+        }
         log.info(
                 "Dữ liệu mẫu bảng giá: thêm {} dịch vụ, {} combo.", createdServices, createdCombos);
+    }
+
+    /**
+     * Tạo combo ngừng bán chứa dịch vụ ngừng bán để thử giao diện (bước 6 thử tay S2-08). Phải làm
+     * theo thứ tự: tạo dịch vụ -> tạo combo -> ngừng bán combo -> ngừng bán dịch vụ.
+     */
+    private boolean seedHotStoneCombo(
+            Map<String, Long> groupIdByName, Map<String, Long> serviceIdByName) {
+        String comboName = "Combo Đá Nóng";
+        String serviceName = "Chườm đá nóng";
+        if (comboExists(comboName)) {
+            return false;
+        }
+        if (findService(serviceName).isPresent()) {
+            log.warn(
+                    "Bỏ qua '{}': dịch vụ '{}' đã có nhưng combo chưa có (dở dang lần chạy trước).",
+                    comboName,
+                    serviceName);
+            return false;
+        }
+        Long groupId = groupIdByName.get("Khác");
+        Long xongHoiId = serviceIdByName.get("Xông hơi thảo dược");
+        if (groupId == null || xongHoiId == null) {
+            log.warn(
+                    "Bỏ qua '{}': thiếu nhóm 'Khác' hoặc dịch vụ 'Xông hơi thảo dược'.", comboName);
+            return false;
+        }
+        ServiceItemResponse chuomDa =
+                serviceItemService.create(
+                        new ServiceItemRequest(serviceName, groupId, 30, 120_000L, 15_000L));
+        serviceIdByName.put(serviceName, chuomDa.id());
+        List<ComboItemRequest> items =
+                List.of(new ComboItemRequest(chuomDa.id(), 1), new ComboItemRequest(xongHoiId, 1));
+        ComboResponse combo =
+                comboService.create(new ComboRequest(comboName, 200_000L, 25_000L, items));
+        comboService.deactivate(combo.id());
+        serviceItemService.deactivate(chuomDa.id());
+        return true;
     }
 
     /** Ghi id của mọi dịch vụ mẫu (mới tạo hay đã có) vào {@code serviceIdByName} để ghép combo. */

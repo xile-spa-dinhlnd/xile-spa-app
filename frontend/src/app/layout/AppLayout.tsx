@@ -2,6 +2,7 @@ import {
   AppstoreOutlined,
   DashboardOutlined,
   DownOutlined,
+  GiftOutlined,
   KeyOutlined,
   LogoutOutlined,
   MenuOutlined,
@@ -33,6 +34,7 @@ const { Header, Sider, Content } = Layout
 const menuItems: MenuProps['items'] = [
   { key: '/', icon: <DashboardOutlined />, label: 'Tổng quan' },
   { key: '/services', icon: <AppstoreOutlined />, label: 'Dịch vụ' },
+  { key: '/combos', icon: <GiftOutlined />, label: 'Combo' },
   { key: '/staff', icon: <TeamOutlined />, label: 'Nhân viên' },
 ]
 

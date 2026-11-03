@@ -4,7 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -29,6 +31,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -50,6 +53,7 @@ class CatalogDevDataTest {
     private CatalogDevData devData;
     private final AtomicLong nextId = new AtomicLong(100);
     private final Map<String, Long> createdServiceIds = new HashMap<>();
+    private final Map<String, Long> createdComboIds = new HashMap<>();
 
     @BeforeEach
     void setUp() {
@@ -61,13 +65,15 @@ class CatalogDevDataTest {
         when(groupService.list(true)).thenReturn(SEED_GROUPS);
         givenNoServicesAndNoCombos();
         givenServiceCreateAssignsIds();
+        givenComboCreateAssignsIds();
 
         devData.run(null);
 
-        verify(serviceItemService, times(11)).create(any());
+        verify(serviceItemService, times(12)).create(any());
         verify(serviceItemService).deactivate(createdServiceIds.get("Ngâm chân muối khoáng"));
+        verify(serviceItemService).deactivate(createdServiceIds.get("Chườm đá nóng"));
         ArgumentCaptor<ComboRequest> combos = ArgumentCaptor.forClass(ComboRequest.class);
-        verify(comboService, times(3)).create(combos.capture());
+        verify(comboService, times(4)).create(combos.capture());
         ComboRequest relax = combos.getAllValues().getFirst();
         assertThat(relax.name()).isEqualTo("Combo Thư Giãn");
         assertThat(relax.price()).isEqualTo(400_000L);
@@ -79,6 +85,25 @@ class CatalogDevDataTest {
         assertThat(combos.getAllValues().get(1).items())
                 .containsExactly(
                         new ComboItemRequest(createdServiceIds.get("Giãn cơ toàn thân"), 2));
+        ComboRequest hotStone = combos.getAllValues().get(3);
+        assertThat(hotStone.name()).isEqualTo("Combo Đá Nóng");
+        assertThat(hotStone.price()).isEqualTo(200_000L);
+        assertThat(hotStone.tourFee()).isEqualTo(25_000L);
+        assertThat(hotStone.items())
+                .containsExactly(
+                        new ComboItemRequest(createdServiceIds.get("Chườm đá nóng"), 1),
+                        new ComboItemRequest(createdServiceIds.get("Xông hơi thảo dược"), 1));
+
+        Long hotStoneServiceId = createdServiceIds.get("Chườm đá nóng");
+        Long hotStoneComboId = createdComboIds.get("Combo Đá Nóng");
+        verify(comboService).deactivate(hotStoneComboId);
+
+        InOrder inOrder = inOrder(serviceItemService, comboService);
+        inOrder.verify(serviceItemService)
+                .create(argThat(req -> req.name().equals("Chườm đá nóng")));
+        inOrder.verify(comboService).create(argThat(req -> req.name().equals("Combo Đá Nóng")));
+        inOrder.verify(comboService).deactivate(hotStoneComboId);
+        inOrder.verify(serviceItemService).deactivate(hotStoneServiceId);
     }
 
     @Test
@@ -86,6 +111,7 @@ class CatalogDevDataTest {
         when(groupService.list(true)).thenReturn(SEED_GROUPS);
         givenNoServicesAndNoCombos();
         givenServiceCreateAssignsIds();
+        givenComboCreateAssignsIds();
 
         devData.run(null);
 
@@ -103,7 +129,8 @@ class CatalogDevDataTest {
                 .thenAnswer(
                         inv ->
                                 inv.getArgument(0).equals("Combo Thư Giãn")
-                                        ? page(List.of(combo(inv.getArgument(0))))
+                                                || inv.getArgument(0).equals("Combo Đá Nóng")
+                                        ? page(List.of(combo(1L, inv.getArgument(0))))
                                         : page(List.<ComboResponse>of()));
 
         devData.run(null);
@@ -132,7 +159,63 @@ class CatalogDevDataTest {
         verify(comboService, times(2)).create(combos.capture());
         assertThat(combos.getAllValues())
                 .extracting(ComboRequest::name)
-                .doesNotContain("Combo Thư Giãn");
+                .doesNotContain("Combo Thư Giãn", "Combo Đá Nóng");
+    }
+
+    @Test
+    void existingHotStoneComboSkipsAllFourSteps() {
+        when(groupService.list(true)).thenReturn(SEED_GROUPS);
+        when(serviceItemService.search(anyString(), isNull(), isNull(), anyInt(), anyInt()))
+                .thenReturn(page(List.<ServiceItemResponse>of()));
+        when(comboService.search(anyString(), isNull(), anyInt(), anyInt()))
+                .thenAnswer(
+                        inv ->
+                                inv.getArgument(0).equals("Combo Đá Nóng")
+                                        ? page(List.of(combo(10L, "Combo Đá Nóng")))
+                                        : page(List.<ComboResponse>of()));
+        givenServiceCreateAssignsIds();
+        givenComboCreateAssignsIds();
+
+        devData.run(null);
+
+        // 11 dịch vụ mẫu ban đầu được tạo, Chườm đá nóng không được tạo
+        verify(serviceItemService, times(11)).create(any());
+        assertThat(createdServiceIds).doesNotContainKey("Chườm đá nóng");
+        // Chỉ 3 combo ban đầu được tạo, Combo Đá Nóng không được tạo
+        ArgumentCaptor<ComboRequest> combos = ArgumentCaptor.forClass(ComboRequest.class);
+        verify(comboService, times(3)).create(combos.capture());
+        assertThat(combos.getAllValues())
+                .extracting(ComboRequest::name)
+                .doesNotContain("Combo Đá Nóng");
+        verify(comboService, never()).deactivate(any());
+    }
+
+    @Test
+    void existingHotStoneServiceWithoutComboLogsWarningAndSkips() {
+        when(groupService.list(true)).thenReturn(SEED_GROUPS);
+        // "Chườm đá nóng" đã có trong search, các dịch vụ khác chưa có
+        when(serviceItemService.search(anyString(), isNull(), isNull(), anyInt(), anyInt()))
+                .thenAnswer(
+                        inv ->
+                                inv.getArgument(0).equals("Chườm đá nóng")
+                                        ? page(List.of(service(99L, "Chườm đá nóng")))
+                                        : page(List.<ServiceItemResponse>of()));
+        when(comboService.search(anyString(), isNull(), anyInt(), anyInt()))
+                .thenReturn(page(List.<ComboResponse>of()));
+        givenServiceCreateAssignsIds();
+        givenComboCreateAssignsIds();
+
+        devData.run(null);
+
+        // Chườm đá nóng đã có nên không được tạo mới
+        assertThat(createdServiceIds).doesNotContainKey("Chườm đá nóng");
+        // Combo Đá Nóng không được tạo
+        ArgumentCaptor<ComboRequest> combos = ArgumentCaptor.forClass(ComboRequest.class);
+        verify(comboService, times(3)).create(combos.capture());
+        assertThat(combos.getAllValues())
+                .extracting(ComboRequest::name)
+                .doesNotContain("Combo Đá Nóng");
+        verify(comboService, never()).deactivate(any());
     }
 
     private void givenNoServicesAndNoCombos() {
@@ -153,12 +236,23 @@ class CatalogDevDataTest {
                         });
     }
 
+    private void givenComboCreateAssignsIds() {
+        when(comboService.create(any()))
+                .thenAnswer(
+                        inv -> {
+                            ComboRequest request = inv.getArgument(0);
+                            long id = nextId.getAndIncrement();
+                            createdComboIds.put(request.name(), id);
+                            return combo(id, request.name());
+                        });
+    }
+
     private static ServiceItemResponse service(Long id, String name) {
         return new ServiceItemResponse(id, name, 1L, "Nhóm", 30, 100_000L, 0L, true, NOW, NOW);
     }
 
-    private static ComboResponse combo(String name) {
-        return new ComboResponse(1L, name, 100_000L, 0L, true, List.of(), 0L, -100_000L, NOW, NOW);
+    private static ComboResponse combo(Long id, String name) {
+        return new ComboResponse(id, name, 100_000L, 0L, true, List.of(), 0L, -100_000L, NOW, NOW);
     }
 
     private static <T> PageResponse<T> page(List<T> content) {

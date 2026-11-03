@@ -2,6 +2,11 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import { api } from '@/shared/api/client'
 import type { PageResponse } from '@/shared/api/page'
 import type {
+  Combo,
+  ComboQuote,
+  ComboQuoteRequest,
+  ComboRequest,
+  ComboSearchParams,
   ServiceGroup,
   ServiceGroupRequest,
   ServiceItem,
@@ -14,6 +19,9 @@ export const catalogKeys = {
   services: ['catalog', 'services'] as const,
   serviceList: (params: ServiceSearchParams) => ['catalog', 'services', params] as const,
   groups: ['catalog', 'service-groups'] as const,
+  combos: ['catalog', 'combos'] as const,
+  comboList: (params: ComboSearchParams) => ['catalog', 'combos', params] as const,
+  comboQuote: (body: ComboQuoteRequest | null) => ['catalog', 'combos', 'quote', body] as const,
 }
 
 /** Danh sách dịch vụ: tìm, lọc, phân trang phía server (FR-SVC-01). */
@@ -102,22 +110,90 @@ export function useCreateService() {
   })
 }
 
-/** Sửa dịch vụ (FR-SVC-03). */
+/** Sửa dịch vụ (FR-SVC-03). Đổi giá dịch vụ làm đổi tổng giá lẻ của combo chứa dịch vụ đó. */
 export function useUpdateService() {
-  const invalidate = useInvalidateServices()
+  const queryClient = useQueryClient()
   return useMutation({
     mutationFn: ({ id, body }: { id: number; body: ServiceItemRequest }) =>
       api.put<ServiceItem>(`/api/catalog/services/${id}`, body),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: catalogKeys.services })
+      queryClient.invalidateQueries({ queryKey: catalogKeys.combos })
+    },
+  })
+}
+
+/** Ngừng bán hoặc bán lại (FR-SVC-04). Ảnh hưởng trạng thái dịch vụ trong combo. */
+export function useSetServiceActive() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, active }: { id: number; active: boolean }) =>
+      api.post<ServiceItem>(`/api/catalog/services/${id}/${active ? 'activate' : 'deactivate'}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: catalogKeys.services })
+      queryClient.invalidateQueries({ queryKey: catalogKeys.combos })
+    },
+  })
+}
+
+/** Tính thử tổng giá lẻ và mức tiết kiệm của combo (FR-CMB-03). */
+export function useComboQuote(body: ComboQuoteRequest | null) {
+  return useQuery({
+    queryKey: catalogKeys.comboQuote(body),
+    queryFn: ({ signal }) => {
+      if (!body) {
+        throw new Error('ComboQuoteRequest body is required')
+      }
+      return api.post<ComboQuote>('/api/catalog/combos/quote', body, { signal })
+    },
+    enabled: body !== null,
+    placeholderData: keepPreviousData,
+  })
+}
+
+/** Danh sách combo: tìm, lọc, phân trang phía server (FR-CMB-01). */
+export function useCombos(params: ComboSearchParams) {
+  return useQuery({
+    queryKey: catalogKeys.comboList(params),
+    queryFn: ({ signal }) =>
+      api.get<PageResponse<Combo>>('/api/catalog/combos', {
+        signal,
+        query: { ...params },
+      }),
+    placeholderData: keepPreviousData,
+  })
+}
+
+function useInvalidateCombos() {
+  const queryClient = useQueryClient()
+  return () => queryClient.invalidateQueries({ queryKey: catalogKeys.combos })
+}
+
+/** Tạo combo mới (FR-CMB-01). */
+export function useCreateCombo() {
+  const invalidate = useInvalidateCombos()
+  return useMutation({
+    mutationFn: (body: ComboRequest) => api.post<Combo>('/api/catalog/combos', body),
     onSuccess: invalidate,
   })
 }
 
-/** Ngừng bán hoặc bán lại (FR-SVC-04). */
-export function useSetServiceActive() {
-  const invalidate = useInvalidateServices()
+/** Sửa combo (FR-CMB-04). */
+export function useUpdateCombo() {
+  const invalidate = useInvalidateCombos()
+  return useMutation({
+    mutationFn: ({ id, body }: { id: number; body: ComboRequest }) =>
+      api.put<Combo>(`/api/catalog/combos/${id}`, body),
+    onSuccess: invalidate,
+  })
+}
+
+/** Ngừng bán hoặc bán lại combo (FR-CMB-05). */
+export function useSetComboActive() {
+  const invalidate = useInvalidateCombos()
   return useMutation({
     mutationFn: ({ id, active }: { id: number; active: boolean }) =>
-      api.post<ServiceItem>(`/api/catalog/services/${id}/${active ? 'activate' : 'deactivate'}`),
+      api.post<Combo>(`/api/catalog/combos/${id}/${active ? 'activate' : 'deactivate'}`),
     onSuccess: invalidate,
   })
 }

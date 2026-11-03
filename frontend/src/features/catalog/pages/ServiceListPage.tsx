@@ -102,7 +102,7 @@ export function ServiceListPage() {
         title={service.active ? 'Ngừng bán dịch vụ?' : 'Bán lại dịch vụ?'}
         description={
           service.active
-            ? 'Dịch vụ sẽ không còn để chọn khi nhập giao dịch. Giao dịch cũ không bị ảnh hưởng.'
+            ? 'Dịch vụ sẽ không còn để chọn khi nhập giao dịch và khi tạo combo. Dịch vụ đang có trong combo đang bán thì phải ngừng bán combo hoặc bỏ dịch vụ khỏi combo trước. Giao dịch cũ không bị ảnh hưởng.'
             : 'Dịch vụ sẽ xuất hiện lại khi nhập giao dịch.'
         }
         okText={service.active ? 'Ngừng bán' : 'Bán lại'}

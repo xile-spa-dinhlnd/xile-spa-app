@@ -1,0 +1,24 @@
+.header {
+  margin-bottom: var(--xl-space-lg);
+}
+
+/* Lồng dưới .header để thắng `h3.ant-typography` (0,1,1). */
+.header .title {
+  margin: 0;
+}
+
+.filterBar {
+  margin-bottom: var(--xl-space-lg);
+}
+
+.searchInput {
+  flex: 1 1 220px;
+}
+
+.statusSelect {
+  flex: 1 1 140px;
+}
+
+.errorAlert {
+  margin-bottom: var(--xl-space-lg);
+}

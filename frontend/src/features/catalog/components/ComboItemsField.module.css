@@ -1,0 +1,110 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.selectWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--xl-space-xs);
+}
+
+.selectInput {
+  width: 100%;
+}
+
+.hintText {
+  margin-top: var(--xl-space-xs);
+}
+
+.itemList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--xl-space-sm);
+  margin-top: var(--xl-space-sm);
+}
+
+.itemCard {
+  border: 1px solid var(--xl-color-border);
+  border-radius: var(--xl-radius-md);
+  padding: var(--xl-space-sm) var(--xl-space-md);
+  background-color: var(--xl-color-bg-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: var(--xl-space-xs);
+}
+
+.itemHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--xl-space-sm);
+}
+
+.itemTitleGroup {
+  display: flex;
+  align-items: center;
+  gap: var(--xl-space-xs);
+  flex-wrap: wrap;
+}
+
+.itemName {
+  font-weight: 500;
+  color: var(--xl-color-heading);
+}
+
+.removeButton {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: calc(-1 * var(--xl-space-xs)) calc(-1 * var(--xl-space-xs)) calc(-1 * var(--xl-space-xs))
+    0;
+}
+
+.warningContainer {
+  margin-top: var(--xl-space-xs);
+}
+
+.itemControls {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--xl-space-md);
+  flex-wrap: wrap;
+}
+
+.qtyWrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+.qtyFormItem {
+  margin-bottom: 0;
+}
+
+.qtyInput {
+  width: 90px;
+}
+
+.itemCalculation {
+  color: var(--xl-color-text-secondary);
+  text-align: right;
+  flex: 1;
+  padding-top: var(--xl-space-xs);
+}
+
+.spinContainer {
+  padding: var(--xl-space-sm);
+  text-align: center;
+}
+
+.selectError {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--xl-space-xs);
+}
