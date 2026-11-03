@@ -50,15 +50,18 @@ kiểm thử lược đồ và ánh xạ lỗi XL với Postgres thật, Git Flo
 
 ### v0.4.0 — Sprint 3: Khách hàng và giao dịch (phần 1)
 
-- **Card:** S3-01 đến S3-06, chi tiết ở [backlog Sprint 2 và 3](backlog/sprint-2-3.md).
-- **Phạm vi:** FR-CUS-01 đến 03 · FR-VIS-01 đến 06, FR-VIS-09 (tạo giao dịch nhiều dòng, giảm giá, thanh toán,
-  người làm, tiền tour, kiểm tra dữ liệu).
-- **Xong khi:** nhập được một ngày bán hàng mẫu tháng 9 và ra đúng số trong bảng đối soát (OQ-03).
+- **Card:** S3-01, 02, 04, 06, 07, 09, 10, 11, chi tiết ở [backlog Sprint 2 và 3](backlog/sprint-2-3.md). Chốt lại
+  03/11/2026: S3-03 (hồ sơ 360) và S3-05 (màn nhập giao dịch) dời sang Sprint 4.
+- **Phạm vi:** FR-CUS-01, 02 · FR-VIS-01 đến 06, FR-VIS-09, phần backend (tạo giao dịch nhiều dòng, giảm giá,
+  thanh toán, người làm, tiền tour, kiểm tra dữ liệu).
+- **Xong khi:** tạo được qua API một ngày bán hàng mẫu tháng 9 và ra đúng số trong bảng đối soát (OQ-03).
 - **Câu hỏi mở:** OQ-02, 06, 07, 08 đã chốt 11/10 (giờ chốt ngày 04:00; tour combo tạm theo combo; cho phép
   thanh toán nhiều hình thức, thêm card S3-06; khách vãng lai không có hồ sơ, SĐT duy nhất).
 
 ### v0.5.0 — Sprint 4: Giao dịch (phần 2), chi phí, chốt sổ và bút toán
 
+- **Dời từ Sprint 3:** S3-03 hồ sơ khách 360 (FR-CUS-03), S3-05 màn nhập giao dịch nhanh (kèm giao diện chia hai
+  hình thức thanh toán).
 - **Phạm vi:** FR-VIS-07, 08, 10, 11 · FR-EXP-01 đến 03 · FR-CLS-01 đến 06 (xem trước, chốt sổ, khóa dữ liệu, bút
   toán điều chỉnh, cảnh báo ngày chưa chốt, lịch sử chốt).
 - **Xong khi:** chạy trọn một ngày: nhập giao dịch và chi phí, chốt sổ, sửa sai bằng bút toán; số khớp Excel.
