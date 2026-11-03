@@ -1,6 +1,6 @@
 # Combo
 
-Trạng thái: khớp code (backend, S2-07) · thiết kế (đã duyệt) (giao diện, S2-08) · Card: S2-07, S2-08 · Yêu cầu: FR-CMB-01 đến FR-CMB-05, BR-01, BR-03, BR-13, BR-18, BR-19, OQ-06, OQ-22
+Trạng thái: khớp code (backend, S2-07; giao diện, S2-08) · Card: S2-07, S2-08 · Yêu cầu: FR-CMB-01 đến FR-CMB-05, BR-01, BR-03, BR-13, BR-18, BR-19, OQ-06, OQ-22
 
 **Chia phần** (mục cuối "Các phần"): backend phần 1 đến 4 (S2-07, đã xong), giao diện phần 5 đến 7 (S2-08). Mỗi lần
 `/implement docs/design/flows/catalog/combo.md phần <N>` làm một phần rồi dừng.
@@ -23,7 +23,9 @@ Trạng thái: khớp code (backend, S2-07) · thiết kế (đã duyệt) (giao
 | 26/10/2026 | Đình (Antigravity) | S2-08 | Sửa theo tự soát phần 5 lần 2: màu tiết kiệm (success/warning) và chữ phụ trong ComboPriceSummary, bắt buộc các prop trạng thái, bỏ font-size, sửa chú thích FR-CMB-01; 118 tests xanh |
 | 26/10/2026 | Đình (Claude) | S2-08     | Tự soát phần 5: 3 vòng, sạch (render lặp do debounce object, số lượng dòng lấy từ `fields`, chế độ sửa giả viết trước) |
 | 26/10/2026 | Đình (Antigravity) | S2-08 | Sửa theo tự soát phần 6 lần 1: thêm test bảng máy tính (stub matchMedia), test sửa combo tải lại danh sách, lỗi tải không kèm trạng thái trống, fake timer cho lỗi tải, Flex header; phần 6 giữ đã code |
-| 26/10/2026 | Đình (Claude) | S2-08     | Tự soát phần 6: 2 vòng, sạch (bảng chưa có test vì jsdom chỉ chạy dạng thẻ, sửa xong chưa có test tải lại, lỗi tải kèm trạng thái trống) |
+| 26/10/2026 | Đình (Antigravity) | S2-08 | Phần 7: ngừng bán, bán lại combo, cảnh báo dịch vụ ngừng bán, seed devdata Chườm đá nóng & Combo Đá Nóng, test invalidation và toggle; khớp code giao diện S2-08 |
+| 26/10/2026 | Đình (Antigravity) | S2-08 | Sửa theo tự soát phần 7 lần 1: InOrder cho thứ tự 4 bước seed devdata, App.useApp cho message, token CSS cho warningLine, thêm assert toggleCalls; phần 7 giữ đã code |
+| 03/11/2026 | Đình (Claude) | S2-08     | Tự soát phần 7: 2 vòng, sạch (thứ tự 4 bước dữ liệu mẫu chưa có test giữ, `message` tĩnh). Cả card S2-08: 7 vòng cho 3 phần (5: 3, 6: 2, 7: 2) |
 
 Phần chung của module (tên không trùng, không xóa cứng, nhật ký, OQ-21): `README.md` cùng thư mục.
 
@@ -492,7 +494,7 @@ nền và nặng tới nhẹ: phần 1 đặt khuôn cho cả tính năng, phầ
 | 4    | Danh sách, tìm, lọc combo; hoàn tất card                    | 50 dòng  | đã soát    |
 | 5    | Giao diện: thêm combo, tính thử giá (S2-08)                 | 380 dòng | đã soát    |
 | 6    | Giao diện: danh sách, tìm, lọc, sửa combo (S2-08)           | 270 dòng | đã soát    |
-| 7    | Giao diện: ngừng bán, bán lại; hoàn tất card S2-08          | 80 dòng  | chưa làm   |
+| 7    | Giao diện: ngừng bán, bán lại; hoàn tất card S2-08          | 80 dòng  | đã soát    |
 
 Phần 5 đến 7 (S2-08) là một card, một nhánh, một PR riêng với S2-07. Khoảng tính cả CSS Modules, không tính test.
 Tổng khoảng 730 dòng, quá mức khoảng 400 của AGENTS.md quy tắc 10; Đình chốt (26/10/2026) giữ một card, chia ba phần,

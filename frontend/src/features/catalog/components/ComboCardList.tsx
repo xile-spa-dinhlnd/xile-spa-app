@@ -1,8 +1,8 @@
-import { EditOutlined } from '@ant-design/icons'
-import { Button, Card, Flex, List, Pagination, Space, Typography } from 'antd'
+import { Card, Flex, List, Pagination, Typography } from 'antd'
 import type { ReactNode } from 'react'
 import { formatMoney } from '@/shared/lib/money'
 import type { Combo } from '../types'
+import { ComboActions } from './ComboActions'
 import { comboStatusTag, formatComboItems, renderSavings } from './comboFormatters'
 import styles from './ComboCardList.module.css'
 
@@ -16,6 +16,7 @@ export interface ComboCardListProps {
   pageSize: number
   onPageChange: (page: number) => void
   onEdit: (combo: Combo) => void
+  onToggleActive: (combo: Combo) => void
 }
 
 /** Danh sách thẻ combo cho màn hình điện thoại (FR-CMB-01). */
@@ -29,6 +30,7 @@ export function ComboCardList({
   pageSize,
   onPageChange,
   onEdit,
+  onToggleActive,
 }: ComboCardListProps) {
   return (
     <>
@@ -52,11 +54,7 @@ export function ComboCardList({
             <Typography.Paragraph className={styles.cardLine}>
               Tiết kiệm: {renderSavings(combo.savings)} · Tour: {formatMoney(combo.tourFee)}
             </Typography.Paragraph>
-            <Space wrap>
-              <Button icon={<EditOutlined />} onClick={() => onEdit(combo)}>
-                Sửa
-              </Button>
-            </Space>
+            <ComboActions combo={combo} onEdit={onEdit} onToggleActive={onToggleActive} />
           </Card>
         )}
       />

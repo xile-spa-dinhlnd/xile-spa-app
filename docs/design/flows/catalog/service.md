@@ -7,6 +7,7 @@ Trạng thái: khớp code · Card: S1-05, S1-06 · Yêu cầu: FR-SVC-01 đến
 | 23/10/2026 | Đình (Claude)      | chore/agent-workflow | Viết bù theo code đang chạy (S1-05 04dd2f7, sửa 46ef8b0; OQ-21 ở S2-06, #41)     |
 | 23/10/2026 | Đình (Antigravity) | S2-06                | Ô lọc nhóm lấy tất cả nhóm; nhóm ngừng dùng có nhãn "(ngừng dùng)"               |
 | 25/10/2026 | Đình (Claude)      | S2-07                | Ngừng bán bị chặn khi dịch vụ nằm trong combo đang bán (OQ-22)                    |
+| 26/10/2026 | Đình (Antigravity) | S2-08                | Cập nhật câu mô tả Popconfirm ngừng bán dịch vụ nhắc tới combo                    |
 
 Phần chung của module (tên không trùng, không xóa cứng, nhật ký, OQ-21): `README.md` cùng thư mục.
 

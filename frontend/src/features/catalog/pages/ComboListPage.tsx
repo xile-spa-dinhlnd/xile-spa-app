@@ -1,8 +1,9 @@
 import { ClearOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons'
-import { Alert, Button, Empty, Flex, Grid, Input, Select, Typography } from 'antd'
+import { Alert, App, Button, Empty, Flex, Grid, Input, Select, Typography } from 'antd'
 import { useState } from 'react'
+import { ApiError } from '@/shared/api/errors'
 import { useDebounce } from '@/shared/hooks/useDebounce'
-import { useCombos } from '../api'
+import { useCombos, useSetComboActive } from '../api'
 import { ComboCardList } from '../components/ComboCardList'
 import { ComboFormDrawer } from '../components/ComboFormDrawer'
 import { ComboTable } from '../components/ComboTable'
@@ -19,6 +20,7 @@ type StatusFilter = 'all' | 'active' | 'inactive'
 export function ComboListPage() {
   const screens = Grid.useBreakpoint()
   const isDesktop = screens.md ?? true
+  const { message } = App.useApp()
 
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState<StatusFilter>('active')
@@ -63,6 +65,20 @@ export function ComboListPage() {
   const openEdit = (combo: Combo) => {
     setEditing(combo)
     setFormOpen(true)
+  }
+
+  const setComboActive = useSetComboActive()
+
+  const handleToggleActive = async (combo: Combo) => {
+    try {
+      await setComboActive.mutateAsync({
+        id: combo.id,
+        active: !combo.active,
+      })
+      message.success(combo.active ? 'Đã ngừng bán combo.' : 'Đã bán lại combo.')
+    } catch (error) {
+      message.error(error instanceof ApiError ? error.message : 'Không thực hiện được thao tác.')
+    }
   }
 
   const data = combosQuery.data
@@ -139,6 +155,7 @@ export function ComboListPage() {
           pageSize={PAGE_SIZE}
           onPageChange={(newPage) => setPage(newPage)}
           onEdit={openEdit}
+          onToggleActive={handleToggleActive}
         />
       ) : (
         <ComboCardList
@@ -151,6 +168,7 @@ export function ComboListPage() {
           pageSize={PAGE_SIZE}
           onPageChange={(newPage) => setPage(newPage)}
           onEdit={openEdit}
+          onToggleActive={handleToggleActive}
         />
       )}
 

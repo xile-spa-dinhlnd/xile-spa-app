@@ -1,8 +1,8 @@
-import { EditOutlined } from '@ant-design/icons'
-import { Button, Space, Table, Typography, type TableColumnsType } from 'antd'
+import { Table, Typography, type TableColumnsType } from 'antd'
 import type { ReactNode } from 'react'
 import { formatMoney } from '@/shared/lib/money'
 import type { Combo } from '../types'
+import { ComboActions } from './ComboActions'
 import { comboStatusTag, formatComboItems, renderSavings } from './comboFormatters'
 import styles from './ComboTable.module.css'
 
@@ -15,6 +15,7 @@ export interface ComboTableProps {
   pageSize: number
   onPageChange: (page: number) => void
   onEdit: (combo: Combo) => void
+  onToggleActive: (combo: Combo) => void
 }
 
 /** Bảng danh sách combo cho màn hình máy tính và iPad (FR-CMB-01). */
@@ -27,6 +28,7 @@ export function ComboTable({
   pageSize,
   onPageChange,
   onEdit,
+  onToggleActive,
 }: ComboTableProps) {
   const columns: TableColumnsType<Combo> = [
     {
@@ -80,11 +82,7 @@ export function ComboTable({
       title: '',
       key: 'actions',
       render: (_: unknown, combo: Combo) => (
-        <Space wrap>
-          <Button icon={<EditOutlined />} onClick={() => onEdit(combo)}>
-            Sửa
-          </Button>
-        </Space>
+        <ComboActions combo={combo} onEdit={onEdit} onToggleActive={onToggleActive} />
       ),
     },
   ]

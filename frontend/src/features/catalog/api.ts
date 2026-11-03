@@ -110,23 +110,29 @@ export function useCreateService() {
   })
 }
 
-/** Sửa dịch vụ (FR-SVC-03). */
+/** Sửa dịch vụ (FR-SVC-03). Đổi giá dịch vụ làm đổi tổng giá lẻ của combo chứa dịch vụ đó. */
 export function useUpdateService() {
-  const invalidate = useInvalidateServices()
+  const queryClient = useQueryClient()
   return useMutation({
     mutationFn: ({ id, body }: { id: number; body: ServiceItemRequest }) =>
       api.put<ServiceItem>(`/api/catalog/services/${id}`, body),
-    onSuccess: invalidate,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: catalogKeys.services })
+      queryClient.invalidateQueries({ queryKey: catalogKeys.combos })
+    },
   })
 }
 
-/** Ngừng bán hoặc bán lại (FR-SVC-04). */
+/** Ngừng bán hoặc bán lại (FR-SVC-04). Ảnh hưởng trạng thái dịch vụ trong combo. */
 export function useSetServiceActive() {
-  const invalidate = useInvalidateServices()
+  const queryClient = useQueryClient()
   return useMutation({
     mutationFn: ({ id, active }: { id: number; active: boolean }) =>
       api.post<ServiceItem>(`/api/catalog/services/${id}/${active ? 'activate' : 'deactivate'}`),
-    onSuccess: invalidate,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: catalogKeys.services })
+      queryClient.invalidateQueries({ queryKey: catalogKeys.combos })
+    },
   })
 }
 
@@ -178,6 +184,16 @@ export function useUpdateCombo() {
   return useMutation({
     mutationFn: ({ id, body }: { id: number; body: ComboRequest }) =>
       api.put<Combo>(`/api/catalog/combos/${id}`, body),
+    onSuccess: invalidate,
+  })
+}
+
+/** Ngừng bán hoặc bán lại combo (FR-CMB-05). */
+export function useSetComboActive() {
+  const invalidate = useInvalidateCombos()
+  return useMutation({
+    mutationFn: ({ id, active }: { id: number; active: boolean }) =>
+      api.post<Combo>(`/api/catalog/combos/${id}/${active ? 'activate' : 'deactivate'}`),
     onSuccess: invalidate,
   })
 }

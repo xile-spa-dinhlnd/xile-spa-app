@@ -118,11 +118,15 @@ const mockCombos: Combo[] = [
 let combosList: Combo[] = []
 let failList = false
 let listUrls: URL[] = []
+let toggleCalls: { id: number; action: string }[] = []
+let failActivateMessage: string | null = null
 
 beforeEach(() => {
   combosList = structuredClone(mockCombos)
   failList = false
   listUrls = []
+  toggleCalls = []
+  failActivateMessage = null
 
   vi.stubGlobal(
     'fetch',
@@ -255,6 +259,36 @@ beforeEach(() => {
             body.price !== null && body.price !== undefined ? retailTotal - body.price : null,
         }
         return json(quote, 200)
+      }
+
+      const matchToggle = url.pathname.match(
+        /^\/api\/catalog\/combos\/(\d+)\/(activate|deactivate)$/,
+      )
+      if (matchToggle && method === 'POST') {
+        const comboId = Number(matchToggle[1])
+        const action = matchToggle[2]
+        toggleCalls.push({ id: comboId, action })
+
+        if (action === 'activate' && failActivateMessage) {
+          return json(
+            {
+              code: 'COMBO_SERVICE_UNAVAILABLE',
+              message: failActivateMessage,
+              fieldErrors: [],
+              path: url.pathname,
+              timestamp: '',
+            },
+            409,
+          )
+        }
+
+        const existing = combosList.find((c) => c.id === comboId)
+        if (!existing) {
+          return json({ code: 'NOT_FOUND', message: 'Không tìm thấy combo.' }, 404)
+        }
+
+        existing.active = action === 'activate'
+        return json(existing, 200)
       }
 
       return json({}, 404)
@@ -565,6 +599,8 @@ describe('ComboListPage - Danh sách, tìm, lọc', () => {
     expect(within(relaxRow).getByText('80.000 đ')).toBeInTheDocument()
     expect(within(relaxRow).getByText('60.000 đ')).toBeInTheDocument()
     expect(within(relaxRow).getByText('Gội đầu thảo dược, Giãn cơ chân × 2')).toBeInTheDocument()
+    expect(within(relaxRow).getByRole('button', { name: /Sửa/ })).toBeInTheDocument()
+    expect(within(relaxRow).getByRole('button', { name: 'Ngừng bán' })).toBeInTheDocument()
 
     // Tiêu đề các cột tiền
     expect(screen.getByRole('columnheader', { name: 'Giá combo' })).toBeInTheDocument()
@@ -576,5 +612,140 @@ describe('ComboListPage - Danh sách, tìm, lọc', () => {
     const brightRow = screen.getByRole('row', { name: /Combo Da Sáng/ })
     const warningEl = within(brightRow).getByText('-50.000 đ')
     expect(warningEl).toHaveClass('ant-typography-warning')
+  })
+})
+
+describe('ComboListPage - Ngừng bán, bán lại', () => {
+  it('ngừng bán qua xác nhận: gọi deactivate, báo Đã ngừng bán combo., tải lại danh sách', async () => {
+    renderPage()
+    expect(await screen.findByText('Combo Thư Giãn')).toBeInTheDocument()
+
+    const deactivateBtns = screen.getAllByRole('button', { name: 'Ngừng bán' })
+    fireEvent.click(deactivateBtns[0])
+
+    const tooltip = await screen.findByRole('tooltip')
+    expect(within(tooltip).getByText('Ngừng bán combo?')).toBeInTheDocument()
+    expect(
+      within(tooltip).getByText(
+        'Combo sẽ không còn để chọn khi nhập giao dịch. Giao dịch cũ không bị ảnh hưởng.',
+      ),
+    ).toBeInTheDocument()
+
+    fireEvent.click(within(tooltip).getByRole('button', { name: 'Ngừng bán' }))
+
+    expect(await screen.findByText('Đã ngừng bán combo.')).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText('Combo Thư Giãn')).not.toBeInTheDocument()
+    })
+    expect(toggleCalls).toEqual([{ id: 1, action: 'deactivate' }])
+  })
+
+  it('bán lại qua xác nhận: báo Đã bán lại combo.', async () => {
+    renderPage()
+    await screen.findByText('Combo Thư Giãn')
+
+    await choose('Lọc theo trạng thái', 'Ngừng bán')
+
+    expect(await screen.findByText('Combo Cũ Đã Ngừng')).toBeInTheDocument()
+
+    const activateBtn = screen.getByRole('button', { name: 'Bán lại' })
+    fireEvent.click(activateBtn)
+
+    const tooltip = await screen.findByRole('tooltip')
+    expect(within(tooltip).getByText('Bán lại combo?')).toBeInTheDocument()
+    expect(
+      within(tooltip).getByText('Combo sẽ xuất hiện lại khi nhập giao dịch.'),
+    ).toBeInTheDocument()
+
+    fireEvent.click(within(tooltip).getByRole('button', { name: 'Bán lại' }))
+
+    expect(await screen.findByText('Đã bán lại combo.')).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText('Combo Cũ Đã Ngừng')).not.toBeInTheDocument()
+    })
+  })
+
+  it('combo ngừng bán có dịch vụ ngừng bán: nút Bán lại bị khóa, luôn hiện hướng dẫn có tên dịch vụ', async () => {
+    combosList.push({
+      id: 5,
+      name: 'Combo Đá Nóng Mẫu',
+      price: 200000,
+      tourFee: 20000,
+      active: false,
+      items: [
+        {
+          serviceId: 10,
+          serviceName: 'Chườm đá nóng',
+          serviceActive: false,
+          listPrice: 120000,
+          quantity: 1,
+          lineTotal: 120000,
+        },
+        {
+          serviceId: 3,
+          serviceName: 'Xông hơi thảo dược',
+          serviceActive: true,
+          listPrice: 100000,
+          quantity: 1,
+          lineTotal: 100000,
+        },
+      ],
+      retailTotal: 220000,
+      savings: 20000,
+      createdAt: '2026-10-11T03:00:00Z',
+      updatedAt: '2026-10-11T03:00:00Z',
+    })
+
+    renderPage()
+    await screen.findByText('Combo Thư Giãn')
+
+    await choose('Lọc theo trạng thái', 'Ngừng bán')
+
+    expect(await screen.findByText('Combo Đá Nóng Mẫu')).toBeInTheDocument()
+
+    const guideText =
+      'Có dịch vụ đã ngừng bán: Chườm đá nóng. Hãy sửa combo để bỏ hoặc thay dịch vụ đó, hoặc bán lại dịch vụ trước.'
+    expect(screen.getByText(guideText)).toBeInTheDocument()
+
+    const card = screen.getByText('Combo Đá Nóng Mẫu').closest<HTMLElement>('.ant-card')!
+    const activateBtn = within(card).getByRole('button', { name: 'Bán lại' })
+    expect(activateBtn).toBeDisabled()
+
+    fireEvent.click(activateBtn)
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument()
+    expect(toggleCalls).toEqual([])
+  })
+
+  it('lỗi bán lại từ backend hiện message.error với thông báo của backend', async () => {
+    renderPage()
+    await screen.findByText('Combo Thư Giãn')
+
+    await choose('Lọc theo trạng thái', 'Ngừng bán')
+
+    expect(await screen.findByText('Combo Cũ Đã Ngừng')).toBeInTheDocument()
+
+    failActivateMessage = 'Không thể bán lại combo: lỗi backend mẫu.'
+
+    const activateBtn = screen.getByRole('button', { name: 'Bán lại' })
+    fireEvent.click(activateBtn)
+
+    const tooltip = await screen.findByRole('tooltip')
+    fireEvent.click(within(tooltip).getByRole('button', { name: 'Bán lại' }))
+
+    expect(await screen.findByText('Không thể bán lại combo: lỗi backend mẫu.')).toBeInTheDocument()
+  })
+
+  it('bấm Hủy ở xác nhận thì không gọi API', async () => {
+    renderPage()
+    expect(await screen.findByText('Combo Thư Giãn')).toBeInTheDocument()
+
+    const deactivateBtns = screen.getAllByRole('button', { name: 'Ngừng bán' })
+    fireEvent.click(deactivateBtns[0])
+
+    const tooltip = await screen.findByRole('tooltip')
+    fireEvent.click(within(tooltip).getByRole('button', { name: 'Hủy' }))
+
+    expect(toggleCalls).toHaveLength(0)
+    expect(combosList.find((c) => c.id === 1)?.active).toBe(true)
   })
 })
