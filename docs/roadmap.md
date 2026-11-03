@@ -50,8 +50,8 @@ kiểm thử lược đồ và ánh xạ lỗi XL với Postgres thật, Git Flo
 
 ### v0.4.0 — Sprint 3: Khách hàng và giao dịch (phần 1)
 
-- **Card:** S3-01 đến S3-07, S3-09 đến S3-11, chi tiết ở [backlog Sprint 2 và 3](backlog/sprint-2-3.md). Chốt lại
-  03/11/2026: S3-04 tách thành S3-04, S3-10, S3-11.
+- **Card:** S3-01 đến S3-07, S3-09 đến S3-13, chi tiết ở [backlog Sprint 2 và 3](backlog/sprint-2-3.md). Chốt lại
+  03/11/2026: S3-04 tách thành S3-04, S3-10, S3-11; thêm S3-12, S3-13 (bộ quy tắc giao diện, refactor giao diện có sẵn).
 - **Phạm vi:** FR-CUS-01 đến 03 · FR-VIS-01 đến 06, FR-VIS-09 (tạo giao dịch nhiều dòng, giảm giá, thanh toán,
   người làm, tiền tour, kiểm tra dữ liệu).
 - **Xong khi:** nhập được một ngày bán hàng mẫu tháng 9 và ra đúng số trong bảng đối soát (OQ-03).
