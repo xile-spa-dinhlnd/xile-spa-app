@@ -1,209 +1,148 @@
-# backend/AGENTS.md — quy tắc riêng cho backend
+# backend/AGENTS.md — backend coding conventions
 
-Đọc `../AGENTS.md` trước. File này chỉ bổ sung phần riêng của backend.
-Stack: Java 21, Spring Boot 4, Gradle (Kotlin DSL, dùng Gradle Wrapper), JPA, Spring Security, Flyway, PostgreSQL.
+Read `../AGENTS.md` first; this file adds only backend specifics. Stack: Java 21, Spring Boot 4, Gradle (Kotlin DSL,
+Gradle Wrapper), JPA, Spring Security, Flyway, PostgreSQL. Code, comments and test names in English; validation and
+error messages shown to users in Vietnamese.
 
-## Thư viện
+## Libraries
 
-Nguồn sự thật: `gradle/libs.versions.toml` (thư viện có trong BOM của Spring Boot thì không ghi version, nâng cùng
-plugin `spring-boot`). Không có trong file đó là chưa có. Thêm thư viện: hỏi trước theo `../AGENTS.md` mục 3. Bản ghi
-ở đây là bản chính đang chạy (`./gradlew dependencies`), đổi thì sửa bảng trong cùng PR (quy tắc 11).
+Source of truth: `gradle/libs.versions.toml` (libraries in the Spring Boot BOM have no version and move with the
+`spring-boot` plugin). Not there = not available. Adding one: ask first per `../AGENTS.md` section 3. Versions below are
+the major versions in use (`./gradlew dependencies`); changes update this table in the same PR (rule 11).
 
-| Thư viện | Bản | Dùng cho | Lưu ý API (tài liệu, ví dụ cũ hay viết theo bản trước) |
+| Library | Version | Used for | API notes (docs and old examples often target the previous version) |
 | --- | --- | --- | --- |
-| Spring Boot (Framework 7, Security 7) | 4.1 | nền ứng dụng | Starter tách nhỏ: `spring-boot-starter-webmvc`, `-flyway`; test starter theo phần (`-webmvc-test`, `-data-jpa-test`...) |
-| Gradle, Kotlin DSL | 9.7 | build | Version thư viện chỉ khai ở `libs.versions.toml`, không viết thẳng trong `build.gradle.kts` |
-| Spring Data JPA, Hibernate ORM | 7.4 | truy cập dữ liệu | `jakarta.persistence`; `ddl-auto` chỉ `validate` hoặc `none` (quy tắc 2) |
-| Jackson | 3.1 | JSON | Package `tools.jackson.databind`, không `com.fasterxml.jackson.databind` (đã gặp: ví dụ cũ trên mạng viết theo Jackson 2) |
-| Flyway (+ `flyway-database-postgresql`) | 12 | migration | `V{n}__...sql`, không sửa file đã có |
-| PostgreSQL JDBC | BOM | driver | Database PostgreSQL 16 (dev và Testcontainers) |
-| Spring Security OAuth2 JOSE (Nimbus JOSE JWT) | 10 | ký, kiểm JWT | Dùng `NimbusJwtEncoder`, `NimbusJwtDecoder` qua `security/`; không thêm jjwt hay tự viết HMAC |
-| Bean Validation (`spring-boot-starter-validation`) | BOM | kiểm dữ liệu request | Thông báo tiếng Việt ngay trên annotation |
-| Spring Boot Mail | BOM | email đặt lại mật khẩu | Chọn bean theo `xile.mail.sender` (`log`, `smtp`) |
-| Spring Boot Actuator | BOM | health check | Chỉ mở `health` |
-| MapStruct (+ `lombok-mapstruct-binding`) | 1.6 | mapper entity → DTO | Bốn quy tắc ở mục Cấu trúc; Lombok chạy trước MapStruct |
-| Lombok | BOM | getter, constructor | Giới hạn trong `lombok.config` (mục Cấu trúc) |
-| JUnit Jupiter | 6 | test | Spring Boot 4 kéo JUnit 6; import vẫn `org.junit.jupiter.api` |
-| AssertJ, Mockito | 3.27, 5 | assert, mock | `assertThatThrownBy(...).extracting("errorCode")`; `@ExtendWith(MockitoExtension.class)` |
-| Testcontainers | 2.0 | test tích hợp | Artifact `testcontainers-postgresql`, import `org.testcontainers.postgresql.PostgreSQLContainer` (bản 1.x là `org.testcontainers.containers`) |
-| Spotless (google-java-format, kiểu AOSP) | 8 | format | `./gradlew spotlessApply` trước khi commit |
+| Spring Boot (Framework 7, Security 7) | 4.1 | application base | Split starters: `spring-boot-starter-webmvc`, `-flyway`; test starters per slice (`-webmvc-test`, `-data-jpa-test`...) |
+| Gradle, Kotlin DSL | 9.7 | build | Versions only in `libs.versions.toml`, never inline in `build.gradle.kts` |
+| Spring Data JPA, Hibernate ORM | 7.4 | data access | `jakarta.persistence`; `ddl-auto` only `validate` or `none` (rule 2) |
+| Jackson | 3.1 | JSON | Package `tools.jackson.databind`, not `com.fasterxml.jackson.databind` (seen: old examples target Jackson 2) |
+| Flyway (+ `flyway-database-postgresql`) | 12 | migrations | `V{n}__...sql`, never edit existing files |
+| PostgreSQL JDBC | BOM | driver | PostgreSQL 16 (dev and Testcontainers) |
+| Spring Security OAuth2 JOSE (Nimbus JOSE JWT) | 10 | sign, verify JWT | `NimbusJwtEncoder`, `NimbusJwtDecoder` via `security/`; no jjwt, no hand-rolled HMAC |
+| Bean Validation (`spring-boot-starter-validation`) | BOM | request validation | Vietnamese message on the annotation |
+| Spring Boot Mail | BOM | password reset email | Bean chosen by `xile.mail.sender` (`log`, `smtp`) |
+| Spring Boot Actuator | BOM | health check | Only `health` exposed |
+| MapStruct (+ `lombok-mapstruct-binding`) | 1.6 | entity → DTO mappers | Four rules under "Structure"; Lombok runs before MapStruct |
+| Lombok | BOM | getters, constructors | Limits in `lombok.config` (see "Structure") |
+| JUnit Jupiter | 6 | tests | Spring Boot 4 brings JUnit 6; imports stay `org.junit.jupiter.api` |
+| AssertJ, Mockito | 3.27, 5 | asserts, mocks | `assertThatThrownBy(...).extracting("errorCode")`; `@ExtendWith(MockitoExtension.class)` |
+| Testcontainers | 2.0 | integration tests | Artifact `testcontainers-postgresql`, import `org.testcontainers.postgresql.PostgreSQLContainer` (1.x used `org.testcontainers.containers`) |
+| Spotless (google-java-format, AOSP style) | 8 | formatting | `./gradlew spotlessApply` before committing |
 
-## Cấu trúc
+## Structure
 
-**Chia module theo tính năng ở cấp ngoài, chia tầng bên trong mỗi module** (controller, service,
-repository, entity, dto...). Đây là kiểu modular monolith phổ biến trong dự án Spring thực tế: bên trong
-mỗi module vẫn quen thuộc như MVC truyền thống, nhưng mỗi người làm trọn một module thì ít đụng file của
-nhau và sau này dễ tách. Tên package gốc: `com.xilespa` (chốt ở S0-04).
+**Modules by feature at the top level, layers inside each module** (modular monolith): each module looks like classic
+MVC inside, and one person owning a module rarely touches the other's files. Root package `com.xilespa`.
 
 ```
 backend/
 ├─ build.gradle.kts, settings.gradle.kts, gradlew, gradlew.bat
-├─ gradle/
-│  ├─ wrapper/
-│  └─ libs.versions.toml              # version catalog: mọi phiên bản thư viện ở đây
-├─ Dockerfile                          # thêm ở giai đoạn DevOps (D-02)
+├─ gradle/libs.versions.toml         # version catalog: every library version
 └─ src/
    ├─ main/java/com/xilespa/
    │  ├─ XileSpaApplication.java
-   │  ├─ config/                      # cấu hình Spring: Jackson, CORS, Clock (Asia/Ho_Chi_Minh), scheduling
-   │  ├─ security/                    # SecurityConfig, JwtService, filter đọc JWT từ cookie
-   │  ├─ common/                      # dùng chung, KHÔNG chứa nghiệp vụ
-   │  │  ├─ mapper/                   # MapStructConfig dùng chung cho mọi mapper
-   │  │  ├─ exception/                # ApiError, GlobalExceptionHandler, BusinessException,
-   │  │  │                            #   ánh xạ XL001/XL002/XL004 (S0-07)
-   │  │  ├─ audit/                    # GHI nhật ký: AuditService.record, AuditLog, AuditLogRepository, AuditAction
-   │  │  ├─ response/                 # PageResponse, PageRequests (phân trang an toàn chống tràn số)
-   │  │  ├─ validation/               # @VisibleText, VisibleTextValidator (chống ký tự vô hình)
-   │  │  └─ util/                     # MoneyUtils, DateUtils, TextNormalizer (chuẩn hóa Unicode, khoảng trắng)
-   │  └─ module/                      # mỗi thư mục con là một module nghiệp vụ
-   │     ├─ auth/                     # FR-AUTH: đăng nhập, phiên, tài khoản
-   │     ├─ catalog/                  # FR-SVC, FR-CMB: dịch vụ, nhóm dịch vụ, combo
-   │     ├─ customer/                 # FR-CUS, FR-PKG: khách hàng, gói liệu trình
-   │     ├─ visit/                    # FR-VIS: lượt khách, visit_item
-   │     ├─ expense/                  # FR-EXP: chi phí
-   │     ├─ closing/                  # FR-CLS: chốt sổ, bút toán điều chỉnh, lock_business_day
-   │     ├─ dashboard/                # FR-DSH: chỉ đọc (view, truy vấn tổng hợp)
-   │     ├─ staff/                    # FR-STF: nhân viên
-   │     ├─ payroll/                  # FR-PAY: tiền tour, lương (R3)
-   │     ├─ importer/                 # FR-IMP: nhập Excel
-   │     ├─ system/                   # FR-SYS: API xem nhật ký thay đổi (đọc từ common/audit), cấu hình hệ thống
-   │     └─ sync/                     # FR-SYN: đồng bộ Google Sheets (R2)
+   │  ├─ config/                      # Spring config: Jackson, CORS, Clock (Asia/Ho_Chi_Minh), scheduling
+   │  ├─ security/                    # SecurityConfig, JwtService, filter reading JWT from the cookie
+   │  ├─ common/                      # shared, NO business logic
+   │  │  ├─ mapper/                   # MapStructConfig shared by all mappers
+   │  │  ├─ exception/                # ApiError, GlobalExceptionHandler, BusinessException, XL001/XL002/XL004 mapping
+   │  │  ├─ audit/                    # WRITES the audit log: AuditService.record, AuditLog, AuditAction
+   │  │  ├─ response/                 # PageResponse, PageRequests (overflow-safe paging)
+   │  │  ├─ validation/               # @VisibleText, VisibleTextValidator (blocks invisible characters)
+   │  │  └─ util/                     # MoneyUtils, DateUtils, TextNormalizer (Unicode and whitespace normalization)
+   │  └─ module/                      # one folder per business module
+   │     ├─ auth/  catalog/  customer/  visit/  expense/  closing/  dashboard/
+   │     ├─ staff/  payroll/  importer/  system/  sync/
    ├─ main/resources/
-   │  ├─ application.yml              # cấu hình chung, không có bí mật
+   │  ├─ application.yml              # shared config, no secrets
    │  ├─ application-dev.yml
-   │  ├─ application-prod.yml         # chỉ đọc ${BIẾN_MÔI_TRƯỜNG}
+   │  ├─ application-prod.yml         # reads ${ENV_VARS} only
    │  └─ db/migration/                # V1__, V2__, ... (Flyway)
    └─ test/
-      ├─ java/com/xilespa/            # cùng cây package với main
-      │  ├─ support/                  # lớp nền Testcontainers, dữ liệu mẫu dùng chung
-      │  └─ ArchitectureTest.java     # (chưa có) kiểm tra ranh giới module, xem quy tắc bên dưới
+      ├─ java/com/xilespa/            # same package tree as main; support/ = Testcontainers base, shared fixtures
       └─ resources/sql/schema_smoke_test.sql
 ```
 
-Một module bên trong (ví dụ `module/catalog`), **mọi module đều theo đúng khuôn này**:
+Modules map to FR codes: `auth` FR-AUTH, `catalog` FR-SVC/FR-CMB, `customer` FR-CUS/FR-PKG, `visit` FR-VIS, `expense`
+FR-EXP, `closing` FR-CLS (closing, adjustments, `lock_business_day`), `dashboard` FR-DSH (read-only), `staff` FR-STF,
+`payroll` FR-PAY (R3), `importer` FR-IMP, `system` FR-SYS (audit log API, system config), `sync` FR-SYN (R2).
+
+Every module follows this template (example `module/catalog`):
 
 ```
 catalog/
-├─ controller/
-│  ├─ ServiceItemController.java      # REST: nhận/trả DTO, @Valid, không có logic
-│  └─ ServiceGroupController.java
-├─ service/
-│  ├─ ServiceItemService.java         # nghiệp vụ + @Transactional + ghi audit; module khác chỉ gọi vào đây
-│  ├─ ServiceGroupService.java
-│  └─ model/                          # kiểu dữ liệu nội bộ của service (record), không trả ra API
-├─ repository/
-│  ├─ ServiceItemRepository.java      # Spring Data JPA
-│  ├─ ServiceGroupRepository.java
-│  └─ ServicePriceHistoryRepository.java
-├─ entity/
-│  ├─ ServiceItem.java                # entity JPA của bảng service (không đặt tên "Service", xem dưới)
-│  ├─ ServiceGroup.java
-│  └─ ServicePriceHistory.java
-├─ enums/                             # enum dùng cho cột của entity, mỗi enum một file
-├─ dto/
-│  ├─ request/
-│  │  ├─ ServiceItemRequest.java      # record + annotation kiểm tra (@VisibleText, @PositiveOrZero...)
-│  │  └─ ServiceGroupRequest.java
-│  └─ response/
-│     ├─ ServiceItemResponse.java     # record
-│     └─ ServiceGroupResponse.java
-├─ mapper/
-│  └─ CatalogMapper.java              # entity → DTO bằng MapStruct (interface @Mapper)
-├─ exception/                         # exception riêng của module (kế thừa BusinessException), nếu cần
-└─ devdata/
-   └─ CatalogDevData.java             # dữ liệu mẫu cho máy dev của module (mục "Dữ liệu mẫu cho máy dev")
+├─ controller/   ServiceItemController.java       # REST: DTO in/out, @Valid, no logic
+├─ service/      ServiceItemService.java          # business + @Transactional + audit; other modules call only this
+│  └─ model/                                      # internal service records, never returned by the API
+├─ repository/   ServiceItemRepository.java       # Spring Data JPA
+├─ entity/       ServiceItem.java                 # JPA entity for table `service` (never named "Service", see below)
+├─ enums/                                         # enums for entity columns, one per file
+├─ dto/request/  ServiceItemRequest.java          # record + validation (@VisibleText, @PositiveOrZero...)
+├─ dto/response/ ServiceItemResponse.java         # record
+├─ mapper/       CatalogMapper.java               # entity → DTO with MapStruct (@Mapper interface)
+├─ exception/                                     # module exceptions (extend BusinessException), if needed
+└─ devdata/      CatalogDevData.java              # dev seed data for the module ("Dev seed data")
 ```
 
-Thư mục nào chưa có file thì chưa tạo. Module nhỏ (như `dashboard`) có thể không có `entity/`, `repository/`
-mà chỉ có `controller/`, `service/`, `dto/`.
+Create folders only when they get a file. Small modules (`dashboard`) may have only `controller/`, `service/`, `dto/`.
 
-Luồng gọi và quy tắc:
+Rules:
 
-- Chiều gọi một chiều: `controller → service → repository → entity`. Controller không gọi repository,
-  service không biết gì về HTTP (`HttpServletRequest`, `ResponseEntity`).
-- **Ranh giới module:** module A chỉ được dùng `service/` và `dto/` của module B. **Không** import
-  `repository/`, `entity/`, `mapper/` của module khác. Giữa hai module tham chiếu bằng id (`Long serviceId`),
-  không `@ManyToOne` sang entity của module khác. `ArchitectureTest` kiểm tra tự động quy tắc này
-  (đề xuất dùng ArchUnit, chỉ ở phạm vi test; chưa thêm, khi thêm thì ghi trong PR theo ADR-0001).
-- Không để hai module gọi vòng tròn lẫn nhau. Nếu cần, tách phần chung ra hoặc đổi chiều phụ thuộc.
-- Controller không trả entity ra ngoài; luôn trả DTO. Tên DTO: `Create...Request`, `Update...Request`,
-  `...Response`. Chuyển đổi đặt ở `mapper/`, không rải trong controller.
-- Mapper dùng **MapStruct**, theo bốn quy tắc:
-  1. Mapper **chỉ chép dữ liệu**. Không tính tiền, giảm giá, doanh thu, trạng thái trong mapper (kể cả trong
-     `@Mapping(expression = ...)`); những việc đó ở service (BR-01, BR-04, BR-05).
-  2. Mọi mapper dùng `@Mapper(config = MapStructConfig.class)` (`common/mapper/`): `componentModel = "spring"`,
-     `unmappedTargetPolicy = ERROR` để build báo lỗi khi quên một trường.
-  3. Không map từ Request vào các trường nhạy cảm của entity (id, trạng thái, giá đã chốt, `created_by`...):
-     đánh dấu `@Mapping(target = "...", ignore = true)` rồi gán trong service.
-  4. Mapping quá phức tạp thì được viết tay (`default` method hoặc lớp riêng) trong cùng `mapper/`.
-- Không đặt tên entity trùng annotation của Spring (`Service`, `Component`, `Repository`...): ví dụ bảng
-  `service` ánh xạ entity `ServiceItem`.
-- POST và PUT nhận cùng các trường thì dùng chung một request DTO (`ServiceItemRequest`); PUT là thay thế
-  toàn bộ. Khác trường thì tách `Create...Request` / `Update...Request`.
-- Người đang đăng nhập: `security/CurrentUser.id()` (rỗng nếu là tác vụ hệ thống).
-- Enum dùng cho cột của entity đặt ở `module/<tên>/enums/`, mỗi enum một file; lưu bằng
-  `@Enumerated(EnumType.STRING)`.
-- Kết quả nội bộ của service mà không được trả thẳng ra API (ví dụ chứa token) đặt ở `service/model/`,
-  tên `...Result`, không đặt trong `dto/`.
-- **Lombok** (dùng có giới hạn, cấu hình trong `backend/lombok.config`):
-  - Entity: chỉ `@Getter` và `@NoArgsConstructor(access = AccessLevel.PROTECTED)`. Thay đổi trạng thái qua
-    method nghiệp vụ có tên rõ nghĩa (`deactivate()`, `changePrice(...)`, `recordFailedLogin(...)`), không setter.
-  - Service, controller, component: `@RequiredArgsConstructor` cho các trường `final`.
-  - **Cấm** `@Data`, `@Setter`, `@Builder`, `@AllArgsConstructor` (`lombok.config` báo lỗi khi build);
-    không dùng `@EqualsAndHashCode`, `@ToString` trên entity. DTO vẫn dùng `record`.
-- Thời điểm tạo, sửa trong entity lấy từ `Clock` (truyền `Instant now` từ service), không gọi
-  `Instant.now()` trong entity.
-- `@Transactional` đặt ở service, không ở controller hay repository. Ghi nhận cần giữ lại kể cả khi request
-  kết thúc bằng lỗi (đếm đăng nhập sai, thu hồi phiên...) chạy trong service riêng với
-  `Propagation.REQUIRES_NEW` (ví dụ `AuthSecurityAuditService`).
-- **Ghi nhật ký thay đổi (BR-18):** mọi service đổi dữ liệu tài chính hoặc danh mục gọi
-  `AuditService.record(action, entityType, entityId, before, after)` (`common/audit`), **trong cùng
-  transaction** với thay đổi gốc (hàm dùng `Propagation.MANDATORY`, gọi ngoài transaction sẽ báo lỗi).
-  - `entityType` là tên bảng (`service`, `combo`, `visit`...); `action` lấy từ `AuditAction` (thêm giá trị khi cần).
-  - `before`, `after` truyền DTO, record hoặc `Map`, **không truyền entity JPA**. Trường nhạy cảm (mật khẩu,
-    token) tự được che; vẫn không cố ý đưa chúng vào.
-  - Người thực hiện lấy từ phiên đăng nhập; tác vụ hệ thống (không có người đăng nhập) để trống.
-  - Xem nhật ký: `GET /api/audit-logs` ở `module/system` (đọc qua `AuditLogQueryService`).
-  - Nhật ký chỉ thêm: không có API sửa hay xóa. Test không dọn được bảng này, nên test dùng `entityType`
-    riêng (ví dụ ngẫu nhiên) thay vì đếm toàn bảng.
-- URL: `/api/{module}/{tài-nguyên}`, danh từ số nhiều, kebab-case (`/api/catalog/services`,
-  `/api/visits`). Hành động nghiệp vụ dùng `POST` lên tài nguyên con:
-  `POST /api/catalog/services/{id}/deactivate`, `POST /api/closings/{date}`.
-- `common`, `config`, `security` không phụ thuộc vào module nghiệp vụ nào. Không để logic nghiệp vụ vào
-  `common`.
-- Module mới: tạo thư mục trong `module/` theo đúng khuôn trên, cập nhật cây thư mục ở file này và tên
-  feature tương ứng ở `frontend/AGENTS.md`.
-- Test tích hợp dùng chung một PostgreSQL trong cả lượt chạy: **không `deleteAll()` các bảng dùng chung**
-  (app_user, service...), vì bảng chỉ thêm (audit_log, lịch sử giá) có thể tham chiếu tới chúng. Mỗi test tạo
-  dữ liệu có tên hoặc tiền tố riêng (ví dụ ngẫu nhiên) và chỉ dọn dữ liệu của chính nó.
-- Test đặt cùng package với lớp được test: `ServiceServiceTest` (đơn vị, Mockito), `ServiceControllerIT`
-  (tích hợp, Testcontainers + MockMvc).
+- One-way calls: `controller → service → repository → entity`. Controllers never call repositories; services know
+  nothing about HTTP (`HttpServletRequest`, `ResponseEntity`).
+- **Module boundary:** module A uses only `service/` and `dto/` of module B, never its `repository/`, `entity/`,
+  `mapper/`. Cross-module references are ids (`Long serviceId`), no `@ManyToOne` into another module. No cycles between
+  modules. (A future `ArchitectureTest` with ArchUnit would enforce this; not added yet.)
+- Controllers never return entities. DTO names: `Create...Request`, `Update...Request`, `...Response`. POST and PUT
+  with the same fields share one request DTO (PUT replaces everything).
+- **MapStruct**, four rules: (1) mappers **only copy**; no money, discount, revenue or status logic, not even in
+  `@Mapping(expression = ...)` (BR-01, BR-04, BR-05); (2) every mapper uses `@Mapper(config = MapStructConfig.class)`
+  (`componentModel = "spring"`, `unmappedTargetPolicy = ERROR`); (3) never map a request into sensitive entity fields
+  (id, status, locked price, `created_by`): `@Mapping(target = "...", ignore = true)` and set them in the service;
+  (4) complex mappings may be hand-written (`default` method or a class) inside `mapper/`.
+- Never name an entity like a Spring annotation (`Service`, `Component`, `Repository`): table `service` → `ServiceItem`.
+- Current user: `security/CurrentUser.id()` (empty for system tasks).
+- Entity column enums in `module/<name>/enums/`, one per file, `@Enumerated(EnumType.STRING)`.
+- Internal service results that must not go to the API (for example containing a token) live in `service/model/`,
+  named `...Result`.
+- **Lombok** (limited, enforced by `backend/lombok.config`): entities only `@Getter` and
+  `@NoArgsConstructor(access = AccessLevel.PROTECTED)`, state changes through named business methods (`deactivate()`,
+  `changePrice(...)`), no setters; services, controllers, components use `@RequiredArgsConstructor`. **Banned:**
+  `@Data`, `@Setter`, `@Builder`, `@AllArgsConstructor`; no `@EqualsAndHashCode`, `@ToString` on entities. DTOs are records.
+- Entity timestamps come from `Clock` (service passes `Instant now`); never `Instant.now()` in an entity.
+- `@Transactional` on services only. Records that must survive a failed request (failed-login counter, session
+  revocation) run in a separate service with `Propagation.REQUIRES_NEW` (example `AuthSecurityAuditService`).
+- **Audit log (BR-18):** every service changing financial or catalog data calls
+  `AuditService.record(action, entityType, entityId, before, after)` **in the same transaction** (`Propagation.MANDATORY`
+  fails outside one). `entityType` is the table name; `action` from `AuditAction`; `before`/`after` are DTOs, records or
+  maps, **never JPA entities** (sensitive fields are masked anyway, but do not pass them). The log is append-only and
+  read via `GET /api/audit-logs` (`module/system`, `AuditLogQueryService`).
+- URLs: `/api/{module}/{resource}`, plural nouns, kebab-case (`/api/catalog/services`, `/api/visits`). Business
+  actions are `POST` on a sub-resource: `POST /api/catalog/services/{id}/deactivate`, `POST /api/closings/{date}`.
+- `common`, `config`, `security` depend on no business module; no business logic in `common`.
+- New module: create it under `module/` with the template, update the tree here and the feature list in
+  `frontend/AGENTS.md`.
 
-## Cơ sở dữ liệu
+## Database
 
-- Schema chỉ đổi bằng Flyway (`src/main/resources/db/migration/`). **Không sửa `V1`, `V2`**; thêm `V3__...`.
-- `spring.jpa.hibernate.ddl-auto` luôn là `validate` hoặc `none`, không bao giờ `update`/`create`.
-- Múi giờ: JVM chạy với múi giờ mặc định UTC (`XileSpaApplication.main`, task test). Múi giờ nghiệp vụ
-  `Asia/Ho_Chi_Minh` chỉ lấy từ `Clock` (`config/TimeConfig`); không dùng `ZoneId.systemDefault()`,
-  `LocalDate.now()` hay `Instant.now()` không qua `Clock`.
-- Tiền: `long` (Java) / `bigint` (SQL). Không `BigDecimal` cho số tiền đồng, không `double`.
-- Các ràng buộc và trigger ở DB là rào chắn cuối. Không viết code vòng qua chúng.
+- JVM runs in UTC (`XileSpaApplication.main`, test task). Business timezone `Asia/Ho_Chi_Minh` only via `Clock`
+  (`config/TimeConfig`); never `ZoneId.systemDefault()`, `LocalDate.now()` or `Instant.now()` without `Clock`.
+- DB constraints and triggers are the last line of defense; never code around them, and still check first in services.
 
-## Lỗi từ cơ sở dữ liệu
+Triggers raise these SQLSTATEs; `common/exception/DatabaseErrors` (called by `GlobalExceptionHandler` for
+`DataAccessException` and `TransactionSystemException`) translates them (`docs/design/erd.md` section 5.5):
 
-Trigger ném các mã SQLSTATE sau; backend bắt và dịch thành lỗi nghiệp vụ có thông báo tiếng Việt (S0-07, `docs/design/erd.md` mục 5.5):
+| SQLSTATE | Meaning                                                  | `code`               | HTTP |
+| -------- | -------------------------------------------------------- | -------------------- | ---- |
+| `XL001`  | Closed day: no insert, update, void (adjustments too)    | `DAY_CLOSED`         | 409  |
+| `XL002`  | Append-only table, or hard delete forbidden              | `RECORD_IMMUTABLE`   | 409  |
+| `XL004`  | Closing a future day                                     | `FUTURE_DAY_CLOSING` | 400  |
 
-| SQLSTATE | Ý nghĩa                                                         | `code` trả về        | HTTP |
-| -------- | --------------------------------------------------------------- | -------------------- | ---- |
-| `XL001`  | Ngày đã chốt: không được thêm, sửa, hủy (kể cả bút toán vào ngày đó) | `DAY_CLOSED`         | 409  |
-| `XL002`  | Bảng chỉ thêm (append-only), hoặc cấm xóa cứng                  | `RECORD_IMMUTABLE`   | 409  |
-| `XL004`  | Không chốt sổ ngày tương lai                                    | `FUTURE_DAY_CLOSING` | 400  |
+Other DB errors stay `INTERNAL_ERROR` (500, logged).
 
-Việc dịch nằm ở `common/exception/DatabaseErrors`, được `GlobalExceptionHandler` gọi cho
-`DataAccessException` và `TransactionSystemException`. Lỗi cơ sở dữ liệu khác vẫn là `INTERNAL_ERROR` (500,
-có ghi log). Trigger là rào chắn cuối: service vẫn nên tự kiểm tra trước (ví dụ ngày đã chốt chưa).
+## Errors
 
-Định dạng lỗi chung (S0-04), mọi API dùng lại, frontend dựa vào đây (S0-08):
+Shared error format, used by every API and parsed by the frontend:
 
 ```json
 {
@@ -215,91 +154,81 @@ có ghi log). Trigger là rào chắn cuối: service vẫn nên tự kiểm tra
 }
 ```
 
-- `code` lấy từ enum `ErrorCode` (`common/exception`); frontend xử lý theo `code`, hiển thị `message`.
-  Lỗi nghiệp vụ mới thì thêm mã vào `ErrorCode`, không trả chuỗi tự do. Các mã lỗi hệ thống/định dạng chuẩn:
-  `VALIDATION_FAILED` (400), `BAD_REQUEST` (400), `NOT_ACCEPTABLE` (406), `UNSUPPORTED_MEDIA_TYPE` (415).
-- Ném lỗi nghiệp vụ bằng `BusinessException` (hoặc lớp con trong `exception/` của module), không tự dựng
-  `ResponseEntity` lỗi trong controller.
-- Thông báo lỗi validation viết tiếng Việt ngay trên annotation. Kiểm tra trường tên dùng
-  `@VisibleText(message = "Tên ... không được để trống")` thay cho `@NotBlank` để chặn ký tự vô hình.
-- Lỗi 500 không bao giờ trả chi tiết kỹ thuật; chi tiết chỉ ghi vào log.
+- `code` comes from `ErrorCode` (`common/exception`); the frontend switches on `code` and shows `message`. New business
+  errors add a code; never free-text errors. Standard codes: `VALIDATION_FAILED` (400), `BAD_REQUEST` (400),
+  `NOT_ACCEPTABLE` (406), `UNSUPPORTED_MEDIA_TYPE` (415).
+- Throw `BusinessException` (or a module subclass); never build error `ResponseEntity`s in controllers.
+- Validation messages in Vietnamese on the annotation. Name fields use `@VisibleText(message = "...")` instead of
+  `@NotBlank` to block invisible characters.
+- A 500 never returns technical details; details go to the log only.
 
-## Chốt sổ và đồng thời
+## Closing and concurrency
 
-- Ghi giao dịch và chốt sổ cùng ngày dùng `lock_business_day(d)` trong transaction (xem ERD 5.5).
-- Đồng bộ Google Sheets chạy nền, idempotent, chỉ cho ngày `CLOSED` (BR-15).
+- Writing a visit and closing the same day use `lock_business_day(d)` inside the transaction (ERD 5.5).
+- Google Sheets sync runs in the background, idempotent, only for `CLOSED` days (BR-15).
 
-## Bảo mật
+## Security
 
-Tài sản, mối đe dọa (`T-xx`), bề mặt tấn công, bí mật và checklist cho mỗi tính năng: `docs/security/`.
+Assets, threats (`T-xx`), attack surface, secrets and the per-feature checklist: `docs/security/`.
 
-- Mật khẩu băm Argon2 hoặc BCrypt. Không log mật khẩu, token, refresh token.
-- Refresh token **chỉ lưu bản băm** SHA-256 (`security/TokenHasher`). Access token và refresh token nằm
-  trong cookie `HttpOnly`, `SameSite=Strict`, `Secure` (bật ở prod).
-- Mọi endpoint ngoài đăng nhập/quên mật khẩu đều yêu cầu xác thực; chưa đăng nhập trả 401.
-- Thông báo sai đăng nhập không tiết lộ email có tồn tại hay không, kể cả qua thời gian phản hồi: khi
-  không tìm thấy email vẫn chạy bcrypt với một hash giả.
-- **Chống DoS do BCrypt (NFR-SEC-05):** Do việc chạy hash giả (và hash thật) tốn CPU (~300ms/lần), nguy cơ
-  DoS cạn kiệt tài nguyên VPS cần được ngăn chặn bằng Rate Limiting (giới hạn số request/phút theo IP) ở reverse
-  proxy (Caddy, card D-05) hoặc Spring filter trước khi chạm tới BCrypt.
-- **CSRF:** không dùng CSRF token (`SecurityConfig` tắt `csrf`). Chống CSRF bằng cookie `SameSite=Strict`, vì
-  frontend và API cùng một site (khi dev qua proxy của Vite, khi chạy thật cùng tên miền). Nếu sau này
-  frontend và API khác tên miền gốc thì phải xem lại quyết định này.
-- **API thay đổi dữ liệu không bao giờ dùng `GET`**, chỉ dùng `POST`, `PUT`, `PATCH`, `DELETE`.
-- Bí mật đọc từ biến môi trường theo profile `dev`/`prod`; không commit.
+- Passwords hashed with Argon2 or BCrypt. Never log passwords, tokens, refresh tokens.
+- Refresh tokens stored **only as SHA-256 hashes** (`security/TokenHasher`). Access and refresh tokens live in
+  `HttpOnly`, `SameSite=Strict`, `Secure` (prod) cookies.
+- Every endpoint except login and forgot-password requires authentication; unauthenticated → 401.
+- Wrong-login responses never reveal whether the email exists, timing included: an unknown email still runs bcrypt
+  against a dummy hash.
+- **BCrypt DoS (NFR-SEC-05):** hashing costs ~300 ms; rate-limit per IP at the reverse proxy (Caddy, card D-05) or a
+  Spring filter before BCrypt.
+- **CSRF:** no CSRF token (`SecurityConfig` disables it); `SameSite=Strict` cookies protect because frontend and API are
+  same-site (Vite proxy in dev, same domain in prod). Revisit if they ever split domains.
+- **Data-changing APIs never use `GET`.** Secrets come from environment variables per profile; never committed.
 
-## Cấu hình
+## Configuration
 
-- Chọn hành vi theo môi trường bằng thuộc tính trong `application-{profile}.yml` và `@ConditionalOnProperty`; không dùng `@Profile` phủ định (như `@Profile("!prod")`).
-- `@Profile` chỉ dùng cho bean dành riêng dev hoặc test. Dữ liệu mẫu dev bật bằng thuộc tính `xile.dev-data.enabled`,
-  không bằng `@Profile` (mục dưới).
-- Giá trị mặc định đặt một chỗ trong `application.yml`; `application-prod.yml` chỉ đọc biến môi trường, không có mặc định.
-- Test dùng hồ sơ `test` chồng lên `application.yml`, không tạo `src/test/resources/application.yml`, không chép khóa `spring.*` của file chính sang file test.
+- Behavior per environment via properties in `application-{profile}.yml` and `@ConditionalOnProperty`; no negated
+  `@Profile` (such as `@Profile("!prod")`). `@Profile` only for dev- or test-only beans.
+- Defaults live once in `application.yml`; `application-prod.yml` only reads environment variables, no defaults.
+- Tests use the `test` profile layered on `application.yml`; never create `src/test/resources/application.yml` or copy
+  `spring.*` keys into test files.
 
-## Dữ liệu mẫu cho máy dev
+## Dev seed data
 
-Để thử tính năng mà không phải tạo tay qua Postman. Bật bằng `xile.dev-data.enabled` (mặc định `false` ở
-`application.yml`, `true` ở `application-dev.yml`; tắt bằng `XILE_DEV_DATA=false`). Muốn làm lại từ đầu thì xóa sạch
-database dev (lệnh ở `README.md` mục "Bật database") rồi chạy lại backend.
+Lets you try features without creating data by hand. Enabled by `xile.dev-data.enabled` (`false` in `application.yml`,
+`true` in `application-dev.yml`; `XILE_DEV_DATA=false` disables). To start over, wipe the dev DB (`README.md`, "Bật
+database") and restart.
 
-- **Không bao giờ để dữ liệu mẫu trong migration Flyway**: migration chạy cả ở production. `V2` chỉ chứa danh mục gốc.
-- **Mỗi module một lớp** `module/<tên>/devdata/<Tên>DevData.java` (`ApplicationRunner`,
-  `@ConditionalOnProperty(name = "xile.dev-data.enabled", havingValue = "true")`). Tính năng mới thêm bản ghi vào lớp
-  của chính module mình; module mới thì tạo lớp mới. **Không sửa lớp của module khác, không sửa migration cũ.**
-- **Gọi service của module, không gọi repository**, để dữ liệu mẫu qua đủ validation, quy tắc nghiệp vụ và audit.
-  Module sau cần bản ghi của module trước (giao dịch cần nhân viên, dịch vụ) thì đọc qua service của module đó.
-- **Chạy lại không tạo trùng**: bản ghi đã có cùng tên (khóa nghiệp vụ) thì bỏ qua; nhờ vậy thêm bản ghi mẫu mới chỉ
-  cần chạy lại backend, không phải xóa database.
-- **Thứ tự** bằng `@Order`: `10` nhân viên, `20` danh mục (dịch vụ, combo), `30` khách hàng, `40` giao dịch, `50` chi
-  phí, chốt sổ. Module mới chọn số theo phụ thuộc và ghi vào danh sách này.
-- **Chỉ dữ liệu giả** (tên, SĐT, ghi chú không phải của khách thật, NFR-PRV-01). Nên có sẵn ca biên để thử giao diện:
-  bản ghi ngừng dùng, giá 0, combo đắt hơn giá lẻ...
-- **Test** bằng Mockito như test service (mẫu `CatalogDevDataTest`): tạo đủ khi trống, không tạo lại bản ghi đã có.
-  Không chạy dữ liệu mẫu trong test tích hợp (`src/test/resources/application-test.yml` không bật).
+- **Never put seed data in Flyway migrations** (they run in production). `V2` holds only reference catalogs.
+- **One class per module** `module/<name>/devdata/<Name>DevData.java` (`ApplicationRunner`,
+  `@ConditionalOnProperty(name = "xile.dev-data.enabled", havingValue = "true")`). Add records to your own module's
+  class; never edit another module's class or an old migration.
+- **Call the module's service, never its repository**, so seed data passes validation, business rules and audit.
+- **Idempotent**: skip records whose business key exists, so new seed rows only need a restart.
+- **Order** with `@Order`: `10` staff, `20` catalog, `30` customers, `40` visits, `50` expenses and closing.
+- **Fake data only** (NFR-PRV-01); include edge cases for the UI: inactive records, price 0, combo dearer than its parts.
+- **Test** like a service test with Mockito (model `CatalogDevDataTest`); never run seed data in integration tests.
 
 ## Test
 
-- Test tích hợp dùng **Testcontainers với PostgreSQL thật**, không dùng H2 (trigger và kiểu dữ liệu của Postgres khác H2).
-- Phần tiền, chốt sổ, bút toán luôn có test. Bộ test schema: `src/test/resources/sql/schema_smoke_test.sql`.
-- Đủ các nhóm ca theo `AGENTS.md` mục 10. Phân tầng:
-  - **Service:** test đơn vị Mockito (`@ExtendWith(MockitoExtension.class)`), mapper thật qua
-    `Mappers.getMapper(...)`, `Clock.fixed(...)`. Mỗi nhánh nghiệp vụ một test; ca lỗi kiểm tra `ErrorCode` và
-    `verify(repository, never()).save(any())`, `verify(auditService, never())...`. Mẫu: `StaffServiceTest`.
-  - **Controller:** `...ControllerIT` với `@IntegrationTest`: mã HTTP, JSON trả về (`jsonPath`), `fieldErrors`,
-    401 khi chưa đăng nhập, dữ liệu và `audit_log` thật trong DB. Người dùng test tạo riêng, dữ liệu có tiền tố
-    ngẫu nhiên (`prefix`). Mẫu: `StaffControllerIT`.
-  - **Entity:** test đơn vị cho method nghiệp vụ (`deactivate()`, `changePrice(...)`) không cần Spring.
-  - **Trigger, ràng buộc DB:** thêm vào `schema_smoke_test.sql`.
-- Assert bằng AssertJ (`assertThat`, `assertThatThrownBy(...).extracting("errorCode")`). Tiền viết `150_000L`.
-- Ca nhiều bộ dữ liệu cùng một kiểu (các chuỗi không hợp lệ, các mức tiền biên) dùng `@ParameterizedTest`.
-- Đầu vào lạ thử bằng request thật trong `...ControllerIT`, đừng suy ra từ annotation: đợt dò ngày 25/10/2026 thấy
-  Jackson nhận `1.7` thành `1` cho trường `Long` tiền, `@NotBlank` cho qua tên chỉ có NBSP, `null` trong danh sách
-  gây 500, dù test đều xanh (S3-08). Mẫu: `InputHandlingIT`.
-- Test tích hợp gắn `@IntegrationTest` (`src/test/java/com/xilespa/support`): chạy cả ứng dụng với Postgres 16
-  thật và MockMvc. Cần **Docker Desktop đang chạy**; đỏ hàng loạt với lỗi kết nối là Docker chưa bật, không phải code sai.
-- Chạy (trong `backend/`, cần JDK 21): `./gradlew spotlessApply test`. Chạy ứng dụng: `./gradlew bootRun`
-  (profile `dev`, cần Postgres ở máy, card S0-05).
-- Chạy riêng một lớp hoặc một method test: `./gradlew test --tests 'com.xilespa.module.staff.service.StaffServiceTest'`
-  (thêm `.tenMethod` cho một method; dùng `*` được, ví dụ `'*StaffControllerIT'`). Sửa lỗi thì chạy riêng test đỏ
-  trước, xanh rồi mới chạy cả bộ.
-- Format: Spotless (google-java-format kiểu AOSP, thụt 4 khoảng). Chạy `spotlessApply` trước khi commit.
+- Integration tests use **Testcontainers with real PostgreSQL**, never H2. Money, closing, adjustments always tested.
+  Schema checks: `src/test/resources/sql/schema_smoke_test.sql`.
+- Cover the groups of `AGENTS.md` section 10, by layer:
+  - **Service:** Mockito unit tests (`@ExtendWith(MockitoExtension.class)`), real mapper via `Mappers.getMapper(...)`,
+    `Clock.fixed(...)`; one test per branch; error cases check `ErrorCode` plus
+    `verify(repository, never()).save(any())` and `verify(auditService, never())...`. Model: `StaffServiceTest`.
+  - **Controller:** `...ControllerIT` with `@IntegrationTest`: HTTP status, JSON (`jsonPath`), `fieldErrors`, 401 when
+    logged out, real data and `audit_log` in the DB; own test user, random data prefix. Model: `StaffControllerIT`.
+  - **Entity:** plain unit tests for business methods. **Triggers, DB constraints:** `schema_smoke_test.sql`.
+- Shared PostgreSQL per run: **never `deleteAll()` shared tables** (append-only tables reference them); each test uses
+  its own prefix and cleans only its own data; never count the whole `audit_log` (use a random `entityType`).
+- Tests live in the same package as the class: `ServiceServiceTest` (unit), `ServiceControllerIT` (integration).
+- AssertJ (`assertThat`, `assertThatThrownBy(...).extracting("errorCode")`); money written `150_000L`; repeated input
+  shapes use `@ParameterizedTest`.
+- Probe odd input with real requests in `...ControllerIT`, never infer from annotations: on 2026-10-25 Jackson turned
+  `1.7` into `1` for a `Long` money field, `@NotBlank` accepted an NBSP-only name, `null` in a list caused 500, all with
+  green tests (S3-08). Model: `InputHandlingIT`.
+- `@IntegrationTest` (`src/test/java/com/xilespa/support`) boots the app with Postgres 16 and MockMvc; needs **Docker
+  running** — mass connection failures mean Docker is off, not broken code.
+- Run (in `backend/`, JDK 21): `./gradlew spotlessApply test`; one class or method:
+  `./gradlew test --tests 'com.xilespa.module.staff.service.StaffServiceTest[.method]'` (wildcards allowed). Fixing a
+  bug: run the red test alone first, then the whole suite. App: `./gradlew bootRun` (profile `dev`).
+- Format: Spotless (google-java-format AOSP, 4-space indent); run `spotlessApply` before committing.

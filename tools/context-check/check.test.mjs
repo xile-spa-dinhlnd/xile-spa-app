@@ -1,4 +1,4 @@
-// Chạy: node --test tools/context-check/check.test.mjs
+// Run: node --test tools/context-check/check.test.mjs
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import os from 'node:os'
@@ -13,7 +13,9 @@ import {
   pathsIn,
   ROOT_LINE_LIMIT,
   sectionOf,
+  SKILL_LINE_LIMIT,
   SUBDIR_LINE_LIMIT,
+  vietnameseProseLines,
 } from './check.mjs'
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
@@ -29,32 +31,33 @@ function makeRepo(files) {
 
 const lines = (count) => 'x\n'.repeat(count)
 const routing = (cell) =>
-  `# Quy tắc\n\n## 2. Đọc gì\n\n| Việc | Đọc |\n| --- | --- |\n| A | ${cell} |\n\n## 3. Khác\n`
+  `# Rules\n\n## 2. What to read\n\n| Job | Read |\n| --- | --- |\n| A | ${cell} |\n\n## 3. Other\n`
+const validRoot = { 'AGENTS.md': routing('`README.md`'), 'README.md': '' }
 const loaders = (dir) => ({
   [`${dir}/AGENTS.md`]: lines(10),
   [`${dir}/CLAUDE.md`]: '@AGENTS.md\n',
-  [`.agents/rules/${dir}.md`]: `Đọc \`${dir}/AGENTS.md\`.\n`,
+  [`.agents/rules/${dir}.md`]: `Read \`${dir}/AGENTS.md\`.\n`,
 })
 
 describe('sectionOf', () => {
-  test('lấy đúng mục, dừng ở tiêu đề mục kế tiếp', () => {
+  test('returns the section and stops at the next heading', () => {
     const section = sectionOf(routing('`README.md`'), 2)
 
-    assert.ok(section.startsWith('## 2. Đọc gì'))
+    assert.ok(section.startsWith('## 2. What to read'))
     assert.ok(section.includes('`README.md`'))
     assert.ok(!section.includes('## 3.'))
   })
 
-  test('không có mục thì trả null', () => {
-    assert.equal(sectionOf('# Tiêu đề\n\n## 3. Khác\n', 2), null)
+  test('returns null when the section is missing', () => {
+    assert.equal(sectionOf('# Title\n\n## 3. Other\n', 2), null)
   })
 })
 
 describe('pathsIn', () => {
-  test('lấy đường dẫn và tên file, bỏ tên package, URL của API, câu lệnh', () => {
+  test('keeps paths and file names, skips package names, API URLs and commands', () => {
     const text =
       '`docs/srs/04-business-rules.md`, `README.md`, `docs/postman/`, `tools.jackson.databind`, ' +
-      '`/api/visits`, `https://x.y/z`, `npm run dev`, `@AGENTS.md`, `mã OQ`'
+      '`/api/visits`, `https://x.y/z`, `npm run dev`, `@AGENTS.md`, `OQ code`'
 
     assert.deepEqual(pathsIn(text), [
       'docs/srs/04-business-rules.md',
@@ -66,7 +69,7 @@ describe('pathsIn', () => {
 })
 
 describe('missingPaths', () => {
-  test('báo đường dẫn không có, giữ đường dẫn có thật', () => {
+  test('reports missing paths and keeps existing ones', () => {
     const root = makeRepo({ 'docs/a.md': '', 'README.md': '' })
 
     assert.deepEqual(missingPaths(root, ['docs/a.md', 'README.md', 'docs/', 'docs/b.md']), [
@@ -74,121 +77,162 @@ describe('missingPaths', () => {
     ])
   })
 
-  test('đường dẫn có chỗ giữ chỗ thì kiểm thư mục đứng trước', () => {
+  test('a path with a placeholder checks the folder before it', () => {
     const root = makeRepo({ 'docs/design/flows/README.md': '' })
 
     assert.deepEqual(
-      missingPaths(root, [
-        'docs/design/flows/<module>/<tính-năng>.md',
-        'docs/backlog/sprint-<n>.md',
-      ]),
+      missingPaths(root, ['docs/design/flows/<module>/<feature>.md', 'docs/backlog/sprint-<n>.md']),
       ['docs/backlog/sprint-<n>.md'],
     )
   })
 })
 
 describe('lineCount', () => {
-  test('đếm như wc -l, có hay không dòng trống cuối file', () => {
+  test('counts like wc -l with or without a trailing newline', () => {
     assert.equal(lineCount('a\nb\n'), 2)
     assert.equal(lineCount('a\nb'), 2)
   })
 })
 
 describe('loaderProblems', () => {
-  test('đủ hai lớp nạp thì không báo gì', () => {
+  test('both loaders present: no problems', () => {
     assert.deepEqual(loaderProblems(makeRepo(loaders('backend')), 'backend'), [])
   })
 
-  test('file nạp có nhưng không trỏ tới AGENTS.md thì báo', () => {
+  test('loaders that do not point to AGENTS.md are reported', () => {
     const root = makeRepo({
       ...loaders('frontend'),
-      'frontend/CLAUDE.md': '# Ghi chú riêng\n',
-      '.agents/rules/frontend.md': 'Đọc `frontend/README.md`.\n',
+      'frontend/CLAUDE.md': '# Private notes\n',
+      '.agents/rules/frontend.md': 'Read `frontend/README.md`.\n',
     })
 
     assert.deepEqual(loaderProblems(root, 'frontend'), [
-      'frontend/CLAUDE.md không có dòng @AGENTS.md, Claude Code sẽ không nạp frontend/AGENTS.md',
-      '.agents/rules/frontend.md không trỏ tới frontend/AGENTS.md, Antigravity sẽ không nạp file đó',
+      'frontend/CLAUDE.md lacks the @AGENTS.md line, so Claude Code will not load frontend/AGENTS.md',
+      '.agents/rules/frontend.md does not point to frontend/AGENTS.md, so Antigravity will not load it',
     ])
   })
 
-  test('thiếu CLAUDE.md và rule của Antigravity thì báo cả hai', () => {
+  test('missing CLAUDE.md and Antigravity rule are both reported', () => {
     const root = makeRepo({ 'backend/AGENTS.md': lines(1) })
 
-    assert.deepEqual(loaderProblems(root, 'backend'), [
-      'backend/CLAUDE.md không có dòng @AGENTS.md, Claude Code sẽ không nạp backend/AGENTS.md',
-      '.agents/rules/backend.md không trỏ tới backend/AGENTS.md, Antigravity sẽ không nạp file đó',
-    ])
+    assert.equal(loaderProblems(root, 'backend').length, 2)
+  })
+})
+
+describe('vietnameseProseLines', () => {
+  test('flags Vietnamese prose with its line number', () => {
+    assert.deepEqual(vietnameseProseLines('English line\nĐọc file này trước\n'), [2])
+  })
+
+  test('ignores code blocks, inline code, double quotes and allowed terms', () => {
+    const markdown = [
+      'Set `Trạng thái: khớp code` and show "Thử lại".',
+      'Ask Đình; money is whole đồng.',
+      '```mermaid',
+      'A[Người dùng] --> B',
+      '```',
+    ].join('\n')
+
+    assert.deepEqual(vietnameseProseLines(markdown), [])
+  })
+
+  test('ignores quotes and inline code that wrap across lines', () => {
+    const markdown = 'Ask "Bạn duyệt thiết kế\nnày chứ?" and set `đã\nsoát`.\n'
+
+    assert.deepEqual(vietnameseProseLines(markdown), [])
+  })
+
+  test('ASCII-only Vietnamese words cannot be detected and pass', () => {
+    assert.deepEqual(vietnameseProseLines('Move the card to Xong.\n'), [])
   })
 })
 
 describe('check', () => {
-  test('repo hợp lệ: không lỗi, in số dòng của từng file', () => {
-    const root = makeRepo({
-      'AGENTS.md': routing('`README.md`'),
-      'README.md': '',
-      ...loaders('backend'),
-    })
+  test('valid repo: no problems, prints line counts', () => {
+    const root = makeRepo({ ...validRoot, ...loaders('backend') })
 
     const { problems, sizes } = check(root)
 
     assert.deepEqual(problems, [])
-    assert.deepEqual(sizes, [
-      `AGENTS.md 9/${ROOT_LINE_LIMIT}`,
-      `backend/AGENTS.md 10/${SUBDIR_LINE_LIMIT}`,
-    ])
+    assert.deepEqual(sizes, [`AGENTS.md 9/${ROOT_LINE_LIMIT}`, `backend/AGENTS.md 10/${SUBDIR_LINE_LIMIT}`])
   })
 
-  test('mục 2 trỏ tới file đã xóa thì báo đúng đường dẫn', () => {
+  test('section 2 pointing to a deleted file reports that path', () => {
     const root = makeRepo({ 'AGENTS.md': routing('`docs/backlog/sprint-0-1.md`') })
 
     assert.deepEqual(check(root).problems, [
-      'AGENTS.md mục 2 trỏ tới `docs/backlog/sprint-0-1.md`, không có trong repo',
+      'AGENTS.md section 2 points to `docs/backlog/sprint-0-1.md`, which is not in the repo',
     ])
   })
 
-  test('file gốc vừa đủ giới hạn thì qua, thêm một dòng thì báo', () => {
+  test('root file at the limit passes, one more line fails', () => {
     const base = routing('`README.md`')
     const atLimit = base + lines(ROOT_LINE_LIMIT - lineCount(base))
-    const overLimit = atLimit + lines(1)
 
-    assert.deepEqual(check(makeRepo({ 'AGENTS.md': atLimit, 'README.md': '' })).problems, [])
+    assert.deepEqual(check(makeRepo({ ...validRoot, 'AGENTS.md': atLimit })).problems, [])
     assert.match(
-      check(makeRepo({ 'AGENTS.md': overLimit, 'README.md': '' })).problems[0],
-      /^AGENTS\.md có 251 dòng/,
+      check(makeRepo({ ...validRoot, 'AGENTS.md': atLimit + lines(1) })).problems[0],
+      new RegExp(`^AGENTS\\.md has ${ROOT_LINE_LIMIT + 1} lines, over the limit of ${ROOT_LINE_LIMIT}`),
     )
   })
 
-  test('file con quá giới hạn thì báo theo giới hạn của file con', () => {
+  test('subfolder file over its own limit is reported', () => {
     const root = makeRepo({
-      'AGENTS.md': routing('`README.md`'),
-      'README.md': '',
+      ...validRoot,
       ...loaders('frontend'),
       'frontend/AGENTS.md': lines(SUBDIR_LINE_LIMIT + 1),
     })
 
-    assert.match(check(root).problems[0], /^frontend\/AGENTS\.md có 321 dòng, quá giới hạn 320/)
+    assert.match(
+      check(root).problems[0],
+      new RegExp(`^frontend/AGENTS\\.md has ${SUBDIR_LINE_LIMIT + 1} lines, over the limit of ${SUBDIR_LINE_LIMIT}`),
+    )
   })
 
-  test('không có mục 2 thì báo', () => {
-    const root = makeRepo({ 'AGENTS.md': '# Quy tắc\n' })
+  test('a skill over the skill limit is reported, other skill files are not counted', () => {
+    const root = makeRepo({
+      ...validRoot,
+      '.agents/skills/implement/SKILL.md': lines(SKILL_LINE_LIMIT + 1),
+      '.agents/skills/implement/endpoint-checklist.md': lines(SKILL_LINE_LIMIT + 50),
+      '.claude/skills/self-review/SKILL.md': lines(SKILL_LINE_LIMIT),
+    })
 
-    assert.deepEqual(check(root).problems, [
-      'AGENTS.md không có mục "## 2." (bảng đọc tài liệu nào cho loại việc nào)',
+    const { problems, sizes } = check(root)
+
+    assert.deepEqual(problems, [
+      `.agents/skills/implement/SKILL.md has ${SKILL_LINE_LIMIT + 1} lines, over the limit of ${SKILL_LINE_LIMIT} (AGENTS.md section 6): merge lines or drop ones a check already enforces`,
+    ])
+    assert.ok(!sizes.some((size) => size.includes('endpoint-checklist')))
+  })
+
+  test('Vietnamese prose in agent files is reported per file with line numbers', () => {
+    const root = makeRepo({
+      ...validRoot,
+      'CLAUDE.md': '@AGENTS.md\n\nTrả lời bằng tiếng Việt.\n',
+      '.agents/rules/builder.md': 'English only.\n',
+      '.claude/skills/x/SKILL.md': 'Use it.\nĐừng dùng.\n',
+      'docs/guide.md': 'Tài liệu tiếng Việt là đúng.\n',
+    })
+
+    assert.deepEqual(
+      check(root).problems.map((problem) => problem.split(' (')[0]),
+      ['CLAUDE.md has Vietnamese prose on line(s) 3', '.claude/skills/x/SKILL.md has Vietnamese prose on line(s) 2'],
+    )
+  })
+
+  test('missing section 2 is reported', () => {
+    assert.deepEqual(check(makeRepo({ 'AGENTS.md': '# Rules\n' })).problems, [
+      'AGENTS.md has no "## 2." section (which doc to read for which job)',
     ])
   })
 
-  test('bỏ qua node_modules có AGENTS.md của thư viện', () => {
-    const root = makeRepo({
-      'AGENTS.md': routing('`README.md`'),
-      'README.md': '',
-      'node_modules/AGENTS.md': lines(1),
-    })
+  test('ignores node_modules containing a library AGENTS.md', () => {
+    const root = makeRepo({ ...validRoot, 'node_modules/AGENTS.md': lines(1) })
 
     assert.deepEqual(check(root).problems, [])
   })
 
-  test('repo thật đang sạch', () => {
+  test('the real repo is clean', () => {
     assert.deepEqual(check(repoRoot).problems, [])
   })
 })

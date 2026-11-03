@@ -1,40 +1,38 @@
 ---
 name: frontend-design
-description: Đề xuất định hướng giao diện (bảng màu, phông chữ, thang cỡ chữ, bo góc, độ dày đặc) cho Xile Spa rồi dừng chờ duyệt; kết quả ghi vào theme.ts, tokens.css và docs/design/ux-guidelines.md mục 5, không viết lại màn hình. Chỉ chạy khi người dùng tự gõ /frontend-design; không tự gọi trong /implement, /plan-task hay khi sửa một màn hình.
+description: Propose a visual direction for Xile Spa (palette, typefaces, type scale, radius, density) and stop for approval; the approved result goes into theme.ts, tokens.css and docs/design/ux-guidelines.md section 5, never into screen rewrites. Only when the user types /frontend-design; never called from /implement, /plan-task or while editing a screen.
 license: Complete terms in LICENSE.txt
 ---
 
 # Frontend Design
 
-> **Bản chép cho Xile Spa, đã sửa.** Nguồn: `anthropics/skills`, file `skills/frontend-design/SKILL.md`, commit
-> `41bbe19` (Apache License 2.0, xem `LICENSE.txt` cạnh file này). Đã sửa so với bản gốc: đổi `description` để chỉ chạy
-> khi người dùng gõ, thêm mục "Quy ước Xile Spa". Phần từ "Ground your designs in the subject matter" trở xuống giữ
-> nguyên văn. Cập nhật bản chép: PR `chore` riêng.
+> **Xile Spa copy, modified.** Source: `anthropics/skills`, file `skills/frontend-design/SKILL.md`, commit `41bbe19`
+> (Apache License 2.0, see `LICENSE.txt` next to this file). Changed from the original: `description` limited to manual
+> use, "Xile Spa conventions" added. Everything from "Ground your designs in the subject matter" down is verbatim.
+> Update this copy in a separate `chore` PR.
 
-## Quy ước Xile Spa (ưu tiên hơn mọi chỉ dẫn bên dưới)
+## Xile Spa conventions (override everything below)
 
-Phần gốc bên dưới viết cho trang giới thiệu (landing page). Xile Spa là **ứng dụng quản trị** chủ tiệm dùng hằng ngày
-trên máy tính, điện thoại, iPad, dựng bằng **Ant Design 6**. Áp dụng phần gốc theo các giới hạn sau:
+The original below was written for landing pages. Xile Spa is an **admin app** the owner uses daily on desktop, phone
+and iPad, built with **Ant Design 6**. Apply the original within these limits:
 
-1. **Chỉ khi người dùng gõ `/frontend-design`.** Không tự gọi skill này khi đang `/implement`, `/plan-task`, `/fix-bug`
-   hay sửa một màn hình.
-2. **Kết quả là một đề xuất, rồi dừng chờ duyệt.** Gồm: bối cảnh (chủ tiệm spa và giãn cơ, nhập liệu nhanh, đọc số
-   tiền), bảng màu 4–6 màu có mã hex và vai trò (thương hiệu, nền, chữ, thành công, cảnh báo, lỗi), phông chữ, thang cỡ
-   chữ, bo góc, khoảng cách, độ dày đặc của bảng và form, cùng ảnh hoặc mô tả áp lên 2–3 màn hình có sẵn. Kiểm độ tương
-   phản chữ trên nền tối thiểu 4.5:1.
-3. **Sau khi duyệt, chỉ sửa ba chỗ:** `frontend/src/styles/theme.ts` (token của Ant Design: `colorPrimary`,
-   `borderRadius`, `fontFamily`, `fontSize`, token từng component), `frontend/src/styles/tokens.css` (cùng giá trị) và
-   `docs/design/ux-guidelines.md` mục 5. Màn hình đổi theo theme; không viết lại component, không thêm CSS riêng cho
-   từng trang. Màn hình nào cần sửa bố cục thì ghi thành card riêng.
-4. **Dùng component của Ant Design**, không tự dựng nút, bảng, form bằng CSS. Tra token bằng skill `antd`
-   (`antd token`, `antd design.md`).
-5. **Bỏ qua phần "hero"** và hiệu ứng mở trang của bản gốc: màn hình quản trị mở ra là dữ liệu và thao tác chính.
-   "Táo bạo ở một chỗ" nghĩa là một điểm nhận diện (màu thương hiệu, logo, tiêu đề), không phải bố cục lạ.
-6. **Không thêm phông chữ tải từ ngoài, gói npm hay ảnh** khi chưa hỏi người làm card (AGENTS.md mục 3). Phông phải có
-   đủ dấu tiếng Việt.
-7. Câu chữ theo `docs/design/ux-guidelines.md` mục 3 (tiếng Việt có dấu), tiền theo mục 4 (`1.234.000 đ`).
-
-Approach this as the design lead at a design studio known for giving every client a distinct visual identity that is not mistaken for anyone else's. This client has already rejected proposals that felt cliché or templated, and is paying for a distinctive point of view: make deliberate, opinionated choices about palette, typography, and layout that are specific to this brief, and take aesthetic risk if justified.
+1. **Only when the user types `/frontend-design`.** Never call it during `/implement`, `/plan-task`, `/fix-bug` or while
+   editing a screen.
+2. **The output is a proposal, then stop for approval.** It contains: context (spa and stretching shop owner, fast data
+   entry, reading money), a palette of 4–6 colors with hex values and roles (brand, background, text, success, warning,
+   error), typefaces, type scale, radius, spacing, table and form density, and how it looks on 2–3 existing screens
+   (screenshots or description). Check text contrast is at least 4.5:1.
+3. **After approval, change only three places:** `frontend/src/styles/theme.ts` (Ant Design tokens: `colorPrimary`,
+   `borderRadius`, `fontFamily`, `fontSize`, per-component tokens), `frontend/src/styles/tokens.css` (same values) and
+   `docs/design/ux-guidelines.md` section 5 (in Vietnamese). Screens change through the theme; no component rewrites,
+   no per-page CSS. A screen that needs a layout change becomes its own card.
+4. **Use Ant Design components**; never hand-build buttons, tables or forms with CSS. Look up tokens with the `antd`
+   skill (`antd token`, `antd design.md`).
+5. **Skip the original's "hero"** and page-load animation: an admin screen opens straight onto data and the main action.
+   "Spend your boldness in one place" means one identity element (brand color, logo, page title), not an unusual layout.
+6. **No externally loaded fonts, npm packages or images** without asking the card owner (`AGENTS.md` section 3). Any
+   typeface must fully support Vietnamese diacritics.
+7. Copy follows `docs/design/ux-guidelines.md` section 3 (Vietnamese with diacritics), money section 4 (`1.234.000 đ`).
 
 ## Ground your designs in the subject matter
 

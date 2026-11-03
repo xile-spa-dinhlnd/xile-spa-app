@@ -1,96 +1,79 @@
 ---
 name: fix-bug
-description: Sửa lỗi có bằng chứng trong Xile Spa - tái hiện lỗi bằng test đỏ, chỉ ra nguyên nhân ở file và dòng cụ thể, vẽ luồng cũ và luồng mới nếu là lỗi luồng, đề xuất cách sửa rồi dừng chờ duyệt. Chỉ chạy khi người dùng tự gõ /fix-bug [<file luồng của tính năng>] <mô tả lỗi> hoặc nhờ điều tra một lỗi; không tự gọi khi test đỏ trong lúc /implement, /write-tests (khi đó dừng và báo theo /implement).
+description: Fix a Xile Spa bug with evidence - reproduce it with a red test, point to the exact file and line causing it, draw old vs. new flow if it is a flow bug, propose the fix and stop for approval. Only when the user types /fix-bug [<flow file>] <description> or asks to investigate a bug; never when a test turns red inside /implement or /write-tests (then stop and report as /implement says).
 ---
 
-# /fix-bug: chứng minh trước, sửa sau
+# /fix-bug — prove first, fix second
 
-Nguyên tắc: **không sửa điều mình chưa chứng minh được.** Mọi câu trong báo cáo phải thuộc một trong hai loại:
-"Đã xác minh" (kèm bằng chứng) hoặc "Giả thuyết" (kèm cách kiểm chứng). Không dùng "có lẽ", "chắc là" mà không
-ghi nhãn.
+Never fix what you have not proven. Every statement in the report is either **Verified** (with evidence) or
+**Hypothesis** (with how to verify it). No "probably" without a label.
 
-## Giai đoạn 1: điều tra (không sửa code)
+## Phase 1: investigate (no code changes)
 
-0. **Tạo nhánh** `fix/<mã-card>-<mô-tả>` theo mục "Nhánh" của `.agents/rules/writer-role.md`, trước khi ghi test
-   đỏ. Lỗi trên bản đã phát hành (`hotfix/*`) thì không tự tạo nhánh: dừng và hỏi (CONTRIBUTING.md mục 6).
-1. **Mô tả lỗi** bằng ba dòng: các bước làm, kết quả mong đợi (trích FR/BR nếu có), kết quả thực tế. Thiếu bước
-   tái hiện thì hỏi người dùng, đừng tự bịa.
-2. **Tái hiện bằng test đỏ.** Viết test nhỏ nhất cho thấy lỗi:
-   - Lỗi logic ở service: test đơn vị (Mockito) cạnh lớp đó.
-   - Lỗi liên quan DB, trigger, transaction, API: test `@IntegrationTest` (Testcontainers, cần Docker).
-   - Lỗi giao diện: Vitest (component, hook) hoặc Playwright cho luồng nhiều trang.
-     Chạy riêng test đó (lệnh ở `AGENTS.md` mục 3) và **dán đoạn output đỏ**. Test đỏ này là file mới duy nhất
-     được tạo trong giai đoạn 1.
-     Nếu không tái hiện được: dừng, báo những gì đã thử, hỏi thêm thông tin. Không sửa "phòng hờ".
-3. **Truy nguyên nhân.** Đọc file luồng của tính năng trước (người dùng đưa đường dẫn, hoặc tìm trong
-   `docs/design/flows/<module>/` theo endpoint, tên lớp) để biết luồng đúng; thấy sơ đồ lệch với code thì ghi vào
-   báo cáo. Đi theo luồng gọi từ chỗ lỗi lộ ra tới chỗ sinh lỗi. Dùng `git log -p -- <file>` và
-   `git blame` để biết dòng đó đổi từ card nào, vì sao. Chỉ ra **file:dòng** gây lỗi và giải thích cơ chế.
-4. **Đánh giá phạm vi.** Lỗi này còn ảnh hưởng chỗ nào khác (tìm cùng mẫu code bằng grep)? Có làm sai dữ liệu đã
-   lưu không? Nếu dữ liệu ngày đã chốt bị sai: chỉ sửa bằng bút toán điều chỉnh (ADR-0003), không viết code sửa thẳng.
+0. **Branch** `fix/<card-code>-<short-desc>` per `.agents/rules/builder.md` ("Branch") before writing the red test. A
+   bug in a released version (`hotfix/*`): do not create a branch; stop and ask (`CONTRIBUTING.md` section 6).
+1. **Describe** in three lines: steps, expected (cite FR/BR), actual. Missing steps → ask; never invent them.
+2. **Reproduce with a red test**, the smallest that shows the bug: service logic → Mockito unit test; DB, trigger,
+   transaction, API → `@IntegrationTest`; UI → Vitest. Run only that test and **paste the red output**. This test is
+   the only new file in phase 1. Cannot reproduce → stop, list what you tried, ask for more information.
+3. **Root cause.** Read the feature's flow file first (given, or found in `docs/design/flows/<module>/` by endpoint or
+   class). Follow the call path from where the bug shows to where it starts. Use `git log -p -- <file>` and `git blame`
+   to see which card changed the line and why. Name the **file:line** and explain the mechanism.
+4. **Blast radius.** Same pattern elsewhere (grep)? Wrong data already stored? Wrong data on a closed day is fixed only
+   by adjustment entries (ADR-0003), never by direct edits.
 
-## Giai đoạn 2: đề xuất (vẫn không sửa code)
+## Phase 2: propose (still no code changes)
 
-Viết báo cáo theo mẫu, rồi **dừng chờ duyệt**:
+Write this report and **stop for approval**:
 
 ```markdown
-# Lỗi: <tóm tắt một dòng>
+# Bug: <one line>
 
-## Hiện tượng
+## Symptom
+Steps / Expected / Actual
 
-Bước làm / Mong đợi / Thực tế
+## Evidence (verified)
+- Red test: `<path>`, output: <short excerpt>
+- Cause: `<file>:<line>` <explanation>
+- Since: commit <hash> (<card>)
 
-## Bằng chứng (đã xác minh)
+## Remaining hypotheses
+- <hypothesis> → verify by: <...>
 
-- Test đỏ: `<đường dẫn test>`, output: <đoạn ngắn>
-- Nguyên nhân: `<file>:<dòng>` <giải thích>
-- Từ khi nào: commit <hash> (<card>)
+## Flow (only for feature-flow bugs)
+<one Mermaid flowchart, see below>
 
-## Giả thuyết còn lại (nếu có)
+## Proposed fix
+- Files and exact changes; why this way; alternatives considered
+- Impact: API, data, migration
 
-- <giả thuyết> → cách kiểm chứng: <...>
-
-## Luồng (chỉ khi là lỗi luồng tính năng)
-
-<một sơ đồ Mermaid, xem quy tắc bên dưới>
-
-## Cách sửa đề xuất
-
-- File sẽ sửa và thay đổi cụ thể
-- Vì sao chọn cách này; cách khác đã cân nhắc
-- Ảnh hưởng: API, dữ liệu, migration (nếu có)
-
-## Test sau khi sửa
-
-- Test đỏ ở trên chuyển xanh và giữ lại làm test chống lỗi tái phát
-- Các test khác cần chạy
+## Tests after the fix
+- The red test turns green and stays as a regression test
+- Other suites to run
 ```
 
-## Sơ đồ cho lỗi luồng tính năng
+## Diagram for flow bugs
 
-Vẽ **một** `flowchart` chứa cả luồng cũ và luồng mới để người đọc so sánh ngay:
-
-- Bước bị bỏ hoặc sai: lớp `cu` (đỏ, nét đứt), nhãn bắt đầu bằng "Cũ:".
-- Bước mới hoặc sửa: lớp `moi` (xanh), nhãn bắt đầu bằng "Mới:".
-- Bước giữ nguyên: không tô.
+One `flowchart` holding both flows: removed or wrong steps use class `old` (red, dashed) with labels starting "Cũ:";
+new or changed steps use class `new` (green) with labels starting "Mới:"; unchanged steps are plain.
 
 ```mermaid
 flowchart TD
     A[Người dùng lưu giao dịch] --> B{Ngày đã chốt?}
     B -- chưa --> C[Lưu visit]
-    C --> D[Cũ: ghi audit_log ngoài transaction]:::cu
-    C --> E[Mới: ghi audit_log trong cùng transaction]:::moi
+    C --> D[Cũ: ghi audit_log ngoài transaction]:::old
+    C --> E[Mới: ghi audit_log trong cùng transaction]:::new
     B -- rồi --> F[409 DAY_CLOSED]
-    classDef cu fill:#fde2e2,stroke:#c0392b,stroke-dasharray:5 5,color:#7b241c
-    classDef moi fill:#e3f6e8,stroke:#1e8449,color:#145a32
+    classDef old fill:#fde2e2,stroke:#c0392b,stroke-dasharray:5 5,color:#7b241c
+    classDef new fill:#e3f6e8,stroke:#1e8449,color:#145a32
 ```
 
-## Giai đoạn 3: sửa (sau khi được duyệt)
+## Phase 3: fix (after approval)
 
-1. Sửa đúng phạm vi đã duyệt. Thấy thêm lỗi khác thì ghi lại để báo, không sửa lẫn vào.
-2. Chạy test đỏ: phải xanh. Chạy toàn bộ test của phần bị ảnh hưởng (backend, frontend hoặc cả hai).
-3. Cập nhật file luồng của tính năng theo luồng mới (chỉ phần "Mới:", bỏ phần "Cũ:" của sơ đồ so sánh), thêm test
-   chống tái phát vào bảng "Hành vi và test" và dòng lịch sử `<dd/MM/yyyy> | <tên người dùng> (Antigravity) |
-   <card> | Sửa lỗi: <tóm tắt>`. Tính năng chưa có file luồng thì tạo theo `docs/design/flows/README.md`.
-4. Báo cáo: file đã sửa, test trước/sau, cách thử tay. Câu commit gợi ý `fix(<phạm vi>): ...` theo CONTRIBUTING.md mục 3 (chỉ câu, không lệnh git); người dùng gõ `/pre-pr-check` khi sẵn
-   sàng.
+1. Fix exactly the approved scope. Other bugs you notice go in the report, not in this fix.
+2. The red test goes green; run the full suite of every affected part.
+3. Update the flow file to the new flow (keep only the "Mới:" side), add the regression test to "Hành vi và test" and a
+   history line `<dd/MM/yyyy> | <user name> (Antigravity) | <card> | Sửa lỗi: <summary>`. No flow file yet → create one
+   from `docs/design/flows/README.md`.
+4. Report with the template in `.agents/rules/builder.md`; suggested commit `fix(<scope>): <english description>`. The
+   user types `/pre-pr-check` when ready.

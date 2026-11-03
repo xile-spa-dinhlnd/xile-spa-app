@@ -12,23 +12,22 @@ allowed-tools:
 
 # Ant Design CLI
 
-> **Bản chép cho Xile Spa.** Nguồn: `ant-design/ant-design-cli`, file `skills/antd/SKILL.md`, commit `9e4e358` (giấy
-> phép MIT, © Ant Design team). Đã sửa so với bản gốc: bỏ tự cài và tự nâng CLI, bỏ các mục gửi báo lỗi (gốc mục 9, 10,
-> 11 và quy tắc 6, 7), ví dụ MCP đổi sang v6, thêm mục "Quy ước Xile Spa". Cập nhật bản chép: PR `chore` riêng.
+> **Xile Spa copy.** Source: `ant-design/ant-design-cli`, file `skills/antd/SKILL.md`, commit `9e4e358` (MIT
+> license, © Ant Design team). Changed from the original: no self-install or self-upgrade of the CLI, bug-report sections
+> removed (original scenarios 9, 10, 11 and key rules 6, 7), migration/changelog/env scenarios shortened, MCP example
+> set to v6, "Xile Spa conventions" added. Update this copy in a separate `chore` PR.
 
-## Quy ước Xile Spa (ưu tiên hơn mọi chỉ dẫn bên dưới)
+## Xile Spa conventions (override everything below)
 
-- Dự án dùng **antd 6** (`frontend/package.json`): mọi lệnh tra cứu thêm `--version 6`, kể cả khi chạy MCP.
-- **Không tự cài, không tự nâng** `@ant-design/cli` (`npm install -g`, `antd upgrade`). Thiếu CLI (`which antd` không
-  ra gì) hoặc CLI báo có bản mới thì dừng và báo người dùng tự chạy; thêm hay nâng công cụ là việc người làm card quyết
-  (AGENTS.md mục 3).
-- **Không gửi báo lỗi** lên GitHub (`antd bug`, `antd bug-cli`), kể cả khi được gợi ý.
-- Quy tắc của repo vẫn đúng hơn ví dụ của antd: cấu trúc và CSS theo `frontend/AGENTS.md` (CSS Modules, màu và khoảng
-  cách lấy từ `tokens.css`/`theme.ts`, không màu viết thẳng); bố cục, câu chữ, trạng thái theo
-  `docs/design/ux-guidelines.md`. `antd demo` chỉ là điểm bắt đầu, không chép nguyên style inline của demo.
-- `antd lint <file đã sửa> --format json` sau khi sửa component; lỗi `deprecated` thì sửa luôn trong cùng phần.
-
-You have access to `@ant-design/cli` — a local CLI tool with bundled antd metadata for v4/v5/v6 (plus migration guides for v3 → v4, v4 → v5, v5 → v6). Use it to query component knowledge, analyze projects, and guide migrations. All data is offline, no network needed.
+- The project uses **antd 6** (`frontend/package.json`): add `--version 6` to every lookup, MCP included.
+- **Never install or upgrade** `@ant-design/cli` yourself (`npm install -g`, `antd upgrade`). CLI missing (`which antd`
+  prints nothing) or an update notice appears → stop and ask the user to run it; tools are the card owner's call
+  (`AGENTS.md` section 3).
+- **Never file bug reports** to GitHub (`antd bug`, `antd bug-cli`), even when suggested.
+- Repo rules beat antd examples: structure and CSS per `frontend/AGENTS.md` (CSS Modules, colors and spacing from
+  `tokens.css`/`theme.ts`, no raw colors); layout, copy and states per `docs/design/ux-guidelines.md`. `antd demo` is a
+  starting point only; never copy a demo's inline styles.
+- Run `antd lint <changed file> --format json` after editing components; fix `deprecated` findings in the same part.
 
 ## Setup
 
@@ -80,110 +79,20 @@ antd doc Table --lang zh            # Chinese docs
 
 ### 3. Debugging antd issues
 
-When code isn't working as expected or the user reports an antd bug:
+`antd info <Component> --version 6 --format json` (does the prop exist in our version?), `antd lint <file> --format json`
+(deprecated or wrong usage), `antd doctor --format json` (project configuration), `antd env --format json` (environment).
 
-```bash
-# Collect full environment snapshot (system, deps, browsers, build tools)
-antd env --format json
+### 4. Version changes
 
-# Check if the prop exists for the user's antd version
-antd info Select --version 5.12.0 --format json
+Upgrading antd is a library change: ask first (`AGENTS.md` section 3). To understand a change:
+`antd changelog <v1> <v2> [Component] --format json`, `antd migrate <from> <to> [--component X] --format json`.
 
-# Check if the prop is deprecated
-antd lint ./src/components/MyForm.tsx --format json
+### 5. Analyzing usage and choosing components
 
-# Diagnose project-level configuration issues
-antd doctor --format json
-```
+`antd usage ./src [--filter Form] --format json` (usage statistics), `antd lint ./src [--only deprecated|a11y|performance]
+--format json` (best-practice violations), `antd list --version 6 --format json` (components by category).
 
-**Workflow:** `antd env` → capture full environment → `antd doctor` → check configuration → `antd info --version X` → verify API against the user's exact version → `antd lint` → find deprecated or incorrect usage.
-
-### 4. Migrating between versions
-
-When the user wants to upgrade antd (e.g., v3 → v4 or v4 → v5):
-
-```bash
-# Get full migration checklist
-antd migrate 3 4 --format json    # v3 → v4
-antd migrate 4 5 --format json    # v4 → v5
-
-# Check migration for a specific component
-antd migrate 4 5 --component Select --format json
-
-# Generate agent-friendly auto-migration prompt (does not modify files)
-antd migrate 4 5 --apply ./src --format json
-
-# See what changed between two versions
-antd changelog 4.24.0 5.0.0 --format json
-
-# See changes for a specific component
-antd changelog 4.24.0 5.0.0 Select --format json
-```
-
-**Workflow:** `antd migrate` → get full checklist → `antd changelog <v1> <v2>` → understand breaking changes → apply fixes → `antd lint` → verify no deprecated usage remains.
-
-### 5. Analyzing project antd usage
-
-When the user wants to understand how antd is used in their project:
-
-```bash
-# Scan component usage statistics
-antd usage ./src --format json
-
-# Filter to a specific component
-antd usage ./src --filter Form --format json
-
-# Lint for best practice violations
-antd lint ./src --format json
-
-# Check only specific rule categories
-antd lint ./src --only deprecated --format json
-antd lint ./src --only a11y --format json
-antd lint ./src --only performance --format json
-```
-
-### 6. Checking changelogs and version history
-
-When the user asks about what changed in a version:
-
-```bash
-# Specific version changelog
-antd changelog 5.22.0 --format json
-
-# Version range (both ends inclusive)
-antd changelog 5.21.0..5.24.0 --format json
-```
-
-### 7. Exploring available components
-
-When the user is choosing which component to use:
-
-```bash
-# List all components with categories
-antd list --format json
-
-# List components for a specific antd version
-antd list --version 5.0.0 --format json
-```
-
-### 8. Collecting environment info
-
-When you need to understand the project's antd setup, or prepare info for a bug report:
-
-```bash
-# Full environment snapshot (text — paste into GitHub Issues)
-antd env
-
-# Structured JSON for programmatic use
-antd env --format json
-
-# Scan a specific project directory
-antd env ./my-project --format json
-```
-
-Collects: OS, Node, package managers (npm/pnpm/yarn/bun/utoo), npm registry, browsers, core deps (antd/react/dayjs), all `@ant-design/*` and `rc-*` packages, and build tools (umi/vite/webpack/typescript/etc.).
-
-### 9. Using as MCP server
+### 6. Using as MCP server
 
 If working in an IDE that supports MCP (Claude Desktop, Cursor, etc.), the CLI can also run as an MCP server, exposing all knowledge-query tools directly:
 

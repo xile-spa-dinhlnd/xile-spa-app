@@ -1,66 +1,68 @@
 <!--
-Tiêu đề PR: <loại>(<phạm vi>): <mô tả ngắn có dấu> [<mã thẻ>]
-Ví dụ:      feat(catalog): quản lý dịch vụ [S1-05]
-Base: develop (chỉ release/* và hotfix/* mới vào main). Quy tắc đầy đủ: CONTRIBUTING.md mục 3, 4.
-Các dòng hướng dẫn dạng chú thích như thế này không hiện ra khi xem PR. Mục không áp dụng thì ghi "Không".
+PR title: <type>(<scope>): <short english description> [<card>]
+Example:  feat(catalog): manage services [S1-05]
+Base: develop (only release/* and hotfix/* go to main). Full rules: CONTRIBUTING.md sections 3, 4.
+These comment lines do not show in the rendered PR. Write "None" for sections that do not apply.
 -->
 
-## Tóm tắt
+## Summary
 
-<!-- 1 đến 3 câu: PR giải quyết vấn đề gì và vì sao cần. -->
+<!-- 1–3 sentences: what problem this PR solves and why. -->
 
-## Liên kết
+## Links
 
-- Thẻ: <!-- Một thẻ, ví dụ S2-01 (link Trello). Việc quy trình không có thẻ thì ghi "Không". -->
-- Thiết kế: <!-- File luồng, ví dụ docs/design/flows/catalog/service-group.md -->
-- Yêu cầu: <!-- FR-SVC-01, BR-19, OQ-06, ADR-0003 ... -->
+- Card: <!-- one card, e.g. S2-01 (Trello link). Process work without a card: "None". -->
+- Design: <!-- flow file, e.g. docs/design/flows/catalog/service-group.md -->
+- Requirements: <!-- FR-SVC-01, BR-19, OQ-06, ADR-0003 ... -->
 
-## Loại thay đổi
+## Type of change
 
-- [ ] `feat`: chức năng mới
-- [ ] `fix`: sửa lỗi
-- [ ] `refactor` / `perf`: đổi cấu trúc hoặc hiệu năng, không đổi hành vi
+- [ ] `feat`: new feature
+- [ ] `fix`: bug fix
+- [ ] `refactor` / `perf`: structure or performance, no behavior change
 - [ ] `test` / `docs` / `build` / `ci` / `chore`
-- [ ] **Breaking change**: đổi API mà frontend đang gọi, đổi schema, đổi cấu hình hoặc biến môi trường
+- [ ] **Breaking change**: changes an API the frontend calls, the schema, configuration or environment variables
 
-## Thay đổi chính
+## Main changes
 
-<!-- Gạch đầu dòng, nhóm theo backend / frontend / DB / tài liệu. -->
+<!-- Bullets grouped by backend / frontend / DB / docs. -->
 
 -
 
-## Kiểm thử
+## Testing
 
-<!-- Ghi kết quả thật, ví dụ "Backend 142/142 (gồm test tích hợp), Frontend 59/59". Chưa chạy được phần nào thì nói lý do. -->
+<!-- Real results, e.g. "Backend 142/142 (incl. integration), Frontend 59/59". Say why if something could not run. -->
 
-- Tự động:
-- Thủ công (Postman hoặc giao diện, kèm kết quả mong đợi):
+- Automated:
+- Manual (Postman or UI, with the expected result):
   1.
 
-## Ảnh chụp màn hình
+## Screenshots
 
-<!-- Có đổi giao diện: chụp cả cỡ máy tính và điện thoại, nên có trước / sau. -->
+<!-- UI changes: desktop and phone, ideally before / after. -->
 
-| Trước | Sau |
-| ----- | --- |
-|       |     |
+| Before | After |
+| ------ | ----- |
+|        |       |
 
-## Rủi ro và cách quay lại
+## Risks and rollback
 
-<!-- Phần nào dễ hỏng, ảnh hưởng dữ liệu nào, có migration không, cần đặt biến môi trường gì khi deploy. -->
+<!-- What can break, which data is affected, migrations, environment variables needed at deploy. -->
 
-## Ghi chú cho người review
+## Notes for reviewers
 
-<!-- Giả định tự quyết vì SRS chưa rõ, chỗ còn chưa chắc, phần sửa ngoài phạm vi thẻ, file nên xem kỹ. -->
+<!-- Assumptions made because the SRS is unclear, uncertain spots, out-of-scope changes, files worth a close look,
+the /self-review line for Đình's PRs. -->
 
 ## Checklist
 
-- [ ] Đã tự đọc lại toàn bộ diff (kể cả phần AI viết); PR thuộc một thẻ, code chính khoảng dưới 400 dòng (không tính test, Postman, tài liệu) hoặc đã giải thích
-- [ ] File luồng của tính năng khớp code: `Trạng thái: khớp code`, có dòng lịch sử của thẻ này, bảng test ghi tên test thật
-- [ ] Build và test qua ở máy: `./gradlew spotlessApply test` (bật Docker) và `npm run format:check && npm run lint && npm run typecheck && npm test`; CI xanh nếu có
-- [ ] Có test cho logic nghiệp vụ mới; không `@Disabled`, không `skip`, không nới assert
-- [ ] Quy tắc nghiệp vụ (AGENTS.md mục 4): tiền là số nguyên đồng, không sửa ngày đã chốt, ghi `audit_log` cùng transaction, không xóa cứng, thời gian qua `Clock`
-- [ ] Đổi schema bằng migration mới `V{n}__...`, không sửa migration cũ
-- [ ] Không có bí mật, `.env`, dữ liệu khách thật; không log mật khẩu, token; phần đăng nhập không làm lộ email có tồn tại
-- [ ] Đúng cấu trúc và quy ước trong `backend/AGENTS.md`, `frontend/AGENTS.md`; thư viện mới đã ghi ADR-0001
-- [ ] Đã cập nhật trong cùng PR: SRS / ERD / README nếu hành vi đổi, Postman nếu đổi endpoint, trạng thái thẻ trong backlog, AGENTS nếu đổi quy ước
+- [ ] I read the whole diff (including AI-written parts); one card, main code under ~400 lines (excluding tests, Postman, docs) or explained
+- [ ] The flow file matches the code: `Trạng thái: khớp code`, a history line for this card, real test names in the test table
+- [ ] Build and tests pass locally: `./gradlew spotlessApply test` (Docker on) and `npm run format:check && npm run lint && npm run typecheck && npm test`; CI green if present
+- [ ] Business logic has tests; no `@Disabled`, no `skip`, no loosened asserts
+- [ ] Hard rules (AGENTS.md section 4): whole-đồng money, no edits to closed days, `audit_log` in the same transaction, no hard deletes, time via `Clock`
+- [ ] Schema changes use a new `V{n}__...` migration; old migrations untouched
+- [ ] No secrets, `.env` or real customer data; no passwords or tokens logged; login does not reveal whether an email exists
+- [ ] Structure and conventions follow `backend/AGENTS.md`, `frontend/AGENTS.md`; new libraries recorded in ADR-0001
+- [ ] Updated in this PR: SRS / ERD / README if behavior changed, Postman if endpoints changed, card status in the backlog, AGENTS files if conventions changed
+- [ ] Code, comments, test names and commit messages in English; UI text in Vietnamese

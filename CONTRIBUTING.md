@@ -79,7 +79,7 @@ Quy tắc:
   PR và ghi lý do trong "Ghi chú cho người review".
 - Việc không thuộc card (sửa quy trình, AGENTS, hook, tài liệu chung) đi PR riêng, **không gộp vào PR của card**.
 - Bắt đầu một card: Antigravity tự tạo nhánh ở skill đầu tiên ghi file (`/plan-task`, `/implement`, `/fix-bug`),
-  bằng đúng hai lệnh dưới, chỉ khi đang ở `develop` hoặc `main` (`.agents/rules/writer-role.md` mục "Nhánh"). Làm tay
+  bằng đúng hai lệnh dưới, chỉ khi đang ở `develop` hoặc `main` (`.agents/rules/builder.md` mục "Branch"). Làm tay
   thì cũng chạy đúng hai lệnh này:
 
   ```bash
@@ -132,23 +132,24 @@ thay đổi trải khắp repo.
 
 **Mô tả ngắn:**
 
-- Tiếng Việt có dấu, bắt đầu bằng động từ, viết thường, không chấm cuối, tối đa khoảng 72 ký tự.
-- Nói **làm gì**, không nói "sửa code", "update", "wip".
+- **Tiếng Anh** (từ 03/11/2026, AGENTS.md mục 4 "Language"), bắt đầu bằng động từ nguyên mẫu (`add`, `fix`,
+  `move`), viết thường, không chấm cuối, tối đa khoảng 72 ký tự. Commit cũ bằng tiếng Việt giữ nguyên.
+- Nói **làm gì**, không viết "update", "fix code", "wip".
 - Thay đổi phá vỡ tương thích (đổi API mà frontend đang gọi): thêm `!` sau phạm vi, ví dụ
-  `feat(catalog)!: đổi giá thành trường price_vnd`.
+  `feat(catalog)!: rename price to price_vnd`.
 
 **Ví dụ tốt:**
 
 ```
-feat(catalog): thêm API ngừng bán và bán lại dịch vụ
-fix(auth): không tiết lộ email tồn tại khi đăng nhập sai
-feat(db): thêm migration V3 cho bảng service_group
-test(visit): kiểm tra không tạo giao dịch vào ngày đã chốt
-docs(srs): cập nhật BR-04 theo câu trả lời OQ-06
-build(be): nâng Spring Boot lên 4.1.2 trong version catalog
+feat(catalog): add deactivate and reactivate endpoints for services
+fix(auth): stop revealing whether an email exists on failed login
+feat(db): add V3 migration for the service_group table
+test(visit): reject visits on a closed day
+docs(srs): update BR-04 with the OQ-06 answer
+build(be): bump Spring Boot to 4.1.2 in the version catalog
 ```
 
-**Ví dụ không dùng:** `update`, `fix bug`, `wip`, `sửa linh tinh`, `final`, `final 2`.
+**Ví dụ không dùng:** `update`, `fix bug`, `wip`, `misc changes`, `final`, `final 2`.
 
 ### Khi nào commit
 
@@ -184,7 +185,7 @@ cd frontend && npm run lint && npm run typecheck && npm test
 
 - **Base đúng nhánh:** PR card vào `develop` (mặc định). Chỉ `release/*` và `hotfix/*` mới mở PR vào `main`.
 - **Tiêu đề** theo đúng định dạng commit, thêm mã card ở cuối, vì khi squash tiêu đề PR thành commit
-  trên `develop`: `feat(catalog): quản lý dịch vụ [S1-05]`.
+  trên `develop`: `feat(catalog): manage services [S1-05]`. Tiêu đề và nội dung PR viết tiếng Anh.
 - **Nội dung** theo `.github/pull_request_template.md`: card Trello, mã FR/BR, đã làm gì, cách thử,
   giả định còn chưa chắc, ảnh chụp màn hình (nếu có giao diện, chụp cả cỡ điện thoại).
 - **Nhỏ, một việc:** một PR thuộc đúng một card (hoặc một việc quy trình không có card); code chính khoảng dưới 400
@@ -211,26 +212,27 @@ cd frontend && npm run lint && npm run typecheck && npm test
 - Đình review PR của Huy **trong vòng 1 ngày làm việc**. Không kịp thì nhắn báo.
 - Đình ưu tiên review PR đang chờ trước khi bắt đầu card mới: PR chờ lâu làm cả nhóm chậm.
 - **Tiêu chuẩn duyệt:** approve khi PR làm code tốt hơn và không vi phạm quy tắc bắt buộc, không đòi hoàn hảo.
-  Chỉ còn `gợi ý:` hoặc `nit:` thì approve kèm bình luận, không chặn.
+  Chỉ còn `suggest:` hoặc `nit:` thì approve kèm bình luận, không chặn.
 - **Thứ tự đọc:** phạm vi và thiết kế (đúng card, đúng chỗ trong cấu trúc) → đúng nghiệp vụ (FR, BR, tiền, chốt sổ)
   → test (đủ nhóm ca ở `AGENTS.md` mục 10) → tên và độ dễ đọc → style. Format để Spotless, Prettier lo, không bình
   luận tay.
-- Ghi tiền tố cho bình luận để rõ mức độ:
-  - `bắt buộc:` phải sửa mới merge.
-  - `gợi ý:` nên sửa, người viết quyết định.
-  - `hỏi:` chưa hiểu, cần giải thích (có thể kèm sửa tài liệu).
+- Bình luận review viết **tiếng Anh**, có tiền tố để rõ mức độ:
+  - `must:` phải sửa mới merge.
+  - `suggest:` nên sửa, người viết quyết định.
+  - `question:` chưa hiểu, cần giải thích (có thể kèm sửa tài liệu).
   - `nit:` chi tiết rất nhỏ, không sửa cũng được.
-  - `khen:` chỗ làm tốt, để giữ cách làm đó.
+  - `praise:` chỗ làm tốt, để giữ cách làm đó.
 - **Người viết PR:**
   - Trả lời mọi bình luận: đã sửa ở commit nào, hoặc vì sao không sửa. Không im lặng bấm Resolve.
-  - Chỉ người mở bình luận mới bấm **Resolve conversation** (với `nit:`, `khen:` thì người viết tự resolve được).
+  - Chỉ người mở bình luận mới bấm **Resolve conversation** (với `nit:`, `praise:` thì người viết tự resolve được).
   - Sửa xong thì bấm **Re-request review**; không push thêm việc ngoài phạm vi card vào PR đang review.
 - **Bất đồng:** qua lại quá 2 vòng trên cùng một bình luận thì nói chuyện trực tiếp, chốt xong ghi kết luận vào
   bình luận đó. Chạm quy tắc nghiệp vụ chưa rõ thì ghi mã OQ, không tự quyết (`AGENTS.md` quy tắc 9).
 - **Review bằng AI:** AI (skill `/review-pr`, `/self-review`) chỉ đọc lượt đầu. Đình đọc từng nhận xét, bỏ hoặc
   sửa cái sai, rồi mới đăng; người viết trả lời như với bình luận của người. AI không approve, không merge.
   `/review-pr` soát cả code, file luồng và nghiệp vụ (có thực tế không), chấm điểm sáu nhóm, kết luận merge hay sửa
-  theo số mục `bắt buộc:` còn lại, trả lời câu hỏi đang chặn người viết và kèm khối sửa để dán vào Antigravity.
+  theo số mục `must:` còn lại, trả lời câu hỏi đang chặn người viết và kèm yêu cầu sửa (fix request) để người viết
+  lưu vào `.handoff/<card>.md` rồi chạy `/implement --fix <card>` trong Antigravity.
 - Danh sách soát khi review:
   - [ ] Tiền là số nguyên, không tự tính tiền ở giao diện.
   - [ ] Không sửa dữ liệu ngày đã chốt; sửa sai bằng bút toán điều chỉnh.
@@ -364,12 +366,14 @@ từng agent: `AGENTS.md` mục 8. Cách dùng skill, hook và luồng chi tiế
 2. **Code.** Antigravity `/implement <file luồng>`: sửa file, chạy test, cập nhật file luồng cho khớp code. Git chỉ
    được đọc, trừ việc tạo nhánh; hook chặn commit, push, đổi sang nhánh đã có.
 3. **Trong lúc AI đang sửa file, không đổi nhánh.** Chờ AI báo xong rồi mới commit hoặc làm việc khác.
-4. **Soát.** Đình: Claude Code `/self-review`, dán khối "lần N" vào Antigravity cho tới khi sạch. Huy: đọc diff.
+4. **Soát.** Đình: Claude Code `/self-review`. Lỗi nhỏ Claude sửa luôn; lỗi lớn Claude ghi yêu cầu sửa vào
+   `.handoff/<card>.md` (không commit), Đình chỉ gõ `/implement --fix <card>` trong Antigravity, không dán khối dài.
+   Tối đa hai vòng mỗi phần, quá thì Claude tự sửa nốt. Huy: đọc diff.
 5. **Git.** Người làm card gõ `/pre-pr-check` (Antigravity): chạy kiểm tra, rồi đưa câu commit, lệnh push, bản nháp
    PR và cách squash merge. Đây là nơi duy nhất hướng dẫn lệnh git. Câu commit cho từng lần sửa thì có sẵn ở cuối
    báo cáo `/implement`, `/fix-bug` và khi `/self-review` thấy một phần sạch (AGENTS.md mục 8), chỉ câu, không lệnh.
-6. **Review.** PR của Huy: Đình chạy `/review-pr <số>` bằng Claude Code, xem lại rồi đăng; Huy dán khối sửa trong
-   review vào Antigravity, commit, push, Re-request review. PR của Đình: merge theo mục 4 sau khi `/self-review` sạch.
+6. **Review.** PR của Huy: Đình chạy `/review-pr <số>` bằng Claude Code, xem lại rồi đăng; Huy lưu yêu cầu sửa trong
+   review vào `.handoff/<card>.md`, chạy `/implement --fix <card>`, commit, push, Re-request review. PR của Đình: merge theo mục 4 sau khi `/self-review` sạch.
 
 **Khi giao trọn cho AI** (việc nhỏ, tài liệu, lúc bận): Claude app làm trong **thư mục riêng** (`git worktree` hoặc
 máy trên cloud), tự tạo nhánh, commit, push và gửi link mở PR; người duyệt chỉ review rồi merge. AI không bao giờ

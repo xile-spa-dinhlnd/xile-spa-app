@@ -46,3 +46,6 @@ __pycache__/
 
 # Công cụ AI: cấu hình cá nhân
 .claude/settings.local.json
+
+# Bàn giao giữa Claude Code và Antigravity (AGENTS.md mục 8), mỗi máy một bản
+.handoff/

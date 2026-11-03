@@ -1,57 +1,51 @@
 ---
 name: plan-task
-description: Thiết kế một card hoặc tính năng của Xile Spa trước khi code - tự tạo nhánh card, đọc yêu cầu và code hiện có, soát chỗ bị ảnh hưởng, rồi viết file luồng docs/design/flows/<module>/<tính-năng>.md (sơ đồ Mermaid, quy tắc, lỗi, bảng test) và dừng chờ duyệt. Chỉ chạy khi người dùng tự gõ /plan-task <tên task> hoặc nhờ thiết kế một card; không tự gọi trong /implement hay khi nhận khối "Sửa theo ..." (khối đó đã được duyệt).
+description: Design a Xile Spa card before coding (Huy's cards) - create the card branch, read the requirements and existing code, find everything affected, write the flow file docs/design/flows/<module>/<feature>.md (Mermaid diagrams, rules, errors, test table) and stop for approval. Only when the user types /plan-task <card> or asks to design a card; never inside /implement or for a fix request.
 ---
 
-# /plan-task <tên task>: thiết kế trước khi code
+# /plan-task <card> — design before code
 
-Kết quả là **file luồng** trong repo, không phải Implementation Plan: người dùng đọc trong 5 phút là biết tính năng
-chạy thế nào, đụng chỗ nào, test gì; `/implement` code theo đúng file đó. **Không sửa file code nào trong skill này.**
+The output is a **flow file** in the repo: someone reads it in 5 minutes and knows how the feature works, what it
+touches and what is tested; `/implement` builds exactly that. **Do not edit code files in this skill.** Đình's cards
+are designed by Claude (`/plan-feature`), not here.
 
-Luồng của Đình dùng Claude `/plan-feature` thay cho skill này; Đình đưa thẳng file luồng cho `/implement`.
+## Steps
 
-## Các bước
+1. **Card.** Take the card code from the argument, the branch name, or the user. Read its row in
+   `docs/backlog/sprint-*.md`.
+2. **Branch** per `.agents/rules/builder.md` ("Branch") before writing anything.
+3. **Requirements.** The card's FR section in `docs/srs/03-functional-requirements.md`, related BRs in
+   `docs/srs/04-business-rules.md`, OQs in `docs/srs/07-open-questions.md`. Money or closing → also the docs in
+   `AGENTS.md` section 2. UI card → `docs/design/ux-guidelines.md` and a full "Màn hình" section.
+4. **Existing code and flows.** The closest module to copy (`module/staff` simple catalog, `module/catalog` priced),
+   migrations if tables are needed, `git log` of similar cards, files in `docs/design/flows/<module>/`. A feature that
+   already has a flow file gets that file updated, not a new one.
+5. **Impact** (write into "Ảnh hưởng", plus a "Dữ liệu mẫu dev" line per `backend/AGENTS.md` "Dev seed data"):
+   - Endpoint behavior changes: grep the URL in `frontend/src`, `backend/src/test`, `docs/postman`.
+   - New state constraint: list every method that moves records into or out of that state.
+   - Referenced records: consider both directions of a state change.
+6. **Write the flow file** with the template in `docs/design/flows/README.md` (Vietnamese). Status
+   `thiết kế (chờ duyệt)`; first history line `<dd/MM/yyyy> | <git user.name> (Antigravity) | <card> | Thiết kế`.
+   - Unclear requirements go to "Câu hỏi mở", each with a `Đề xuất:` line. A needed library not in the "Libraries" tables
+     goes there too, with the four points of `AGENTS.md` section 3.
+   - "Bảo mật" per part A of `docs/security/security-checklist.md`; part C probes go into the test table.
+   - Every rule in "Quy tắc nghiệp vụ" has at least one test in "Hành vi và test"; behaviors that transform data before
+     saving have a re-read-from-DB case.
+   - Large card → "Các phần" per "Chia phần" in `docs/design/flows/README.md`: one user-visible function per part,
+     foundation and heaviest first.
+   - Main code estimated over ~400 lines → add a "Câu hỏi mở" proposing a split at the next planning, or one PR with
+     parts and a reason. Do not split on your own.
+7. **Backlog**: card to `Đang làm`.
+8. **Stop.** Give the path, a short summary, the open questions, and ask: "Bạn duyệt thiết kế này chứ? Có gì cần đổi?"
+   When approved: record the answers (business decisions become new OQs), delete "Câu hỏi mở", set
+   `thiết kế (đã duyệt)`. Next step: `/implement <flow file>` (with ` part 1` if it has parts).
 
-1. **Xác định card.** Lấy mã card hoặc tên task từ tham số (`/plan-task S2-06`, `/plan-task "quản lý nhóm dịch
-   vụ"`); không có thì lấy từ tên nhánh hoặc câu của người dùng. Đọc dòng của card trong `docs/backlog/sprint-*.md`.
-2. **Tạo nhánh** theo mục "Nhánh" của `.agents/rules/writer-role.md`, trước khi ghi file nào.
-3. **Đọc yêu cầu.** Đúng mục FR trong `docs/srs/03-functional-requirements.md`, BR liên quan trong
-   `docs/srs/04-business-rules.md`, OQ trong `docs/srs/07-open-questions.md`. Đụng tiền hay chốt sổ thì đọc thêm
-   theo bảng ở `AGENTS.md` mục 2. Card có giao diện thì đọc `docs/design/ux-guidelines.md` và viết đủ mục "Màn hình".
-4. **Đọc code và file luồng hiện có.** Module gần giống nhất để làm theo (`module/staff` cho danh mục đơn giản,
-   `module/catalog` cho danh mục có giá); migration nếu cần bảng; `git log` để xem card trước làm thế nào; các file
-   trong `docs/design/flows/<module>/`. Tính năng đã có file luồng thì sửa file đó, không tạo file mới.
-5. **Soát chỗ bị ảnh hưởng** (`AGENTS.md` mục 7), ghi vào mục "Ảnh hưởng" của file luồng; ghi luôn dòng "Dữ liệu
-   mẫu dev" (`backend/AGENTS.md` mục "Dữ liệu mẫu cho máy dev"):
-   - Endpoint đổi hành vi: grep URL trong `frontend/src`, `backend/src/test`, `docs/postman`.
-   - Thêm ràng buộc trạng thái (ngừng dùng, đã chốt...): liệt kê mọi method đưa bản ghi vào, ra khỏi trạng thái đó.
-   - Bản ghi bị bản ghi khác tham chiếu: xét cả hai chiều đổi trạng thái.
-6. **Viết file luồng** `docs/design/flows/<module>/<tính-năng>.md` theo khung ở `docs/design/flows/README.md`. Trạng
-   thái `thiết kế (chờ duyệt)`; dòng lịch sử đầu `<dd/MM/yyyy> | <tên người dùng> (Antigravity) | <card> | Thiết kế`
-   (tên lấy từ `git config --get user.name`). Chỗ SRS chưa rõ đưa vào "Câu hỏi mở", mỗi câu có **Đề xuất:**.
-   Cần thư viện chưa có trong bảng "Thư viện" của `backend/AGENTS.md`, `frontend/AGENTS.md` thì cũng đưa vào "Câu hỏi
-   mở", nêu đủ bốn điểm ở AGENTS.md mục 3 (mục đích, ưu nhược, uy tín, hiệu năng).
-   Viết mục "Bảo mật" theo `docs/security/security-checklist.md` phần A, ghi ca thử phần C vào bảng test.
-   Card lớn thì viết mục "Các phần" theo mục "Chia phần" của `docs/design/flows/README.md`: mỗi phần một chức năng
-   người dùng thấy, phần nền và nặng trước (thường là "Tạo"), nhẹ sau.
-7. **Chuyển card sang "Đang làm"** trong file backlog.
-8. **Dừng lại**, báo đường dẫn file, tóm tắt vài dòng, các câu hỏi mở, rồi hỏi: "Bạn duyệt thiết kế này chứ? Có gì
-   cần đổi?" Khi được duyệt: ghi câu trả lời vào file (câu thành quyết định nghiệp vụ thì thêm OQ), xóa "Câu hỏi mở",
-   đổi trạng thái thành `thiết kế (đã duyệt)`. Bước tiếp theo là `/implement <đường dẫn file luồng>` (file chia phần:
-   `/implement <đường dẫn file luồng> phần 1`).
+## Diagrams
 
-## Một card, một PR
-
-Card và PR là một (CONTRIBUTING.md mục 2). Ước lượng code chính (không tính test, Postman, tài liệu) quá khoảng 400
-dòng thì ghi vào "Câu hỏi mở": đề xuất tách card ở lần lập sprint sau, hoặc giữ một PR và ghi lý do. Không tự tách.
-Giữ một PR thì chia phần để code và soát từng phần (`docs/design/flows/README.md` mục "Chia phần").
-
-## Quy tắc vẽ sơ đồ
-
-- `sequenceDiagram` với các bên: `Người dùng`, `Giao diện`, `Controller`, `Service`, `DB`. Ghi rõ chỗ mở
-  transaction, chỗ ghi `audit_log`, chỗ kiểm tra ngày đã chốt.
-- `flowchart TD` cho rẽ nhánh: mỗi nhánh lỗi kết thúc bằng mã lỗi trả về (ví dụ `409 DAY_CLOSED`).
-- Nhãn tiếng Việt, ngắn. Ví dụ:
+- `sequenceDiagram` with participants `Người dùng`, `Giao diện`, `Controller`, `Service`, `DB`; mark where the
+  transaction opens, where `audit_log` is written, where the closed day is checked.
+- `flowchart TD` for branching; every error branch ends with the returned code (for example `409 DAY_CLOSED`).
+- Short Vietnamese labels (the flow file is a doc).
 
 ```mermaid
 sequenceDiagram

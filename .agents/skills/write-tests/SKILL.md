@@ -1,87 +1,76 @@
 ---
 name: write-tests
-description: Viết test cho code backend (JUnit, Mockito, Testcontainers) hoặc frontend (Vitest, Testing Library) của Xile Spa theo bảng điều kiện đạt - lập bảng ca test (chuẩn, dữ liệu sai, biên, lỗi nghiệp vụ, quyền, không tác dụng phụ), viết test, chứng minh test đỏ được, chạy và báo kết quả. Dùng khi cần thêm hoặc bổ sung test, khi người dùng gõ /write-tests, hoặc trong bước test của /implement.
+description: Write Xile Spa tests for backend (JUnit, Mockito, Testcontainers) or frontend (Vitest, Testing Library) - list the cases across the six groups of the test bar, write them, prove each can fail by breaking the guarded line, run them and report real numbers. Use when tests are needed, when the user types /write-tests, or in the test step of /implement.
 ---
 
-# /write-tests: test đủ ca, đỏ được, chạy thật
+# /write-tests — complete cases, able to fail, really run
 
-Chuẩn phải đạt: `AGENTS.md` mục 10. Cách viết theo tầng: `backend/AGENTS.md` mục Test, `frontend/AGENTS.md` mục
-Test và lệnh. Mẫu trong repo: `StaffServiceTest`, `StaffControllerIT`, `money.test.ts`, `StaffListPage.test.tsx`.
+Bar to meet: `AGENTS.md` section 10. Layer specifics: `backend/AGENTS.md` ("Test"), `frontend/AGENTS.md` ("Tests and
+commands"). Models in the repo: `StaffServiceTest`, `StaffControllerIT`, `money.test.ts`, `StaffListPage.test.tsx`.
 
-## 1. Xác định đối tượng test
+## 1. What to test
 
-Đọc code cần test (service, controller, schema, component), yêu cầu FR/BR của nó và bảng "Hành vi và test" trong
-file luồng của tính năng (`docs/design/flows/<module>/`). Liệt kê **mọi nhánh**: mỗi
-`if`, mỗi `throw new BusinessException(ErrorCode.X)`, mỗi annotation validation, mỗi trạng thái hiển thị.
+Read the code under test and the flow file's "Hành vi và test" table. List **every branch**: each `if`, each
+`throw new BusinessException(ErrorCode.X)`, each validation annotation, each screen state.
 
-Gọi từ `/implement`: danh sách test là bảng "Hành vi và test" của file luồng (hoặc khối sửa), đúng tên test ở đó; chỉ
-test hành vi của phần đang làm. Ca biên tìm thêm được viết nếu thuộc phần đang làm, ghi vào dòng "Khác thiết kế" của
-báo cáo `/implement`; không đổi tên, không bỏ test có trong bảng.
+Called from `/implement`: the test list is the table (or the fix request), with the exact test names written there,
+only for the current part. Extra edge cases you find are allowed if they belong to the current part; report them under
+"Differs from design". Never rename or drop a test listed in the table.
 
-## 2. Lập bảng ca test trước khi viết
+## 2. Case table first
 
-Trình bày bảng cho người dùng xem (không cần chờ duyệt nếu đang trong `/implement` đã duyệt):
+| #   | Group          | Layer   | Input / situation          | Expected                                  |
+| --- | -------------- | ------- | -------------------------- | ----------------------------------------- |
+| 1   | Happy path     | Service | name `"  Lan   A "`        | saves "Lan A", audit CREATE               |
+| 2   | Invalid input  | IT      | empty name                 | 400, `fieldErrors[0].field = fullName`    |
+| 3   | Edge case      | IT      | duplicate differing in case | 409 `STAFF_NAME_DUPLICATE`               |
+| 4   | Business error | Service | ...                        | `ErrorCode...`, no `save`, no audit       |
+| 5   | Auth           | IT      | not logged in              | 401                                       |
 
-| #   | Nhóm          | Tầng    | Đầu vào / tình huống      | Kết quả mong đợi                          |
-| --- | ------------- | ------- | ------------------------- | ----------------------------------------- |
-| 1   | Chuẩn         | Service | tên `"  Lan   A "`        | lưu "Lan A", ghi audit CREATE             |
-| 2   | Dữ liệu sai   | IT      | tên rỗng                  | 400, `fieldErrors[0].field = fullName`    |
-| 3   | Biên          | IT      | trùng tên khác hoa thường | 409 `STAFF_NAME_DUPLICATE`                |
-| 4   | Lỗi nghiệp vụ | Service | ...                       | `ErrorCode...`, không `save`, không audit |
-| 5   | Quyền         | IT      | chưa đăng nhập            | 401                                       |
+Cover all six groups; a group that does not apply says "not applicable: <reason>". Think in Xile Spa terms: money 0 and
+huge, closed day, future day, first/last day of month, whitespace-only text, empty list, last page. Pick the cheapest
+layer that proves it: pure logic in unit tests; DB, triggers, transactions, security, JSON in integration tests.
 
-Đủ sáu nhóm của `AGENTS.md` mục 10 (chuẩn, dữ liệu sai, biên, lỗi nghiệp vụ, quyền, không tác dụng phụ). Nhóm
-nào không áp dụng thì ghi "không áp dụng" và lý do. Ca biên phải nghĩ theo nghiệp vụ của Xile Spa: tiền 0 và rất
-lớn, ngày đã chốt, ngày tương lai, ngày đầu/cuối tháng, chuỗi toàn khoảng trắng, danh sách rỗng, trang cuối.
+## 3. Write
 
-Chọn tầng rẻ nhất mà vẫn chứng minh được: logic thuần ở test đơn vị; thứ phụ thuộc DB, trigger, transaction,
-bảo mật, JSON ở test tích hợp.
+- One test, one behavior; the name says it (backend `camelCase`, frontend `it('...')` in English).
+- Arrange / act / assert separated by blank lines. Assert concrete values; check errors by code.
+- Time via `Clock.fixed(...)`; IT data with a random prefix; never `deleteAll()` shared tables.
+- Frontend: query by role and visible text; fake the API with `vi.fn()` on `fetch`. Data screens test at least the load
+  error (with "Thử lại") and the empty state.
 
-## 3. Viết test
+Mistakes reviewers keep returning (all happened):
 
-- Một test một hành vi; tên nói hành vi (backend `camelCase` tiếng Anh, frontend `it('...')` tiếng Việt).
-- Ba đoạn chuẩn bị / thực hiện / kiểm tra, cách nhau một dòng trống.
-- Assert giá trị cụ thể; lỗi kiểm tra bằng mã (`ErrorCode`, `code` trong JSON).
-- Thời gian qua `Clock.fixed(...)`; dữ liệu IT có tiền tố ngẫu nhiên; không `deleteAll()` bảng dùng chung.
-- Frontend: tìm phần tử theo vai trò và chữ hiển thị; giả API bằng `vi.fn()` cho `fetch`. Màn hình có dữ liệu có ít
-  nhất ca lỗi tải (có "Thử lại") và ca trống (`docs/design/ux-guidelines.md` mục 2).
+- **Text that appears in several places**: the asserted text also shows in a drawer, select or form, so the test passes
+  even when the target did not change. Narrow with `within(...)`.
+- **Test name ≠ what it checks** ("calls deactivate" but only clicks Cancel). Rename, then add the missing test.
+- **Mocks unlike the backend**: data the business forbids, `fieldErrors` the backend never sends, unused mock branches.
+- **Asserting a mock instead of the screen**: spying on `App.useApp` or `message.error` instead of finding the text.
+- **`any`, `as`, `!`, CSS-class selectors** (`.ant-popover`): Ant Design popovers have `role="tooltip"`.
 
-### Lỗi hay gặp (đã xảy ra thật, review sẽ trả lại)
+## 4. Prove each test can fail
 
-- **Assert chữ xuất hiện ở nhiều chỗ**: chữ cần kiểm tra cũng hiện ở chỗ khác (drawer, ô chọn, form) nên test xanh cả
-  khi phần cần kiểm tra không đổi. Giới hạn vùng tìm (`within(...)`, hoặc lọc phần tử nằm ngoài drawer).
-- **Tên test không khớp điều nó kiểm tra**: test tên "gọi deactivate" nhưng chỉ bấm Hủy. Đổi tên, rồi viết thêm test
-  cho đúng hành vi còn thiếu.
-- **Mock không giống backend**: dữ liệu mà nghiệp vụ không cho phép (dịch vụ đang bán trong nhóm đã ngừng dùng), lỗi
-  có `fieldErrors` trong khi backend trả rỗng, nhánh mock không test nào dùng. Mock lấy theo đúng hành vi backend.
-- **Kiểm tra hàm mock thay cho màn hình**: spy `App.useApp`, `message.error` thay vì tìm chữ người dùng thấy.
-- **`any`, `as`, `!`, chọn theo class CSS** (`.ant-popover`): popover của Ant Design có `role="tooltip"`.
+For each new behavior (at least the happy path, each business error, each data refresh after a write): temporarily break
+exactly the line the test guards (flip a condition, drop a check, remove `invalidateQueries`), run that test alone, see
+it red, **restore the code**, run it green. A test that cannot go red gets a better assert.
 
-## 4. Chứng minh test đỏ được
+| Code broken (file:line, change) | Test that went red | Error (one line) |
+| ------------------------------- | ------------------ | ---------------- |
 
-Với mỗi hành vi mới (ít nhất ca chuẩn, ca lỗi nghiệp vụ và mỗi chỗ làm mới dữ liệu sau khi sửa): tạm sửa sai đúng
-**dòng code** mà test bảo vệ (đảo điều kiện, bỏ một dòng kiểm tra, bỏ `invalidateQueries`), chạy riêng test đó, thấy
-đỏ, rồi **trả code về như cũ** và chạy lại thấy xanh. Test không đỏ được thì viết lại assert.
+"Tried breaking it" without this table counts as not tried.
 
-Báo cáo mỗi lần thử bằng một dòng đủ để người khác làm lại được:
-
-| Code đã sửa sai (file:dòng, sửa gì) | Test đỏ | Lỗi in ra (một dòng) |
-| ----------------------------------- | ------- | -------------------- |
-
-"Đã thử làm đỏ" mà không có bảng này thì coi như chưa thử.
-
-## 5. Chạy và báo
+## 5. Run and report
 
 ```bash
-cd backend && ./gradlew test --tests '<lớp test>'      # rồi ./gradlew spotlessApply test
-cd frontend && npx vitest run <file test>              # rồi npm test
+cd backend && ./gradlew test --tests '<test class>'      # then ./gradlew spotlessApply test
+cd frontend && npx vitest run <test file>                # then npm test
 ```
 
-Báo cáo: bảng ca test (đánh dấu đã viết), số test qua/đỏ thật, các ca đã thử làm đỏ, ca nào chưa viết và vì sao.
-Không ghi "đã qua" khi chưa chạy được (ví dụ Docker chưa bật); nói rõ lý do.
+Report: the case table (marked written), real pass/fail counts, the mutation table, cases not written and why. Never
+write "passed" when it did not run (for example Docker is off); say why.
 
-## Không bao giờ
+## Never
 
-- `@Disabled`, `it.skip`, xóa test đang đỏ, nới assert để test xanh (AGENTS.md quy tắc 5).
-- Test chỉ kiểm tra mock được gọi mà không kiểm tra kết quả.
-- Gọi backend thật hoặc dịch vụ ngoài từ test frontend.
+- `@Disabled`, `it.skip`, deleting a red test, loosening an assert (`AGENTS.md` rule 5).
+- A test that only checks a mock was called without checking the result.
+- Calling the real backend or external services from frontend tests.

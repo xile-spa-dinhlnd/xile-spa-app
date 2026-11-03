@@ -3,7 +3,7 @@ trigger: glob
 globs: backend/**
 ---
 
-# Code backend
+# Backend code
 
-Đang đọc hoặc sửa file trong `backend/`: đọc và tuân theo `backend/AGENTS.md` (cấu trúc module, quy tắc từng tầng,
-test, lệnh) cùng với `AGENTS.md` ở gốc. Nội dung quy tắc chỉ nằm ở đó; file này chỉ để bật đúng lúc.
+Reading or editing files in `backend/`: read and follow `backend/AGENTS.md` (module layout, layer rules, tests,
+commands) together with the root `AGENTS.md`. The rules live only there; this file just switches them on.

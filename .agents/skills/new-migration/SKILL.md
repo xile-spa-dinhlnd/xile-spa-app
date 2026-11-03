@@ -1,37 +1,37 @@
 ---
 name: new-migration
-description: Thêm một migration Flyway mới (V{n}__mo_ta.sql) cho Xile Spa đúng số thứ tự và quy ước, cập nhật ERD và bộ test schema. Dùng khi cần thêm hoặc đổi bảng, cột, index, trigger, view, hoặc khi người dùng gõ /new-migration.
+description: Add a new Flyway migration (V{n}__description.sql) to Xile Spa with the right number and conventions, then update the entity, ERD and schema test. Use when a table, column, index, trigger or view must be added or changed, or when the user types /new-migration.
 ---
 
-# /new-migration: đổi schema bằng migration mới
+# /new-migration — change the schema with a new migration
 
-Đọc trước: `docs/design/erd.md` (mục 2 quy ước, mục 5 quyết định thiết kế), migration hiện có trong
+Read first: `docs/design/erd.md` (section 2 conventions, section 5 design decisions) and the existing migrations in
 `backend/src/main/resources/db/migration/`.
 
-## Các bước
+## Steps
 
-1. **Tìm số kế tiếp.** Lấy số lớn nhất trong thư mục migration **và** trên develop:
-   `git ls-tree --name-only origin/develop backend/src/main/resources/db/migration/`. Số mới = lớn nhất + 1.
-   Nhắc người dùng báo số này cho người kia (CONTRIBUTING.md mục 4, "Xung đột"), vì hai nhánh có thể cùng lấy một số.
-2. **Đặt tên** `V{n}__<mo_ta_snake_case_tieng_anh>.sql`, ví dụ `V3__service_group_sort_order.sql`.
-3. **Viết SQL** theo quy ước của V1:
-   - Tiền `bigint` có `CHECK (... >= 0)` khi phù hợp; thời điểm `timestamptz`; ngày làm việc `date`.
-   - Không `DROP` dữ liệu nghiệp vụ; ngừng dùng thì thêm cột trạng thái (BR-09, BR-19).
-   - Bảng có `business_date` thuộc phần tài chính: gắn trigger chặn ngày đã chốt như các bảng trong V1 (`XL001`).
-   - Bảng chỉ thêm (lịch sử, nhật ký): trigger chặn `UPDATE`/`DELETE` (`XL002`).
-   - Index cho khóa ngoại và cột lọc thường dùng; ràng buộc duy nhất đặt tên `ux_<bảng>_<cột>`.
-   - Ghi chú tiếng Việt ở đầu file: migration này để làm gì, card nào.
-4. **Cập nhật entity** tương ứng (`ddl-auto: validate` sẽ báo lỗi nếu entity lệch schema).
-5. **Cập nhật tài liệu và test schema:**
-   - `docs/design/erd.md`: bảng, cột, quyết định mới.
-   - `backend/src/test/resources/sql/schema_smoke_test.sql`: thêm kiểm tra cho ràng buộc hoặc trigger mới.
-   - Sơ đồ trong `docs/design/diagrams/` là file sinh tự động: chỉ nhắc người dùng chạy lại
-     `docs/design/tools/gen_erd_mermaid.py` (ERD mục 11), không sửa tay.
-6. **Chạy test** (cần Docker): `cd backend && ./gradlew test --tests 'com.xilespa.db.SchemaSmokeIT'`, rồi toàn bộ
+1. **Next number.** Take the highest number in the folder **and** on develop:
+   `git ls-tree --name-only origin/develop backend/src/main/resources/db/migration/`. New number = highest + 1. Remind
+   the user to tell the other person this number (`CONTRIBUTING.md` section 4), since two branches can take the same one.
+2. **Name** `V{n}__<english_snake_case_description>.sql`, for example `V3__service_group_sort_order.sql`.
+3. **SQL** following V1's conventions:
+   - Money `bigint` with `CHECK (... >= 0)` where it fits; timestamps `timestamptz`; business dates `date`.
+   - Never `DROP` business data; deactivation is a status column (BR-09, BR-19).
+   - Financial tables with `business_date`: the closed-day trigger like V1's tables (`XL001`).
+   - Append-only tables (history, logs): trigger blocking `UPDATE`/`DELETE` (`XL002`).
+   - Indexes on foreign keys and frequent filter columns; unique constraints named `ux_<table>_<column>`.
+   - A header comment in English: what this migration is for, which card.
+4. **Entity** updated to match (`ddl-auto: validate` fails on drift).
+5. **Docs and schema test:**
+   - `docs/design/erd.md`: tables, columns, new decisions (Vietnamese).
+   - `backend/src/test/resources/sql/schema_smoke_test.sql`: checks for new constraints or triggers.
+   - `docs/design/diagrams/` is generated: remind the user to rerun `docs/design/tools/gen_erd_mermaid.py` (ERD
+     section 11); never edit it by hand.
+6. **Run** (Docker on): `cd backend && ./gradlew test --tests 'com.xilespa.db.SchemaSmokeIT'`, then
    `./gradlew spotlessApply test`.
 
-## Không bao giờ
+## Never
 
-- Sửa, đổi tên, xóa migration đã có trên develop (hook sẽ chặn).
-- Đặt `spring.jpa.hibernate.ddl-auto` thành `update` hay `create`.
-- Merge migration mà chưa có code dùng nó (CONTRIBUTING.md mục 3).
+- Edit, rename or delete a migration already on develop (a hook blocks it).
+- Set `spring.jpa.hibernate.ddl-auto` to `update` or `create`.
+- Merge a migration without the code that uses it (`CONTRIBUTING.md` section 3).

@@ -1,116 +1,84 @@
 ---
 name: implement
-description: Code theo một thiết kế đã duyệt của Xile Spa - đầu vào là đường dẫn file luồng docs/design/flows/<module>/<tính-năng>.md hoặc một khối sửa từ review; tự tạo nhánh card, viết backend, frontend, mỗi tầng có test viết bằng /write-tests, Postman, cập nhật file luồng cho khớp code và backlog, rồi dừng. Dùng khi người dùng gõ /implement <file luồng>, dán khối "Sửa theo ..." từ review, hoặc duyệt xong /plan-task, /fix-bug.
+description: Build an approved Xile Spa design. Input is a flow file docs/design/flows/<module>/<feature>.md (optionally "part N") or "--fix <card>" to apply the latest fix request in .handoff/<card>.md. Creates the card branch if needed, writes backend and frontend code with tests per layer, Postman, syncs the flow file, appends a build report to .handoff/<card>.md, then stops. Use when the user types /implement.
 ---
 
-# /implement <file luồng>: code theo thiết kế đã duyệt
+# /implement — build an approved design
 
-Đầu vào là một trong hai:
+## Input (exactly one)
 
-- **File luồng** `docs/design/flows/<module>/<tính-năng>.md` có `Trạng thái: thiết kế (đã duyệt)` (Đình: do Claude
-  viết; Huy: do `/plan-task` viết). File còn "Câu hỏi mở" hoặc còn "chờ duyệt" thì dừng và hỏi.
-- **Khối sửa** bắt đầu bằng `# Sửa theo ...` (từ `/self-review` hoặc `/review-pr`): làm đúng từng bước của khối, không
-  làm thêm ngoài khối.
+- **Flow file** with `Trạng thái: thiết kế (đã duyệt)`. Still has "Câu hỏi mở" or "chờ duyệt" → stop and ask.
+  If it has a "Các phần" section the user must give `part <N>`; missing → ask. Part N needs part N-1 marked `đã soát`
+  (Huy: `đã code`).
+- **`--fix <card>`**: read the last "Fix request" section in `.handoff/<card>.md`. Do exactly its numbered items,
+  nothing more; respect its "Keep as is" list.
 
-**File có mục "Các phần"** (`docs/design/flows/README.md` mục "Chia phần"): người dùng gõ `/implement <file luồng>
-phần <N>`. Thiếu số phần thì hỏi, không tự làm cả card. Chỉ làm phần N:
+Read only: the flow file (or fix request), the files it names, and the closest existing module to copy from
+(`module/staff` for simple catalogs, `module/catalog` for priced ones). Do not read other docs unless the flow file
+points to them.
 
-- Phần trước chưa `đã soát` (Huy: chưa `đã code`) thì dừng và hỏi.
-- Theo "Thứ tự làm" bên dưới nhưng chỉ với lớp, method, test, Postman ghi ở phần N; không viết trước code của phần sau.
-  Bước 1 (backlog "Đang làm") chỉ ở phần 1.
-- Xong phần: bảng "Hành vi và test" ghi tên test thật cho các dòng của phần N, trạng thái phần N trong bảng "Các
-  phần" thành `đã code`, rồi dừng và báo cáo. Bước 5 đến 9 (ảnh hưởng còn lại, file luồng `khớp code`, backlog "Xong")
-  chỉ làm ở phần cuối.
+## Rules
 
-Code đúng như thiết kế. Thấy thiết kế sai, thiếu hoặc không làm được (thêm bảng, đổi API, đụng module của người
-kia) thì **dừng và hỏi**; được đồng ý thì sửa file luồng trước rồi mới code khác đi. Cần thư viện chưa có trong
-`package.json` hoặc `libs.versions.toml` cũng **dừng và hỏi** theo bốn điểm của AGENTS.md mục 3, không tự `npm install`
-hay thêm vào `libs.versions.toml`. Viết code theo phiên bản và lưu ý ở bảng "Thư viện" của `backend/AGENTS.md`,
-`frontend/AGENTS.md`.
+- Build exactly what the design says. Design wrong, incomplete or impossible (new table, API change, touching the other
+  person's module) → stop and ask; once approved, update the flow file first, then code.
+- Need a library not in `package.json` / `libs.versions.toml` → stop and ask (`AGENTS.md` section 3).
+- An unexpected red test (existing test, another part's test) → stop and report: which test, the error, your suspicion.
+  Never edit test infrastructure (`src/test/resources`, `support/`) or other parts' tests to make things green.
+- Design states a result but not how → pick the simplest way that fits existing code; note it under "Differs from
+  design".
 
-**Không rẽ sang việc khác.** Trong `/implement` chỉ gọi `/write-tests` và `/new-migration`; không tự gọi `/fix-bug`,
-`/plan-task`, `/pre-pr-check`. Test đỏ ngoài dự kiến (test có sẵn, test của phần khác) thì **dừng và báo**: test nào,
-lỗi in ra, nghi nguyên nhân; không sửa cấu hình, hạ tầng test (`src/test/resources`, `support/`) hay test của phần
-khác chỉ để cho xanh (S3-08: chép cấu hình Jackson sang file test để test xanh). Thiết kế chỉ nói kết quả mà chưa nói
-cách làm thì chọn cách đơn giản nhất với code đang có, ghi vào dòng "Khác thiết kế" của báo cáo.
+## Steps
 
-## Bước 0. Nhánh
-
-Tạo hoặc kiểm tra nhánh theo mục "Nhánh" của `.agents/rules/writer-role.md`, trước khi ghi file nào.
-
-## Thứ tự làm
-
-Làm từng bước. **Bước nào có code nghiệp vụ thì có bước test ngay sau, gọi `/write-tests`** theo bảng "Hành vi và
-test" của file luồng: viết test, thử làm đỏ, chạy xanh. Test của bước chưa xanh thì không sang bước sau.
-
-1. **Backlog:** card sang "Đang làm" trong `docs/backlog/sprint-*.md` (nếu chưa).
-2. **DB** (nếu có): dùng skill `/new-migration`.
-3. **Backend**, theo khuôn module ở `backend/AGENTS.md`:
-   1. `entity/` (+ `enums/`): Lombok giới hạn, method nghiệp vụ thay cho setter, thời điểm truyền từ `Clock`.
-      Có method nghiệp vụ thì **test entity** bằng `/write-tests`.
+0. **Branch** per `.agents/rules/builder.md` ("Branch") before writing any file.
+1. **Backlog** (part 1 or whole card only): card to `Đang làm` in `docs/backlog/sprint-*.md`.
+2. **DB** if needed: `/new-migration`.
+3. **Backend** (`backend/AGENTS.md` module template), test right after each layer with `/write-tests`:
+   1. `entity/` (+ `enums/`): business methods instead of setters, timestamps passed in from `Clock`. Entity test if it
+      has business methods.
    2. `repository/`.
-   3. `service/`: `@Transactional`, kiểm tra nghiệp vụ, `AuditService.record(...)` trong cùng transaction,
-      lỗi bằng `BusinessException` + mã trong `ErrorCode`. **Test service** (Mockito) bằng `/write-tests`.
-   4. `dto/request`, `dto/response` (record, thông báo validation tiếng Việt), `mapper/` (MapStruct, chỉ chép dữ liệu).
-   5. `controller/`: URL theo quy ước, không có logic. **Test `...ControllerIT`** (`@IntegrationTest`) bằng
-      `/write-tests`. Xem `endpoint-checklist.md` trong thư mục skill này cho từng endpoint.
-4. **Frontend**, theo `frontend/AGENTS.md`: `types.ts` → `api.ts` (query key, hook) → `schemas.ts` (Zod khớp
-   backend) → component, page → `routes.tsx` → `index.ts`. **Test schema Zod và component, page** (Vitest, Testing
-   Library) bằng `/write-tests`. Màn hình theo mục "Màn hình" của file luồng và `docs/design/ux-guidelines.md` (bố
-   cục, bốn trạng thái, câu chữ đúng từng chữ). Kiểm tra cỡ điện thoại, iPad, máy tính. Style bằng CSS Modules cạnh component,
-   không `style={{}}` (`frontend/AGENTS.md` mục CSS).
-5. **Ảnh hưởng:** làm hết các dòng ở mục "Ảnh hưởng" của file luồng (nơi gọi ở frontend, test cũ, Postman, method
-   khác chạm cùng trạng thái). Trước khi coi là xong, grep lại URL và tên method đã đổi để chắc không còn chỗ sót
-   (`AGENTS.md` mục 7).
-6. **Postman:** thêm hoặc sửa request trong `docs/postman/xile-spa.postman_collection.json` (body mẫu, kiểm tra mã
-   trạng thái). Trường hợp lỗi chính cũng có request riêng.
-7. **Tài liệu:** SRS, ERD, README nếu hành vi đổi; `AGENTS.md` nếu đổi quy ước (AGENTS.md quy tắc 11). **Bảo mật:**
-   code theo mục "Bảo mật" của file luồng và phần B của `docs/security/security-checklist.md`; làm phần D (cập nhật
-   `docs/security/` nếu thêm endpoint công khai, bí mật, mối đe dọa).
-8. **File luồng khớp code** (chốt chặn): sửa sơ đồ, quy tắc, lỗi theo **code vừa viết**; bảng "Hành vi và test"
-   ghi tên test thật đang có trong code (không ghi dự định); nhóm không áp dụng ghi "không áp dụng: <lý do>". Đổi
-   trạng thái thành `khớp code`, thêm dòng lịch sử `<dd/MM/yyyy> | <tên người dùng> (Antigravity) | <card> | Khớp
-   code`. Còn ô trống thì quay lại `/write-tests`, chưa được sang bước 9.
-9. **Backlog:** card sang "Xong" khi đủ Definition of Done.
-10. **Dừng.** Báo cáo theo mục dưới. Không tự chạy `/pre-pr-check`, không đưa lệnh git (chỉ câu commit gợi ý).
+   3. `service/`: `@Transactional`, business checks, `AuditService.record(...)` in the same transaction,
+      `BusinessException` + `ErrorCode`. Service test (Mockito).
+   4. `dto/request`, `dto/response` (records, Vietnamese validation messages), `mapper/` (MapStruct, copy only).
+   5. `controller/`: URL convention, no logic. `...ControllerIT` (`@IntegrationTest`). Walk `endpoint-checklist.md`
+      (next to this file) for every endpoint.
+4. **Frontend** (`frontend/AGENTS.md`): `types.ts` → `api.ts` → `schemas.ts` → components, pages → `routes.tsx` →
+   `index.ts`. Use the `antd` skill before writing Ant Design code. Screens follow the flow file's "Màn hình" section and
+   `docs/design/ux-guidelines.md` exactly (layout, four states, exact copy). CSS Modules only, no `style={{}}`. Test
+   schemas and components with `/write-tests`. Check phone, iPad and desktop widths.
+5. **Impact**: do every line of the flow file's "Ảnh hưởng" section; grep changed URLs and method names in
+   `frontend/src`, `backend/src/test`, `docs/postman` until nothing is left (`AGENTS.md` section 7).
+6. **Postman**: add or update requests in `docs/postman/xile-spa.postman_collection.json` with body and status check;
+   main error cases get their own request.
+7. **Docs and security**: SRS, ERD, README if behavior changed; AGENTS files if a convention changed (rule 11). Follow
+   the flow file's "Bảo mật" section and parts B and D of `docs/security/security-checklist.md`.
+8. **Flow file matches code** (gate): update diagrams, rules, errors to the code you wrote; the "Hành vi và test" table
+   lists real test names that exist now; groups not applicable say `không áp dụng: <reason>`. Set
+   `Trạng thái: khớp code` and add history line `<dd/MM/yyyy> | <user name> (Antigravity) | <card> | Khớp code`. Empty
+   cells → back to `/write-tests`.
+9. **Backlog**: card to `Xong` when the Definition of Done (`AGENTS.md` section 5) is met.
+10. **Stop** and report.
 
-Chạy theo khối sửa thì chỉ làm các bước của khối, rồi bước 8 nếu khối có đổi hành vi so với file luồng.
+Part N: do steps 0–4 only for the classes, tests and Postman listed for part N; write the real test names for part N in
+"Hành vi và test" and set part N to `đã code`. Steps 5–9 only in the last part. Never write code of a later part.
 
-## Soát phạm vi trước khi báo
+Fix mode: only the fix request's items, then step 8 if behavior changed vs. the flow file.
 
-Đã gặp thật ở S2-08: sửa ngoài khối (bỏ màu, chú thích mà thiết kế yêu cầu) và làm hỏng lại chỗ lần trước đã sửa (đầu
-trang quay về CSS tự viết). Trước khi báo cáo, chạy `git status --short` và `git diff --stat` (chỉ đọc) rồi so với
-**danh sách được phép**:
+## Before reporting
 
-- Khối sửa: các file khối nêu tên, file luồng, file test của chúng.
-- Phần N: các lớp, component, test ở bảng của phần N trong file luồng, cộng file luồng và backlog.
-- Cả card: mục "Cấu trúc code" và "Ảnh hưởng" của file luồng.
+- Scope check per `.agents/rules/builder.md` ("Scope discipline").
+- Every changed main file (entity, service, controller, schema, component, page, hook) has its test file changed or
+  added.
+- Commands for the parts you touched are green: `cd backend && ./gradlew spotlessApply test`;
+  `cd frontend && npm run format && npm run lint && npm run typecheck && npm test`.
 
-File nằm ngoài danh sách thì bỏ thay đổi đó, hoặc giữ và ghi vào dòng "Ngoài phạm vi" của báo cáo kèm lý do. Với khối
-sửa, đọc lại mục "Giữ nguyên" và xem diff: điểm nào trong đó bị đổi thì trả lại như cũ.
+## Report
 
-## Báo cáo
+Use the template in `.agents/rules/builder.md` ("Report"): append it to `.handoff/<card>.md` and show it. Round number:
+fix mode uses the fix request's round; a normal run starts at round 0 (or the next part's first entry).
 
-Một lần, không lặp lại:
+Suggested commit: inside a card use `feat`, `refactor` or `test`, never `fix`; part runs end the description with
+`(part N)`. Next step line:
 
-- Nhánh đang làm (và đã tạo mới hay chưa).
-- Mỗi bước của file luồng hoặc của khối sửa: đã làm hay chưa, khác kế hoạch chỗ nào và vì sao.
-- **Skill đã gọi** (ví dụ `/write-tests` 3 lần) và **Khác thiết kế**: cách làm tự chọn, test thêm ngoài bảng, test đỏ
-  ngoài dự kiến; không có thì ghi "không".
-- **Code mới và nơi gọi** (mọi lần chạy, kể cả từng phần): mỗi method, lớp, bản nạp chồng mới kèm chỗ gọi trong
-  `src/main` (grep tên). Chỉ test gọi hoặc không ai gọi thì xóa trước khi báo (`AGENTS.md` mục 7, 9; S3-08: thêm
-  `PageRequests.of` 3 tham số "để sau này dùng").
-- File đã sửa, và dòng **Ngoài phạm vi** theo mục "Soát phạm vi trước khi báo" (file ngoài danh sách được phép, lý
-  do giữ); không có thì ghi "không".
-- Lệnh test đã chạy, kết quả thật (số test qua, đỏ).
-- Bảng thử làm đỏ của `/write-tests` bước 4 (code đã sửa sai, test đỏ, lỗi in ra). Không có bảng thì không báo xong.
-  Chỉ ghi một hành vi "đã có test" hoặc "đã bao phủ" khi bảng có dòng làm sai đúng chỗ đó và test đỏ (S2-08: báo bảng
-  combo "bao phủ 100%" trong khi test chỉ chạy dạng thẻ điện thoại).
-- Cách thử bằng Postman hoặc giao diện, kết quả mong đợi.
-- **Câu commit gợi ý** cho đúng thay đổi của lần chạy này, theo CONTRIBUTING.md mục 3 (AGENTS.md mục 8): dòng đầu
-  `<loại>(<phạm vi>): <mô tả tiếng Việt có dấu>`, dòng `Refs: <mã card>, <FR/BR/OQ>`; chạy theo phần thì ghi "phần
-  <N>" ở cuối mô tả; khối sửa trong card dùng loại của phần code được sửa (`feat`, `refactor`, `test`), không `fix`.
-  Chỉ câu, đặt trong khung code để chép, không kèm lệnh git.
-- Bước tiếp theo: Đình chạy `/self-review` bằng Claude Code; Huy đọc diff rồi gõ `/pre-pr-check` khi sẵn sàng.
-  File chia phần, chưa tới phần cuối: Đình chạy `/self-review phần <N>`; Huy đọc diff của phần, đổi trạng thái phần
-  thành `đã soát` rồi gõ `/implement <file luồng> phần <N+1>`.
+- Đình: "Run `/self-review` (or `/self-review part N`) in Claude Code."
+- Huy: "Read the diff; mark the part `đã soát` and run `/implement <flow file> part <N+1>`, or type `/pre-pr-check`
+  after the last part."
